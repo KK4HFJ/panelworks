@@ -21,12 +21,21 @@ from panelworks.runtime import load_form
 
 def main():
     ap = argparse.ArgumentParser(prog="panelworks", description="Run a PanelWorks JSON form")
-    ap.add_argument("form", help="path to the .json form file")
+    ap.add_argument("form", nargs="?", help="path to the .json form file")
+    ap.add_argument("--design", action="store_true",
+                    help="open the form in the visual designer instead of running it")
     ap.add_argument("--version", action="version", version=f"PanelWorks {__version__}")
     ap.add_argument("--mcp", choices=["http", "stdio", "none"], default="http")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
     a = ap.parse_args()
+
+    if a.design:
+        from panelworks.designer import run_designer
+        run_designer(a.form)
+        return
+    if not a.form:
+        ap.error("a form file is required (or use --design to start a new one)")
 
     try:
         from panelworks import mcp_bridge

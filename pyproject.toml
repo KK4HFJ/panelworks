@@ -29,6 +29,7 @@ mqtt = ["paho-mqtt>=2.0"]
 
 [project.scripts]
 panelworks = "panelworks.cli:main"
+panelworks-designer = "panelworks.designer:main"
 
 [tool.setuptools]
 packages = ["panelworks"]

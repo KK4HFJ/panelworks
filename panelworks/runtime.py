@@ -564,10 +564,11 @@ class Form:
         for name, ospec in spec.get("objects", {}).items():
             self._add(name, ospec)
 
-        self.root.after(20, self._pump)
-        self.root.after(0, self._load)
+        self._pump_after = self.root.after(20, self._pump)
+        self._load_after = self.root.after(0, self._load)
 
     def _load(self):
+        self._load_after = None
         self._loaded = True
         if self.bus:
             self.bus.start()
@@ -640,6 +641,12 @@ class Form:
             self.bus.stop()
         if self.hooks:
             self.hooks.stop()
+        for aid in (self._pump_after, self._load_after):
+            if aid:
+                try:
+                    self.root.after_cancel(aid)
+                except tk.TclError:
+                    pass
         self.root.after(10, self.root.destroy)
 
     # ---- objects -------------------------------------------------------------
@@ -814,7 +821,7 @@ class Form:
             except Exception as e:
                 fut.set_exception(e)
         if not self._closing:
-            self.root.after(20, self._pump)
+            self._pump_after = self.root.after(20, self._pump)
 
     def run(self):
         self.root.mainloop()

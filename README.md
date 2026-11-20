@@ -30,6 +30,7 @@ panelworks/runtime.py      <- controls, Form, event dispatch, thread bridge
 panelworks/mcp_bridge.py   <- MCP server, single-instance lock and relay
 panelworks/mqtt.py         <- MQTT control, subscribe / publish / mirror
 panelworks/webhooks.py     <- HTTP webhooks (n8n): events out, replies drive the form
+panelworks/designer.py     <- the visual form designer
 panelworks/cli.py          <- the `panelworks` command
 ```
 
@@ -91,6 +92,42 @@ Restart Claude Desktop; the panel window opens and Claude can ask it things like
 
 Claude Code over HTTP: start with the default `--mcp http`, then
 `claude mcp add --transport http pumppanel http://127.0.0.1:8765/mcp`.
+
+## Designer: draw forms without writing JSON
+
+![PanelWorks Designer](docs/designer.png)
+
+```
+panelworks-designer                       # new form
+panelworks-designer my_panel.json         # open (or create) a form
+panelworks --design my_panel.json         # same thing
+```
+
+The designer works the way classic RAD tools did, and needs no AI:
+
+- **Draw:** pick a tool in the Toolbox and drag a rectangle on the form, or click
+  for a default-size control. Double-click a tool to drop one in.
+- **Arrange:** drag to move (5 px snap), drag the black grip to resize, arrow keys
+  nudge 1 px (Shift: 10 px). Drag the grip at the form's corner to resize the form.
+- **Properties:** pick a row, edit below. True/False and fixed choices get a drop-down,
+  colours get a picker, lists are one item per line.
+- **Code:** double-click a control (or an event on the **Events** tab). The designer
+  writes a `def Command1_Click(f):` stub in the form's `.py` file and opens it in
+  VS Code if installed, otherwise Notepad (set `PANELWORKS_EDITOR` to choose).
+  It never runs the file to open it.
+- **Connections:** MQTT `subscribe` / `publish` and n8n `webhook` entries for the
+  selected control, or `mqtt` / `webhooks` for the form, edited as JSON.
+- **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, **F5 run**.
+  Timers and MQTT controls sit in the tray under the form, as they did in VB.
+
+Files are saved with only the properties you changed, so they stay readable and
+diff well in git. Forms written by hand or by Claude open without losing anything
+(form-level `mqtt`/`webhooks`, every subscribe/publish/webhook).
+
+**With Claude:** the designer watches the file it has open. When Claude changes the
+form (for example `add_object` then `save_form` on a running panel), the designer
+reloads it, asking first if you have unsaved edits. Rough a panel out with Claude,
+polish it by hand, then have Claude wire up the automations, or the other way round.
 
 ## The form file
 
@@ -373,9 +410,8 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Not yet built
 
-- Visual drag-and-drop designer (today: edit JSON, or have Claude `add_object`)
+- Multi-select and alignment tools in the designer
 - Frame/container controls, menus, PictureBox/Canvas drawing, multiple forms
-- MQTT over TLS (paho supports it; just needs config keys)
 
 ## License
 
