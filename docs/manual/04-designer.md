@@ -6,7 +6,7 @@ The designer is laid out the way VB's was:
 
 | Area | What it's for |
 |---|---|
-| **Menu bar** | File, Edit, View, Help |
+| **Menu bar** | File, Edit, View, Format, Help |
 | **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code, Immediate · ⬆ Update (when there is one) |
 | **Toolbox** (left) | The controls you can draw |
 | **Form** (middle) | Your window, on a grey workspace, with a dot grid |
@@ -45,6 +45,39 @@ instead of drawing again.
   connection edits.
 
 The mouse position (form coordinates) is shown in the status bar while you draw.
+
+## Selecting several controls
+
+![Three labels selected](img/multiselect.png)
+
+- **Drag a box** on an empty part of the form: every control it touches is selected.
+- **Ctrl+click** (or Shift+click) adds a control to the selection, or takes it out.
+- **Ctrl+A** selects every control; **Esc** goes back to the Form.
+
+The **primary** control, the last one you clicked, has a solid blue outline,
+and the others are dashed. With several selected:
+
+- dragging any of them moves them all, keeping their spacing; the arrow keys nudge them all;
+- **Del** deletes them all, and **Ctrl+D** duplicates the group;
+- the Properties window shows the primary's values, and **a change applies to
+  every selected control that has that property**. Set ForeColor once for a whole
+  row of labels.
+
+### The Format menu
+
+Line things up the way VB did. Everything aligns to the **primary** control:
+
+| Format menu | Does |
+|---|---|
+| Align → Lefts, Centers, Rights | Line up the left edges, centres or right edges |
+| Align → Tops, Middles, Bottoms | The same, vertically |
+| Make Same Size → Width, Height, Both | Copy the primary's size |
+| Horizontal / Vertical Spacing: Make Equal | Even gaps between three or more controls |
+| Center in Form → Horizontally, Vertically | Centre the selection (one control or a group) |
+
+A typical layout: draw a column of labels roughly, drag a box around them, click
+the top one to make it primary, then **Align → Lefts** and **Vertical Spacing:
+Make Equal**. Ctrl+Z undoes each step.
 
 ## The Properties window
 
@@ -188,8 +221,11 @@ variable, if set, still overrides the editor setting.
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
 | Ctrl+Z | Undo |
-| Ctrl+D | Duplicate selected control |
-| Del | Delete selected control |
+| Ctrl+D | Duplicate the selected control(s) |
+| Del | Delete the selected control(s) |
+| Ctrl+A | Select all controls |
+| Esc | Select the Form |
+| Ctrl+click / Shift+click | Add to or remove from the selection |
 | Arrows / Shift+arrows | Nudge 1 / 10 pixels |
 
 ## Help

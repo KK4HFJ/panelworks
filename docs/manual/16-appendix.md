@@ -13,8 +13,10 @@
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
 | Ctrl+Z | Undo (form and code together after a rename) |
-| Ctrl+D | Duplicate the selected control |
-| Del | Delete the selected control |
+| Ctrl+D | Duplicate the selected control(s) |
+| Del | Delete the selected control(s) |
+| Ctrl+A / Esc | Select all controls / select the Form |
+| Ctrl+click, Shift+click | Add to or remove from the selection |
 | Arrow keys | Nudge 1 pixel |
 | Shift+arrow keys | Nudge 10 pixels |
 | Enter (in the Edit box) | Apply the property |

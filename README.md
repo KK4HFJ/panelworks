@@ -135,6 +135,8 @@ The designer works the way classic RAD tools did, and needs no AI:
 - **Run:** the green **▶ Start** button on the toolbar (or F5) saves and runs the
   panel; the red **■ End** button stops it. Start while it's running restarts it
   with your latest changes. The Code window has a Start button too.
+- **Several at once:** drag a box or Ctrl+click to select several controls; move, nudge,
+  delete or set a property on all of them; **Format** menu to align, make same size, space evenly.
 - **Updates:** the designer checks GitHub once a day; an orange **⬆ Update** button
   shows what's new and runs `git pull` for you (Help → Check for Updates).
 - **Immediate window (Ctrl+G):** live `print()` output and errors from the running

@@ -168,6 +168,8 @@ class Designer:
         self.order = []                # object names in creation (z) order
         self._drag = None
         self._band = None
+        self._selband = None               # rubber band for selecting (Pointer tool)
+        self.multi = []                    # names when several controls are selected
         self._defaults = {}
         self._mtime = None
         self._editor_widget = None
@@ -274,6 +276,25 @@ class Designer:
         v.add_command(label="Code in external editor", command=self.code_external)
         v.add_command(label="Immediate Window", accelerator="Ctrl+G", command=self.immediate)
         m.add_cascade(label="View", menu=v)
+        fm = tk.Menu(m, tearoff=0)
+        al = tk.Menu(fm, tearoff=0)
+        for label, how in (("Lefts", "left"), ("Centers", "center"), ("Rights", "right"), (None, None),
+                           ("Tops", "top"), ("Middles", "middle"), ("Bottoms", "bottom")):
+            al.add_separator() if label is None else al.add_command(label=label, command=lambda h=how: self.align(h))
+        fm.add_cascade(label="Align", menu=al)
+        sz = tk.Menu(fm, tearoff=0)
+        for label, how in (("Width", "width"), ("Height", "height"), ("Both", "both")):
+            sz.add_command(label=label, command=lambda h=how: self.same_size(h))
+        fm.add_cascade(label="Make Same Size", menu=sz)
+        fm.add_command(label="Horizontal Spacing: Make Equal", command=lambda: self.space_equally("h"))
+        fm.add_command(label="Vertical Spacing: Make Equal", command=lambda: self.space_equally("v"))
+        ce = tk.Menu(fm, tearoff=0)
+        ce.add_command(label="Horizontally", command=lambda: self.center_in_form("h"))
+        ce.add_command(label="Vertically", command=lambda: self.center_in_form("v"))
+        fm.add_cascade(label="Center in Form", menu=ce)
+        fm.add_separator()
+        fm.add_command(label="Select All", accelerator="Ctrl+A", command=self.select_all)
+        m.add_cascade(label="Format", menu=fm)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label="Check for Updates...", command=lambda: self.updates_dialog())
         h.add_separator()
@@ -430,6 +451,8 @@ class Designer:
         r.bind("<Control-w>", lambda e: self.close_form())
         r.bind("<Control-g>", lambda e: self.immediate())
         r.bind("<Control-comma>", lambda e: self.preferences())
+        r.bind("<Control-a>", lambda e: None if self._typing() else self.select_all())
+        r.bind("<Escape>", lambda e: None if self._typing() else self.select("Form"))
         r.bind("<F5>", lambda e: self.run_form())
         r.bind("<F7>", lambda e: self.show_code())
         for seq, fn in (("<Delete>", self.delete_selected), ("<Control-z>", self.undo),
@@ -915,7 +938,9 @@ class Designer:
         w.bind("<ButtonPress-1>", lambda e: self._obj_press(e, n))
         w.bind("<B1-Motion>", lambda e: self._obj_motion(e))
         w.bind("<ButtonRelease-1>", lambda e: self._drag_release(e))
-        w.bind("<Double-Button-1>", lambda e: (self._open_default_event(n), "break")[1])
+        # a quick second Ctrl/Shift-click arrives as a double-click: it's still a toggle
+        w.bind("<Double-Button-1>", lambda e: (self.toggle_select(n) if e.state & 0x0005
+                                               else self._open_default_event(n), "break")[1])
         w.bind("<Motion>", lambda e: self._status_xy(w.winfo_x() + e.x, w.winfo_y() + e.y))
         w.configure(cursor="fleur")
         for seq in ("<Key>", "<FocusIn>"):
@@ -952,26 +977,112 @@ class Designer:
         self.say(f"Added {name}. Drag to move, use the black grip to resize, double-click for code.")
         return name
 
+    # ------------------------------------------------------------- Format menu
+    def _fmt_targets(self, need=2):
+        names = self.sel_names()
+        if len(names) < need:
+            self.say("Select several controls first: Ctrl+click them, or drag a box around them.")
+            return None
+        return [self.host.objects[n] for n in names]
+
+    def _fmt_done(self, what):
+        self._draw_selection()
+        self._refresh_values()
+        self._set_dirty(True)
+        self.say(f"{what}. Ctrl+Z to undo.")
+
+    def align(self, how):
+        """Align to the primary control (outlined in solid blue), as VB does."""
+        objs = self._fmt_targets()
+        if not objs:
+            return
+        p = self.host.objects[self.selected]
+        L, T, W, H = p.get("Left"), p.get("Top"), p.get("Width"), p.get("Height")
+        self._checkpoint()
+        for o in objs:
+            w, h = o.get("Width"), o.get("Height")
+            if how == "left":     o.set("Left", L)
+            elif how == "right":  o.set("Left", max(0, L + W - w))
+            elif how == "center": o.set("Left", max(0, L + (W - w) // 2))
+            elif how == "top":    o.set("Top", T)
+            elif how == "bottom": o.set("Top", max(0, T + H - h))
+            elif how == "middle": o.set("Top", max(0, T + (H - h) // 2))
+        self._fmt_done(f"Aligned {how}s to {self.selected}")
+
+    def same_size(self, how):
+        objs = self._fmt_targets()
+        if not objs:
+            return
+        p = self.host.objects[self.selected]
+        self._checkpoint()
+        for o in objs:
+            if how in ("width", "both"):
+                o.set("Width", p.get("Width"))
+            if how in ("height", "both"):
+                o.set("Height", p.get("Height"))
+        self._fmt_done(f"Made the same {how if how != 'both' else 'size'} as {self.selected}")
+
+    def space_equally(self, axis):
+        objs = self._fmt_targets(3)
+        if not objs:
+            return self.say("Equal spacing needs three or more controls selected.")
+        pos, size = ("Left", "Width") if axis == "h" else ("Top", "Height")
+        objs.sort(key=lambda o: o.get(pos))
+        first, last = objs[0], objs[-1]
+        span = last.get(pos) + last.get(size) - first.get(pos)
+        gap = (span - sum(o.get(size) for o in objs)) / (len(objs) - 1)
+        self._checkpoint()
+        at = first.get(pos)
+        for o in objs:
+            o.set(pos, max(0, round(at)))
+            at += o.get(size) + gap
+        self._fmt_done(f"Equal {'horizontal' if axis == 'h' else 'vertical'} spacing")
+
+    def center_in_form(self, axis):
+        objs = self._fmt_targets(1)
+        if not objs:
+            return
+        self._checkpoint()
+        if axis == "h":
+            l = min(o.get("Left") for o in objs); r = max(o.get("Left") + o.get("Width") for o in objs)
+            d = (self.form["width"] - (r - l)) // 2 - l
+            for o in objs:
+                o.set("Left", max(0, o.get("Left") + d))
+        else:
+            t = min(o.get("Top") for o in objs); b = max(o.get("Top") + o.get("Height") for o in objs)
+            d = (self.form["height"] - (b - t)) // 2 - t
+            for o in objs:
+                o.set("Top", max(0, o.get("Top") + d))
+        self._fmt_done("Centred in the form")
+
     def _drop_tool(self, typ):
         n = len(self.order)
         self.add_object(typ, 20 + (n % 8) * 10, 20 + (n % 8) * 10)
         self.tool.set("Pointer")
 
     def delete_selected(self):
-        n = self.selected
-        if n == "Form" or n not in self.host.objects:
+        names = self.sel_names() if len(self.multi) > 1 else [self.selected]
+        names = [n for n in names if n != "Form" and n in self.host.objects]
+        if not names:
             return
         self._checkpoint()
-        o = self.host.objects.pop(n)
-        if hasattr(o, "_tray"):
-            o._tray.destroy()
-        o.destroy()
-        self.order.remove(n)
+        for n in names:
+            o = self.host.objects.pop(n)
+            if hasattr(o, "_tray"):
+                o._tray.destroy()
+            o.destroy()
+            self.order.remove(n)
         self.select("Form")
         self._set_dirty(True)
-        self.say(f"Deleted {n}. Ctrl+Z to undo.")
+        self.say(f"Deleted {', '.join(names)}. Ctrl+Z to undo.")
 
     def duplicate_selected(self):
+        if len(self.multi) > 1:                        # copy the whole group, offset together
+            news = []
+            for n in self.sel_names():
+                self.select(n)
+                news.append(self.duplicate_selected())
+            return self.select_many([m for m in news if m])
         n = self.selected
         if n == "Form" or n not in self.host.objects:
             return
@@ -988,6 +1099,7 @@ class Designer:
         if caption_was_name:
             self.host.objects[new].set("Caption", new)
             self.refresh_panels()
+        return new
 
     def _restack(self, front):
         n = self.selected
@@ -1003,7 +1115,43 @@ class Designer:
         self._set_dirty(True)
 
     # ------------------------------------------------------------ selection
+    def _visual(self, n):
+        o = self.host.objects.get(n)
+        return o is not None and hasattr(o, "widget") and o.TYPE not in NONVISUAL_ORDER
+
+    def sel_names(self):
+        """The selected visual controls (several, or the one), primary last."""
+        if len(self.multi) > 1:
+            return [n for n in self.multi if n in self.host.objects]
+        return [self.selected] if self._visual(self.selected) else []
+
+    def select_many(self, names, primary=None):
+        names = [n for n in dict.fromkeys(names) if self._visual(n)]
+        if len(names) <= 1:
+            return self.select(names[0] if names else "Form")
+        primary = primary if primary in names else names[-1]
+        names.remove(primary)
+        self.multi = names + [primary]
+        self.selected = primary
+        for o in self.host.objects.values():
+            if hasattr(o, "_tray"):
+                o._tray.configure(relief="raised")
+        self._draw_selection()
+        self.refresh_panels()
+
+    def toggle_select(self, n):
+        cur = self.sel_names()
+        if n in cur:
+            cur.remove(n)
+            self.select_many(cur)
+        else:
+            self.select_many(cur + [n], primary=n)
+
+    def select_all(self):
+        self.select_many([n for n in self.order if self._visual(n)])
+
     def select(self, name):
+        self.multi = []
         self.selected = name if (name == "Form" or name in self.host.objects) else "Form"
         for o in self.host.objects.values():
             if hasattr(o, "_tray"):
@@ -1014,6 +1162,15 @@ class Designer:
     def _draw_selection(self):
         self.canvas.delete("sel")
         self.handle.place_forget()
+        if len(self.multi) > 1:
+            for n in self.sel_names():
+                o = self.host.objects[n]
+                x, y, w, h = o.get("Left"), o.get("Top"), o.get("Width"), o.get("Height")
+                primary = n == self.selected
+                self.canvas.create_rectangle(x - 3, y - 3, x + w + 2, y + h + 2, tags="sel",
+                                             outline="#1f5fbf" if primary else "gray35",
+                                             dash=() if primary else (3, 2), width=2 if primary else 1)
+            return
         o = self.host.objects.get(self.selected)
         if o is None or not hasattr(o, "widget"):
             return
@@ -1029,6 +1186,8 @@ class Designer:
         n = self.selected
         o = self.host.objects.get(n)
         self.sel_label.configure(text=f"Form  ({self.form['name']})" if n == "Form" else f"{n}   ({o.TYPE})")
+        if len(self.multi) > 1:
+            self.sel_label.configure(text=f"{len(self.multi)} selected  (showing {n})")
         # properties
         self.tree.delete(*self.tree.get_children())
         for prop, value, ro in self._prop_rows():
@@ -1177,6 +1336,13 @@ class Designer:
                 value = max(1, value) if prop in ("Width", "Height") else max(0, value)
             self._checkpoint()
             o.set(prop, value)
+            others = [m for m in self.sel_names() if m != n]
+            for m in others:                       # several selected: same change to each
+                om = self.host.objects[m]
+                if prop in om.property_names() and hasattr(type(om), "set_" + prop):
+                    om.set(prop, value)
+            if others:
+                n = f"{len(others) + 1} controls"
         except Exception as e:
             messagebox.showerror("Property", f"{prop}: {e}", parent=self.root)
             return
@@ -1453,14 +1619,23 @@ class Designer:
     def _obj_press(self, e, n):
         if self.tool.get() != "Pointer":
             return self._canvas_press(e)               # drawing over an existing control
-        self.select(n)
-        o = self.host.objects[n]
-        self._drag = {"mode": "move", "name": n, "start": (e.x_root, e.y_root),
-                      "orig": (o.get("Left"), o.get("Top")), "moved": False}
+        if e.state & 0x0005:                           # Ctrl or Shift: add/remove
+            self.toggle_select(n)
+            return "break"
+        if n in self.multi:
+            self.selected = n                          # keep the group; this one is primary
+            self.multi.remove(n); self.multi.append(n)
+            self._draw_selection(); self.refresh_panels()
+        else:
+            self.select(n)
+        names = self.sel_names() or [n]
+        self._drag = {"mode": "move", "name": n, "start": (e.x_root, e.y_root), "moved": False,
+                      "orig": {m: (self.host.objects[m].get("Left"), self.host.objects[m].get("Top"))
+                               for m in names}}
         return "break"
 
     def _obj_motion(self, e):
-        if self._band is not None:
+        if self._band is not None or self._selband is not None:
             return self._canvas_motion(e)
         d = self._drag
         if not d or d["mode"] != "move":
@@ -1471,11 +1646,18 @@ class Designer:
         if not d["moved"]:
             self._checkpoint()
             d["moved"] = True
+        # move the group by the primary's snapped offset, so they keep their spacing
+        px, py = d["orig"][d["name"]]
+        sx = max(-min(x for x, _ in d["orig"].values()), snap(px + dx) - px)
+        sy = max(-min(y for _, y in d["orig"].values()), snap(py + dy) - py)
+        for m, (x, y) in d["orig"].items():
+            om = self.host.objects[m]
+            om.set("Left", x + sx)
+            om.set("Top", y + sy)
         o = self.host.objects[d["name"]]
-        o.set("Left", max(0, snap(d["orig"][0] + dx)))
-        o.set("Top", max(0, snap(d["orig"][1] + dy)))
         self._draw_selection()
-        self.say(f"{d['name']}  Left {o.get('Left')}  Top {o.get('Top')}")
+        what = d["name"] if len(d["orig"]) == 1 else f"{len(d['orig'])} controls"
+        self.say(f"{what}  Left {o.get('Left')}  Top {o.get('Top')}")
         return "break"
 
     def _handle_press(self, e):
@@ -1501,7 +1683,7 @@ class Designer:
         return "break"
 
     def _drag_release(self, e):
-        if self._band is not None:
+        if self._band is not None or self._selband is not None:
             return self._canvas_release(e)
         d, self._drag = self._drag, None
         if d and d["moved"]:
@@ -1513,7 +1695,9 @@ class Designer:
     def _canvas_press(self, e):
         x, y = self._xy(e)
         if self.tool.get() == "Pointer":
-            self.select("Form")
+            self._selband = (x, y, bool(e.state & 0x0005))
+            self.canvas.delete("selband")
+            self.canvas.create_rectangle(x, y, x, y, outline="#1f5fbf", dash=(4, 2), tags="selband")
             return "break"
         self._band = (x, y)
         self.canvas.delete("band")
@@ -1521,6 +1705,10 @@ class Designer:
         return "break"
 
     def _canvas_motion(self, e):
+        if self._selband is not None:
+            x, y = self._xy(e)
+            self.canvas.coords("selband", self._selband[0], self._selband[1], x, y)
+            return "break"
         if self._band is None:
             return "break"
         x, y = self._xy(e)
@@ -1530,6 +1718,28 @@ class Designer:
         return "break"
 
     def _canvas_release(self, e):
+        if self._selband is not None:
+            x, y = self._xy(e)
+            x0, y0, add = self._selband
+            self._selband = None
+            self.canvas.delete("selband")
+            if abs(x - x0) < 4 and abs(y - y0) < 4:         # a plain click on the form
+                if not add:
+                    self.select("Form")
+                return "break"
+            l, t, r, b = min(x, x0), min(y, y0), max(x, x0), max(y, y0)
+            hits = []
+            for n in self.order:                              # touched by the box, as in VB
+                if not self._visual(n):
+                    continue
+                o = self.host.objects[n]
+                ox, oy = o.get("Left"), o.get("Top")
+                if ox < r and ox + o.get("Width") > l and oy < b and oy + o.get("Height") > t:
+                    hits.append(n)
+            self.select_many((self.sel_names() if add else []) + hits)
+            if hits:
+                self.say(f"{len(self.sel_names())} selected. Format menu: align, size, spacing.")
+            return "break"
         if self._band is None:
             return "break"
         x, y = self._xy(e)
@@ -1578,12 +1788,16 @@ class Designer:
 
     # ------------------------------------------------------------- misc ui
     def nudge(self, dx, dy):
-        o = self.host.objects.get(self.selected)
-        if o is None or not hasattr(o, "widget"):
+        names = self.sel_names()
+        if not names:
             return
+        objs = [self.host.objects[n] for n in names]
+        dx = max(dx, -min(o.get("Left") for o in objs))
+        dy = max(dy, -min(o.get("Top") for o in objs))
         self._checkpoint()
-        o.set("Left", max(0, o.get("Left") + dx))
-        o.set("Top", max(0, o.get("Top") + dy))
+        for o in objs:
+            o.set("Left", o.get("Left") + dx)
+            o.set("Top", o.get("Top") + dy)
         self._draw_selection()
         self._refresh_values()
         self._set_dirty(True)

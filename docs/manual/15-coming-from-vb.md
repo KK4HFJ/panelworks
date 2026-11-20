@@ -65,6 +65,7 @@ chapter translates the rest.
 ## Things VB never did
 
 - **Renaming a control renames its code** (chapter 5).
+- **The Format menu is still here**: align, make same size, equal spacing, centre in form.
 - **The Immediate window keeps working while the program runs**, and an error doesn't put you in break mode.
 - **Syntax errors are caught when you save**, with the line marked.
 - **Properties follow devices with no code**: MQTT `subscribe`, Serial `Fill`.
