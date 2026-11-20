@@ -32,6 +32,7 @@
 | The panel doesn't appear in Claude | Quit Claude Desktop **from the tray icon** before editing the config, then start it again. Check the JSON (commas!) and that the paths exist. Use forward slashes. |
 | Two panel windows open | The config points at two different installs (an old folder and a new one). Each entry should use `python.exe` from the same venv. One install never opens two windows for the same form. |
 | Panels stay open after quitting Claude | Normally they close with it. If an old version left some behind, end the leftover `python.exe` processes in Task Manager once. |
+| A panel connects when started from one PowerShell window but not from the designer, a shortcut or Claude | Variables set with `$env:NAME=...` (or `set`) only last for that window. Store them for good with `setx NAME value` (or Start → *Edit environment variables for your account*), then close and reopen the designer. The MQTT error names the host it tried; `mqtt.example.com` means the variable wasn't seen. |
 | `${VAR}` values are empty when started by Claude | Claude Desktop doesn't see variables set in a Command Prompt. Put them in the server's `"env"` block. |
 
 ## MQTT

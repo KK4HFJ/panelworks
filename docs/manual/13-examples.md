@@ -62,12 +62,16 @@ broker with TLS. It shows:
 - the **read-only pattern**: `"status": false` and a broker account that can
   only read `home/#`, so the console can never switch the HVAC.
 
+Store the connection details once, so every program (the designer, shortcuts, Claude)
+sees them. Run each line in a Command Prompt, then close and reopen the designer:
+
 ```
-set PW_MQTT_HOST=mqtt.example.com
-set PW_MQTT_USER=panelworks
-set PW_MQTT_PASS=...
-python -m panelworks examples\hvac_console.json --mcp none
+setx PW_MQTT_HOST mqtt.example.com
+setx PW_MQTT_USER panelworks
+setx PW_MQTT_PASS "..."
 ```
+
+(`set` or PowerShell's `$env:` only last for the one window you type them in.)
 
 ## n8n demo: event procedures in a workflow
 

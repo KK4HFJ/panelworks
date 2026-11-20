@@ -85,9 +85,12 @@ class MqttLink:
     # ---- paho callbacks (network thread: never touch widgets here) ------------
     def _error(self, message):
         """Report a connection problem once (it repeats on every retry otherwise)."""
+        message = f"{self.broker}:{self.port}: {message}"      # say where it tried
+        if "example." in self.broker or not self.broker:
+            message += " - that looks like a placeholder; is an environment variable (e.g. PW_MQTT_HOST) not set for this program?"
         if message != self.last_error:
             self.last_error = message
-            print(f"[mqtt] {self.broker}:{self.port}: {message}")
+            print(f"[mqtt] {message}")
             if self.on_error:
                 self.form.post(self.on_error, message)
 
