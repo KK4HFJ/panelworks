@@ -190,6 +190,8 @@ class Designer:
         else:
             self.new_form(path)
         self.root.after(1500, self._watch_file)
+        if self.settings.get("check_updates", True):
+            self.root.after(3000, self._startup_update_check)
 
     # ------------------------------------------------------------------ about
     AUTHOR = "Steve Spence (KK4HFJ)"
@@ -273,6 +275,8 @@ class Designer:
         v.add_command(label="Immediate Window", accelerator="Ctrl+G", command=self.immediate)
         m.add_cascade(label="View", menu=v)
         h = tk.Menu(m, tearoff=0)
+        h.add_command(label="Check for Updates...", command=lambda: self.updates_dialog())
+        h.add_separator()
         h.add_command(label="About PanelWorks", command=self.about)
         m.add_cascade(label="Help", menu=h)
         self.root.config(menu=m)
@@ -305,6 +309,11 @@ class Designer:
         sep()
         btn("Code", lambda: self.code_window(), "Open the Code window (F7)")
         btn("Immediate", self.immediate, "Live output of the running panel, and type at it (Ctrl+G)")
+        self.btn_update = tk.Button(bar, text="\u2B06 Update", command=lambda: self.updates_dialog(),
+                                    relief="flat", padx=6, pady=1, overrelief="raised",
+                                    fg="#b85c00", activeforeground="#b85c00", font=("Helvetica", 10, "bold"))
+        self.btn_update.bind("<Enter>", lambda e: self.say("A newer PanelWorks is on GitHub: click to see what's new"))
+        self._update_info = None                # shown (packed) only when an update exists
 
     def _build_layout(self):
         self._build_toolbar()
@@ -470,6 +479,134 @@ class Designer:
         items = [p for p in recent_list() if os.path.exists(p)]
         return items[0] if items else None
 
+    # ------------------------------------------------------------- updates
+    def _startup_update_check(self):
+        """Once a day, in the background; the designer never waits for GitHub."""
+        from . import updates
+        if not updates.due():
+            return
+        result = {}
+        def work():
+            result.update(updates.check())
+            updates.mark_checked(result)
+        t = threading.Thread(target=work, daemon=True)
+        t.start()
+        def done():
+            if t.is_alive():
+                return self.root.after(500, done)
+            if result.get("status") == "behind":
+                self._show_update(result)
+        self.root.after(500, done)
+
+    def _show_update(self, info):
+        self._update_info = info
+        n = info.get("behind", 0)
+        self.btn_update.configure(text=f"\u2B06 Update ({n} new)" if n else "\u2B06 Update")
+        self.btn_update.pack(side="right", padx=4)
+        self.say(f"A newer PanelWorks is on GitHub ({n} change{'s' if n != 1 else ''}). "
+                 "Click Update on the toolbar, or Help > Check for Updates.")
+
+    def updates_dialog(self, info=None):
+        """Help > Check for Updates: what's new, and Update now."""
+        from . import updates
+        top = tk.Toplevel(self.root)
+        top.title("Check for Updates")
+        top.transient(self.root)
+        top.geometry("640x380")
+        msg = tk.Label(top, text="Checking GitHub...", anchor="w", justify="left", padx=10, pady=8,
+                       font=("Helvetica", 10, "bold"))
+        msg.pack(fill="x")
+        body = tk.Text(top, height=12, wrap="word", padx=8, pady=6, font=("Helvetica", 9))
+        body.pack(fill="both", expand=True, padx=10)
+        bar = tk.Frame(top, padx=10, pady=8)
+        bar.pack(fill="x")
+        close = tk.Button(bar, text="Close", width=10, command=top.destroy)
+        close.pack(side="right")
+        upd = tk.Button(bar, text="Update now", width=12, state="disabled")
+        upd.pack(side="right", padx=6)
+        restart = tk.Button(bar, text="Restart designer", width=14, command=self._restart)
+        self._upd_dialog = (top, msg, body, upd, restart)          # tests reach in here
+
+        def put(text):
+            body.configure(state="normal")
+            body.insert("end", text + "\n")
+            body.see("end")
+
+        def show(r):
+            updates.mark_checked(r)
+            short = (r.get("local") or "?")[:7]
+            if r["error"]:
+                msg.configure(text=r["error"])
+                put("To update by hand, in a Command Prompt:\n  cd " + updates.ROOT +
+                    "\n  git pull\n  .venv\\Scripts\\python -m pip install -e \".[mqtt]\"")
+            elif r["status"] == "current":
+                msg.configure(text=f"PanelWorks is up to date (version {short}).")
+                self.btn_update.pack_forget()
+            elif r["status"] == "behind":
+                n = r["behind"]
+                msg.configure(text=f"{n} update{'s' if n != 1 else ''} available. You have {short}.")
+                put("What's new (newest first):\n")
+                for sha, date, text in r["commits"][:25]:
+                    put(f"  {date}  {text}")
+                upd.configure(state="normal")
+                self._show_update(r)
+            else:
+                msg.configure(text=f"Your copy ({short}) has changes that aren't on GitHub; "
+                                   "update it with git yourself.")
+
+        def run_update():
+            if self._running() and not messagebox.askyesno(
+                    "Update", "A panel is running. Update anyway? (It keeps running the old version "
+                    "until you restart it.)", parent=top):
+                return
+            upd.configure(state="disabled")
+            close.configure(state="disabled")
+            body.delete("1.0", "end")
+            put("Updating ...\n")
+            res = {}
+            lines = []
+            def work():
+                res["ok"], res["restart"] = updates.update(log=lines.append)
+            t = threading.Thread(target=work, daemon=True)
+            t.start()
+            def poll():
+                while lines:
+                    put(lines.pop(0))
+                if t.is_alive():
+                    return top.after(200, poll)
+                close.configure(state="normal")
+                if res.get("ok"):
+                    msg.configure(text="Updated. Restart the designer to use the new version.")
+                    self.btn_update.pack_forget()
+                    restart.pack(side="right", padx=6)
+                else:
+                    msg.configure(text="The update didn't finish; see below.")
+            poll()
+
+        upd.configure(command=run_update)
+        if info:
+            show(info)
+        else:
+            result = {}
+            t = threading.Thread(target=lambda: result.update(updates.check()), daemon=True)
+            t.start()
+            def wait():
+                if t.is_alive():
+                    return top.after(200, wait)
+                show(result)
+            wait()
+        return top
+
+    def _restart(self):
+        """Start a fresh designer on the same form, then close this one."""
+        if not self._ok_to_discard():
+            return
+        args = [sys.executable, "-m", "panelworks.designer"] + ([self.path] if self.path else [])
+        subprocess.Popen(args, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0)
+        for aid in self.root.tk.call("after", "info"):
+            self.root.tk.call("after", "cancel", aid)
+        self.root.destroy()
+
     def immediate(self):
         """View > Immediate Window (Ctrl+G), like VB's."""
         w = getattr(self, "_immwin", None)
@@ -556,7 +693,8 @@ class Designer:
              "snap": tk.StringVar(top, st["snap"]), "code_font_size": tk.StringVar(top, st["code_font_size"]),
              "editor": tk.StringVar(top, st["editor"]), "recent_max": tk.StringVar(top, st["recent_max"]),
              "editor_default": tk.BooleanVar(top, st["editor_default"]),
-             "reopen_last": tk.BooleanVar(top, st["reopen_last"])}
+             "reopen_last": tk.BooleanVar(top, st["reopen_last"]),
+             "check_updates": tk.BooleanVar(top, st["check_updates"])}
         row = 0
 
         def field(label, key, width=8, browse=None, note=""):
@@ -592,6 +730,8 @@ class Designer:
                        variable=v["editor_default"]).grid(row=row, column=0, columnspan=3, sticky="w"); row += 1
         tk.Checkbutton(frm, text="Reopen the last form when the designer starts",
                        variable=v["reopen_last"]).grid(row=row, column=0, columnspan=3, sticky="w"); row += 1
+        tk.Checkbutton(frm, text="Check GitHub for a newer PanelWorks once a day",
+                       variable=v["check_updates"]).grid(row=row, column=0, columnspan=3, sticky="w"); row += 1
 
         def ok():
             try:

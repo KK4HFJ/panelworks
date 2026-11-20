@@ -7,7 +7,7 @@ The designer is laid out the way VB's was:
 | Area | What it's for |
 |---|---|
 | **Menu bar** | File, Edit, View, Help |
-| **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code, Immediate |
+| **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code, Immediate · ⬆ Update (when there is one) |
 | **Toolbox** (left) | The controls you can draw |
 | **Form** (middle) | Your window, on a grey workspace, with a dot grid |
 | **Tray** (under the form) | Invisible controls: Timer, MQTT, Serial |
@@ -171,6 +171,7 @@ other way round.
 | External editor | (empty) | Program for **External...**; empty means VS Code if installed, else Notepad |
 | Double-click opens code in the external editor | off | Use your own editor instead of the Code window |
 | Reopen the last form at startup | off | The designer opens where you left off |
+| Check GitHub for a newer PanelWorks once a day | on | Shows the ⬆ Update button when there is one |
 
 Settings are kept in `%APPDATA%\PanelWorks\settings.json` (`~/.config/panelworks/`
 on macOS and Linux), so they survive updates. The `PANELWORKS_EDITOR` environment
@@ -191,6 +192,8 @@ variable, if set, still overrides the editor setting.
 | Del | Delete selected control |
 | Arrows / Shift+arrows | Nudge 1 / 10 pixels |
 
-## Help → About
+## Help
 
-Shows the version, the author, and the licence.
+- **Check for Updates...** compares your copy with GitHub and lists what's new,
+  with **Update now** (chapter 2, *Updating*).
+- **About** shows the version, the author, and the licence.

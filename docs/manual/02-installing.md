@@ -168,6 +168,21 @@ cheap dedicated control-panel screen.
 
 ## Updating
 
+The designer checks GitHub for a newer PanelWorks once a day, in the
+background. When there is one, an orange **⬆ Update** button appears on the
+toolbar. Click it, or use **Help → Check for Updates...**, to see what's new and
+click **Update now**. It runs `git pull` for you, reruns the pip install only if
+the update needs new libraries, and offers to restart the designer.
+
+![Check for Updates](img/updates.png)
+
+Your own panels aren't touched: they live in your panels folder, and example
+copies made with File → Examples are yours. If you've edited files inside the
+PanelWorks folder itself, git refuses rather than overwrite them, and says which.
+Turn the daily check off in **File → Preferences**.
+
+To update by hand (or if Git isn't installed):
+
 ```
 cd C:\dev\panelworks
 git pull

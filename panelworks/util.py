@@ -46,6 +46,7 @@ DEFAULTS = {
     "editor_default": False,   # double-click opens code in the outside editor
     "reopen_last": False,      # designer reopens the last form at startup
     "recent_max": RECENT_MAX,
+    "check_updates": True,     # look for a newer PanelWorks on GitHub once a day
 }
 
 
