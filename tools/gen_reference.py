@@ -322,6 +322,34 @@ for t in ORDER:
     parts.append(section(t, props, cls.method_names(), cls.EVENTS, settable,
                          getattr(cls, "RUNTIME_ONLY", ())))
 
+parts.append("""## Menu items
+
+Built with the designer's **Menu Editor** (Tools → Menu Editor, Ctrl+E). Each
+item is an object named in the editor, e.g. `mnuFileExit`.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Caption | read/write | The text. `&` before a letter underlines it as the access key; `-` is a separator. |
+| Checked | read/write | Shows a tick beside the item. Clicking doesn't change it: your code does (`f.mnuViewChart.Checked = not f.mnuViewChart.Checked`). |
+| Enabled | read/write | False greys the item out. |
+| Visible | read/write | False hides the item. |
+| Shortcut | read/write | Key that chooses it: `Ctrl+O`, `Ctrl+Shift+S`, `F5`... |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Click | Choose the item from code. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f)` | The item is chosen, by mouse, access key or Shortcut. |
+""")
+
 parts.append("""## Events every control can also send elsewhere
 
 Any event of any control (and the form) can also, with no code:

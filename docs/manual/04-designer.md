@@ -6,7 +6,7 @@ The designer is laid out the way VB's was:
 
 | Area | What it's for |
 |---|---|
-| **Menu bar** | File, Edit, View, Format, Help |
+| **Menu bar** | File, Edit, View, Format, Tools, Help |
 | **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code, Immediate · ⬆ Update (when there is one) |
 | **Toolbox** (left) | The controls you can draw |
 | **Form** (middle) | Your window, on a grey workspace, with a dot grid |
@@ -45,6 +45,37 @@ instead of drawing again.
   connection edits.
 
 The mouse position (form coordinates) is shown in the status bar while you draw.
+
+## Menus: the Menu Editor
+
+![The Menu Editor](img/menu-editor.png)
+
+**Tools → Menu Editor** (Ctrl+E) builds the panel's menu bar, the way VB's did:
+
+1. Type a **Caption**. `&File` underlines the F (Alt+F opens it); `-` makes a
+   separator line. A **Name** is suggested as you type (`mnuFile`, then
+   `mnuFileExport` for an item under it); type your own to override.
+2. Optionally pick a **Shortcut** (Ctrl+E, F5...) and tick **Checked**,
+   **Enabled**, **Visible**.
+3. **Next** adds an item below; **Insert** adds one above. **→** indents the item
+   under the one above it (a submenu item), **←** takes it back out. **↑ ↓** move it.
+4. **OK**. The menu shows as a strip at the top of the form; click it to edit again.
+
+Each item has a **Click** event. Pick it in the Code window's Object and
+Procedure lists (`mnuFileExit` → `Click`) and write what it does:
+
+```python
+def mnuFileExit_Click(f):
+    f.Unload()
+
+def mnuViewChart_Click(f):
+    f.mnuViewChart.Checked = not f.mnuViewChart.Checked
+    f.chtLevel.Visible = f.mnuViewChart.Checked
+```
+
+Renaming an item in the Menu Editor renames its procedure too. Menu items
+have Caption, Checked, Enabled, Visible and Shortcut properties you can change at
+run time (chapter 12).
 
 ## Frames
 
@@ -238,6 +269,7 @@ variable, if set, still overrides the editor setting.
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
+| Ctrl+E | Menu Editor |
 | Ctrl+Z | Undo |
 | Ctrl+D | Duplicate the selected control(s) |
 | Del | Delete the selected control(s) |

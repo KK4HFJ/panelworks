@@ -685,6 +685,9 @@ class Form:
         for name, ospec in spec.get("objects", {}).items():
             self._add(name, ospec)
         auto_option_groups(self)
+        if spec.get("menu"):
+            from . import menus
+            menus.install(self, spec["menu"])
         for o in self.objects.values():            # frames stay behind their contents
             if isinstance(o, Frame):
                 o.widget.lower()
@@ -823,12 +826,17 @@ class Form:
             **({"code": self.code_file} if self.code_file else {}),
             **({"mqtt": self.mqtt_cfg} if self.mqtt_cfg else {}),
             **({"webhooks": self.webhooks_cfg} if self.webhooks_cfg is not None else {}),
+            **({"menu": self._menu_spec()} if getattr(self, "_menu_top", None) else {}),
             "objects": {n: {"type": o.TYPE, **o.persist(),
                             **({o._bind_key: o._bind} if o._bind else {}),
                             **({"publish": o._publish} if o._publish else {}),
                             **({"webhook": o._webhook} if o._webhook else {})}
-                        for n, o in self.objects.items()},
+                        for n, o in self.objects.items() if o.TYPE != "Menu"},
         }
+
+    def _menu_spec(self):
+        from . import menus
+        return menus.to_spec(self)
 
     def save(self, path=None):
         path = path or self.path

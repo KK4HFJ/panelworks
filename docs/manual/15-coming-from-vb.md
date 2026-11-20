@@ -47,6 +47,7 @@ chapter translates the rest.
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
 | Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
+| Menu Editor, `mnuFile_Click` | The same: Tools → Menu Editor (Ctrl+E) |
 | PictureBox, Image, Line, MDI | Not yet built |
 
 ## Differences worth knowing

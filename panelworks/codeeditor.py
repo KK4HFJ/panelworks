@@ -235,7 +235,7 @@ class CodeWindow:
 
     # ----------------------------------------------------------- navigation
     def refresh_lists(self):
-        objs = ["(General)", "Form"] + list(self.d.order)
+        objs = ["(General)", "Form"] + list(self.d.code_objects())
         self.obj_box.configure(values=objs)
         if self.obj_box.get() not in objs:
             self.obj_box.set("(General)")
@@ -246,12 +246,12 @@ class CodeWindow:
 
     def _fill_procs(self):
         obj = self.obj_box.get()
-        if obj != "Form" and obj not in self.d.order:      # empty at start-up, or the control was deleted
+        if obj != "Form" and obj not in self.d.code_objects():   # empty at start-up, or deleted
             obj = "(General)"
             self.obj_box.set(obj)
         defs = set(self._defs())
         if obj == "(General)":
-            known = {f"{n}_{e}" for n in ["Form"] + list(self.d.order) for e in self.d._events_for(n)}
+            known = {f"{n}_{e}" for n in ["Form"] + list(self.d.code_objects()) for e in self.d._events_for(n)}
             vals = [d for d in self._defs() if d not in known] or ["(no general procedures)"]
         else:
             vals = [("● " if f"{obj}_{e}" in defs else "   ") + e for e in self.d._events_for(obj)]
@@ -323,7 +323,7 @@ class CodeWindow:
         if not m:
             return
         name = m.group(1)
-        for obj in ["Form"] + list(self.d.order):
+        for obj in ["Form"] + list(self.d.code_objects()):
             if name.startswith(obj + "_") and name[len(obj) + 1:] in self.d._events_for(obj):
                 if self.obj_box.get() != obj:
                     self.obj_box.set(obj)

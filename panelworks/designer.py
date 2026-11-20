@@ -304,6 +304,9 @@ class Designer:
         fm.add_separator()
         fm.add_command(label="Select All", accelerator="Ctrl+A", command=self.select_all)
         m.add_cascade(label="Format", menu=fm)
+        tl = tk.Menu(m, tearoff=0)
+        tl.add_command(label="Menu Editor...", accelerator="Ctrl+E", command=self.menu_editor)
+        m.add_cascade(label="Tools", menu=tl)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label="Check for Updates...", command=lambda: self.updates_dialog())
         h.add_separator()
@@ -425,6 +428,7 @@ class Designer:
         self.titlebar = tk.Label(self.formframe, text="Form1", anchor="w", bg="#2b4f81", fg="white",
                                  font=("Helvetica", 10, "bold"), padx=6)
         self.titlebar.pack(fill="x")
+        self.menustrip = tk.Frame(self.formframe, bg="#f0f0f0", bd=0)   # preview of the panel's menu bar
         self.canvas = tk.Canvas(self.formframe, highlightthickness=0, width=400, height=300)
         self.canvas.pack()
         self.tray = tk.Frame(self.formframe, bg="gray85")
@@ -459,6 +463,7 @@ class Designer:
         r.bind("<Control-n>", lambda e: self.new_form() if self._ok_to_discard() else None)
         r.bind("<Control-w>", lambda e: self.close_form())
         r.bind("<Control-g>", lambda e: self.immediate())
+        r.bind("<Control-e>", lambda e: self.menu_editor())
         r.bind("<Control-comma>", lambda e: self.preferences())
         r.bind("<Control-a>", lambda e: None if self._typing() else self.select_all())
         r.bind("<Escape>", lambda e: None if self._typing() else self.select("Form"))
@@ -638,6 +643,205 @@ class Designer:
         for aid in self.root.tk.call("after", "info"):
             self.root.tk.call("after", "cancel", aid)
         self.root.destroy()
+
+    # ------------------------------------------------------------ menus
+    def menu_names(self):
+        from .menus import tree_to_flat
+        return [e["name"] for e in tree_to_flat(self.extras.get("menu")) if e["name"] and e["caption"] != "-"]
+
+    def code_objects(self):
+        """Controls and menu items: everything that can have event procedures."""
+        return list(self.order) + self.menu_names()
+
+    def _draw_menustrip(self):
+        from .menus import split_caption
+        for w in self.menustrip.winfo_children():
+            w.destroy()
+        tree = self.extras.get("menu") or []
+        if not tree:
+            self.menustrip.pack_forget()
+            return
+        for it in tree:
+            if it.get("visible", True) is False or it.get("caption") == "-":
+                continue
+            label, ul = split_caption(it.get("caption", ""))
+            lb = tk.Label(self.menustrip, text=label, underline=ul, bg="#f0f0f0", padx=6, pady=1,
+                          fg="black" if it.get("enabled", True) else "gray55", cursor="hand2")
+            lb.pack(side="left")
+            lb.bind("<Button-1>", lambda e: self.menu_editor())
+        self.menustrip.pack(fill="x", before=self.canvas)
+
+    def menu_editor(self):
+        """Tools > Menu Editor (Ctrl+E), VB's: a flat list where indent = submenu."""
+        from .menus import tree_to_flat, flat_to_tree, check_flat, KEYS
+        flat = tree_to_flat(self.extras.get("menu"))
+        original_names = {e["name"] for e in flat if e["name"]}
+        top = tk.Toplevel(self.root)
+        top.title("Menu Editor")
+        top.transient(self.root)
+        top.resizable(False, False)
+        f = tk.Frame(top, padx=10, pady=8)
+        f.pack(fill="both")
+        v = {k: tk.StringVar(top) for k in ("caption", "name", "shortcut")}
+        b = {k: tk.BooleanVar(top, k != "checked") for k in ("checked", "enabled", "visible")}
+        tk.Label(f, text="Caption:").grid(row=0, column=0, sticky="w")
+        e_cap = tk.Entry(f, textvariable=v["caption"], width=28)
+        e_cap.grid(row=0, column=1, columnspan=2, sticky="w", pady=2)
+        tk.Label(f, text="Name:").grid(row=1, column=0, sticky="w")
+        tk.Entry(f, textvariable=v["name"], width=28).grid(row=1, column=1, columnspan=2, sticky="w", pady=2)
+        tk.Label(f, text="Shortcut:").grid(row=2, column=0, sticky="w")
+        ttk.Combobox(f, textvariable=v["shortcut"], values=KEYS, width=14).grid(row=2, column=1, sticky="w", pady=2)
+        opts = tk.Frame(f)
+        opts.grid(row=3, column=0, columnspan=4, sticky="w", pady=(2, 6))
+        for k, label in (("checked", "Checked"), ("enabled", "Enabled"), ("visible", "Visible")):
+            tk.Checkbutton(opts, text=label, variable=b[k]).pack(side="left", padx=(0, 10))
+        tk.Label(f, text="Use & before the access key (&File), and - for a separator line.",
+                 fg="gray40", font=("Helvetica", 8)).grid(row=4, column=0, columnspan=4, sticky="w")
+        btns = tk.Frame(f)
+        btns.grid(row=5, column=0, columnspan=4, sticky="w", pady=4)
+        lb = tk.Listbox(f, width=46, height=12, font=("Courier", 10), activestyle="none", exportselection=False)
+        lb.grid(row=6, column=0, columnspan=4, sticky="we")
+        state = {"i": None, "loading": False}
+
+        def label_of(e):
+            cap = e["caption"] or "(new item)"
+            extra = ("   " + e["shortcut"]) if e.get("shortcut") else ""
+            return "……" * e["level"] + cap + extra
+
+        def redraw(select=None):
+            lb.delete(0, "end")
+            for e in flat:
+                lb.insert("end", label_of(e))
+            if select is not None and 0 <= select < len(flat):
+                lb.selection_set(select)
+                lb.see(select)
+                load(select)
+            else:
+                load(None)
+
+        def load(i):
+            state["i"], state["loading"] = i, True
+            e = flat[i] if i is not None else {"caption": "", "name": "", "shortcut": "",
+                                                "checked": False, "enabled": True, "visible": True}
+            for k in v:
+                v[k].set(e.get(k, ""))
+            for k in b:
+                b[k].set(bool(e.get(k)))
+            state["loading"] = False
+
+        def store(key):
+            i = state["i"]
+            if state["loading"] or i is None:
+                return
+            e = flat[i]
+            if key in v:
+                e[key] = v[key].get() if key == "caption" else v[key].get().strip()
+            else:
+                e[key] = b[key].get()
+            if key == "name":
+                e["_auto"] = False                    # the user typed a name: keep it
+            if key == "caption" and e["caption"] != "-" and (not e["name"] or e.get("_auto")):
+                # suggest a name from the caption, VB-style: mnuFile, mnuFileOpen
+                from .menus import split_caption
+                parent = next((flat[j]["name"] for j in range(i - 1, -1, -1)
+                               if flat[j]["level"] < e["level"]), "")
+                word = re.sub(r"[^A-Za-z0-9]", "", split_caption(e["caption"])[0].title())
+                e["name"] = ((parent if parent.startswith("mnu") else "mnu") + word) if word else ""
+                e["_auto"] = True
+                state["loading"] = True
+                v["name"].set(e["name"])
+                state["loading"] = False
+            lb.delete(i)
+            lb.insert(i, label_of(e))
+            lb.selection_set(i)
+
+        for k in list(v) + list(b):
+            (v.get(k) or b[k]).trace_add("write", lambda *_, k=k: store(k))
+        lb.bind("<<ListboxSelect>>", lambda e: load(lb.curselection()[0]) if lb.curselection() else None)
+
+        def cur():
+            return state["i"]
+
+        def move(dl=0, di=0):
+            i = cur()
+            if i is None:
+                return
+            if dl:
+                flat[i]["level"] = max(0, min(flat[i]["level"] + dl, (flat[i - 1]["level"] + 1) if i else 0))
+                return redraw(i)
+            j = i + di
+            if 0 <= j < len(flat):
+                flat[i], flat[j] = flat[j], flat[i]
+                redraw(j)
+
+        def insert(after=True):
+            i = cur()
+            lvl = flat[i]["level"] if i is not None else 0
+            at = (i + 1 if after else i) if i is not None else len(flat)
+            flat.insert(at, {"level": lvl, "caption": "", "name": "", "shortcut": "",
+                             "checked": False, "enabled": True, "visible": True})
+            redraw(at)
+            e_cap.focus_set()
+
+        def delete():
+            i = cur()
+            if i is not None:
+                del flat[i]
+                redraw(min(i, len(flat) - 1) if flat else None)
+
+        for text, cmd in (("←", lambda: move(dl=-1)), ("→", lambda: move(dl=1)),
+                          ("↑", lambda: move(di=-1)), ("↓", lambda: move(di=1)),
+                          ("Next", lambda: insert(True)), ("Insert", lambda: insert(False)),
+                          ("Delete", delete)):
+            tk.Button(btns, text=text, width=6 if len(text) > 1 else 3, command=cmd).pack(side="left", padx=1)
+
+        def ok():
+            taken = set(self.order) | {"Form", "Me"}
+            problems = check_flat(flat, taken)
+            if problems:
+                messagebox.showerror("Menu Editor", "\n".join(problems[:8]), parent=top)
+                return
+            self._checkpoint(include_code=True)
+            # renamed items keep their Click code
+            code = self._code_text()
+            renamed = []
+            for e in flat:
+                old = e.get("_orig")
+                if old and old != e["name"] and old in original_names:
+                    code, procs, refs = rename_in_code(code, old, e["name"], ["Click"])
+                    if procs or refs:
+                        renamed.append(f"{old} -> {e['name']}")
+            tree = flat_to_tree([{k: e[k] for k in ("level",) + tuple(("caption", "name", "shortcut",
+                                 "checked", "enabled", "visible"))} for e in flat])
+            if tree:
+                self.extras["menu"] = tree
+            else:
+                self.extras.pop("menu", None)
+            if renamed:
+                cw = self.code_window()
+                if cw:
+                    cw.replace_all(code)
+            self._draw_menustrip()
+            self.refresh_panels()
+            self._set_dirty(True)
+            top.destroy()
+            self.say("Menu updated." + (f" Renamed in code: {', '.join(renamed)}." if renamed else "")
+                     + " Double-click a menu item's Click in the Code window's lists to write it.")
+
+        for e in flat:
+            e["_orig"] = e["name"]
+        bar = tk.Frame(top, padx=10, pady=8)
+        bar.pack(fill="x")
+        tk.Button(bar, text="Cancel", width=9, command=top.destroy).pack(side="right")
+        tk.Button(bar, text="OK", width=9, command=ok).pack(side="right", padx=6)
+        top.bind("<Escape>", lambda e: top.destroy())
+        redraw(0 if flat else None)
+        if not flat:
+            insert()
+        e_cap.focus_set()
+        self._menued = {"top": top, "flat": flat, "vars": v, "bools": b, "ok": ok, "insert": insert,
+                        "move": move, "delete": delete, "select": redraw}      # tests reach in here
+        return top
 
     def immediate(self):
         """View > Immediate Window (Ctrl+G), like VB's."""
@@ -872,6 +1076,7 @@ class Designer:
         bg = self.extras.get("backColor") or self.default_bg
         self.canvas.configure(width=self.form["width"], height=self.form["height"], bg=bg)
         self.titlebar.configure(text=self.form["caption"])
+        self._draw_menustrip()
         self._draw_grid()
 
         for name, ospec in spec.get("objects", {}).items():
@@ -1519,6 +1724,8 @@ class Designer:
             if "webhooks" in self.extras:
                 ev += ["WebhookResponse", "WebhookError"]
             return ev
+        if n in self.menu_names():
+            return ["Click"]
         o = self.host.objects[n]
         ev = list(o.EVENTS)
         if o._webhook:

@@ -12,6 +12,7 @@
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save (form and code) |
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
+| Ctrl+E | Menu Editor |
 | Ctrl+Z | Undo (form and code together after a rename) |
 | Ctrl+D | Duplicate the selected control(s) |
 | Del | Delete the selected control(s) |
