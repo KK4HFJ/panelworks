@@ -29,14 +29,19 @@ The window itself. In code it is `f`; in JSON connections and MCP it is the obje
 |---|---|---|
 | BackColor | read/write | Window background colour. |
 | Caption | read/write | Title bar text. |
+| Forms | read-only | The open forms, by name: `f.Forms["Settings"].txtValue.Text`. Read-only. |
 | Height | read/write | Window height in pixels. |
+| Main | read-only | The program's first form. Read-only. |
+| Owner | read-only | The form that showed this one (None for the main form). Read-only. |
 | Width | read/write | Window width in pixels. |
 
 **Methods**
 
 | Method | Description |
 |---|---|
+| Hide | Hide the window without unloading it. |
 | MsgBox | `MsgBox(prompt, title=None)`: show a message and wait for OK. |
+| Show | `Show("Settings", modal=False)`: open another form (Settings.json beside this one) and return it; Form_Load has run by then. `modal=True` waits until it's closed. `Show()` with no name shows this form again after Hide. |
 | Unload | Close the form (fires Form_Unload first). |
 
 **Events**

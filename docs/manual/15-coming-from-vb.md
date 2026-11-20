@@ -26,6 +26,8 @@ chapter translates the rest.
 | `If MsgBox("Sure?", vbYesNo) = vbYes Then` | `if messagebox.askyesno("Title", "Sure?", parent=f.root):` |
 | `InputBox("Name?")` | `simpledialog.askstring("Title", "Name?", parent=f.root)` |
 | `Unload Me` / `End` | `f.Unload()` |
+| `frmSettings.Show vbModal` | `f.Show("Settings", modal=True)` |
+| `Form2.Text1.Text` | `f.Forms["Form2"].Text1.Text`, or `f.Owner.Text1.Text` from a dialog |
 | `On Error GoTo Handler` | `try:` … `except Exception as e:` |
 | `Debug.Print x` | `print(x)`, shown in the Immediate window (Ctrl+G) |
 | `DoEvents` | Not needed; use a Timer or a thread (chapter 6) |
@@ -48,7 +50,7 @@ chapter translates the rest.
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
 | Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
 | Menu Editor, `mnuFile_Click` | The same: Tools → Menu Editor (Ctrl+E) |
-| PictureBox, Image, Line, MDI | Not yet built |
+| PictureBox, Image, Line, MDI forms | Not yet built |
 
 ## Differences worth knowing
 
@@ -60,8 +62,8 @@ chapter translates the rest.
   lines are the body. The Code window handles most of it.
 - **Names are case-sensitive.** `f.lblLevel` and `f.lbllevel` are different,
   and the second is an error.
-- **One form per file.** Each panel is its own program. Several panels can run
-  side by side, and talk to each other over MQTT.
+- **One form per file.** A program's forms sit side by side in a folder, and
+  `f.Show("Settings")` opens one. Separate programs can also talk to each other over MQTT.
 - **An error doesn't end the program.** The failing procedure stops, the error
   is shown, and the panel carries on.
 

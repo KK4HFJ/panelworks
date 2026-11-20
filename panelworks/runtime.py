@@ -86,7 +86,7 @@ class VBObject:
         if hasattr(cls, "get_" + name):
             return getattr(cls, "get_" + name)(self)
         if hasattr(cls, "m_" + name):
-            return lambda *a: getattr(cls, "m_" + name)(self, *a)
+            return lambda *a, **k: getattr(cls, "m_" + name)(self, *a, **k)
         raise AttributeError(f"{object.__getattribute__(self, 'Name')} has no member '{name}'")
 
     def __setattr__(self, name, value):
@@ -642,12 +642,18 @@ class Form:
 
     EVENTS = ("Load", "Unload")
 
-    def __init__(self, spec, path=None, code=None):
+    def __init__(self, spec, path=None, code=None, owner=None):
         self.__dict__["objects"] = {}
         self.path = path
         self.spec_name = spec.get("name", "Form1")
         self.code_file = spec.get("code")
-        self.root = tk.Tk()
+        # The first form is the program's main window; forms opened with Show() are
+        # child windows of it (one Tk, one event loop), as in VB.
+        self.owner = owner
+        self.main = owner.main if owner is not None else self
+        self.forms = owner.forms if owner is not None else {}      # shared: name -> open Form
+        self.forms[self.spec_name] = self
+        self.root = tk.Tk() if owner is None else tk.Toplevel(owner.root)
         self._option_vars = {}
         self._queue = queue.Queue()
         self._gui_thread = threading.get_ident()
@@ -715,7 +721,7 @@ class Form:
         if hasattr(cls, "get_" + name):
             return getattr(cls, "get_" + name)(self)
         if hasattr(cls, "m_" + name):
-            return lambda *a: getattr(cls, "m_" + name)(self, *a)
+            return lambda *a, **k: getattr(cls, "m_" + name)(self, *a, **k)
         raise AttributeError(f"Form has no object or member '{name}'")
 
     def __setattr__(self, name, value):
@@ -743,7 +749,18 @@ class Form:
     get = VBObject.get
     set = VBObject.set
     call = VBObject.call
-    snapshot = VBObject.snapshot
+
+    def snapshot(self):
+        """Properties as plain values: other forms are given by name (for MCP and JSON)."""
+        props = VBObject.snapshot(self)
+        for k, v in list(props.items()):
+            if isinstance(v, Form):
+                props[k] = v.spec_name
+            elif isinstance(v, dict) and all(isinstance(x, Form) for x in v.values()):
+                props[k] = sorted(v)
+            elif v is None and k == "Owner":
+                props[k] = None
+        return props
 
     def get_Type(self): return "Form"
     def get_Caption(self): return self.root.title()
@@ -755,14 +772,98 @@ class Form:
     def get_BackColor(self): return str(self.root.cget("bg"))
     def set_BackColor(self, v): self.root.configure(bg=v)
 
+    # ---- several forms (VB's Show / Hide / Forms) ------------------------------------
+    def get_Forms(self):
+        """The open forms, by name: f.Forms["Settings"].txtValue.Text"""
+        return dict(self.forms)
+
+    def get_Owner(self):
+        """The form that showed this one (None for the main form)."""
+        return self.owner
+
+    def get_Main(self):
+        return self.main
+
+    def _find_form_file(self, name):
+        base = os.path.dirname(os.path.abspath(self.path)) if self.path else os.getcwd()
+        cands = [name] if name.lower().endswith(".json") else [name + ".json", name]
+        for c in cands:
+            p = c if os.path.isabs(c) else os.path.join(base, c)
+            if os.path.isfile(p):
+                return p
+        for fn in sorted(os.listdir(base)):                  # by the form's name inside the file
+            if fn.lower().endswith(".json"):
+                try:
+                    with open(os.path.join(base, fn), encoding="utf-8-sig") as fh:
+                        if json.load(fh).get("name") == name:
+                            return os.path.join(base, fn)
+                except (OSError, ValueError):
+                    continue
+        raise FileNotFoundError(f"No form '{name}' in {base} (looked for {name}.json and form names)")
+
+    def m_Show(self, name=None, modal=False):
+        """f.Show("Settings") opens another form (Settings.json beside this one) and
+        returns it; already open, it's brought to the front. modal=True waits until
+        it's closed, like VB's vbModal. f.Show() with no name shows this form again."""
+        if name is None:
+            self.root.deiconify()
+            self.root.lift()
+            return self
+        other = self.forms.get(name)
+        if other is None or other._closing:
+            path = self._find_form_file(name)
+            with open(path, encoding="utf-8-sig") as fh:
+                spec = json.load(fh)
+            if spec.get("name", "Form1") in self.forms and not self.forms[spec.get("name", "Form1")]._closing:
+                other = self.forms[spec.get("name", "Form1")]
+            else:
+                other = Form(spec, path=path, owner=self)
+                other._centre_over(self)
+                if other._load_after:                   # as in VB: Form_Load has run when Show returns
+                    other.root.after_cancel(other._load_after)
+                    other._load()
+        other.root.deiconify()
+        other.root.lift()
+        if modal:
+            other.root.transient(self.root)
+            other.root.update_idletasks()
+            try:
+                other.root.grab_set()
+            except tk.TclError:
+                pass
+            self.root.wait_window(other.root)       # this procedure carries on when it closes
+        return other
+
+    def m_Hide(self):
+        """Hide the window without unloading it (Show brings it back as it was)."""
+        self.root.withdraw()
+
+    def _centre_over(self, other):
+        try:
+            other.root.update_idletasks()
+            w = self.root.winfo_reqwidth() if self.root.winfo_width() < 2 else self.root.winfo_width()
+            g = self.root.geometry().split("+")[0]
+            w, h = (int(x) for x in g.split("x"))
+            x = other.root.winfo_rootx() + (other.root.winfo_width() - w) // 2
+            y = other.root.winfo_rooty() + (other.root.winfo_height() - h) // 3
+            self.root.geometry(f"{w}x{h}+{max(0, x)}+{max(0, y)}")
+        except (tk.TclError, ValueError):
+            pass
+
     def m_MsgBox(self, prompt, title=None):
         messagebox.showinfo(title or self.get_Caption(), str(prompt), parent=self.root)
 
     def m_Unload(self):
         if self._closing:
             return
+        if self.main is self:                       # closing the main form closes the rest
+            for other in list(self.forms.values()):
+                if other is not self:
+                    other.m_Unload()
         self._closing = True
         self.fire("Form", "Unload")
+        if self.forms.get(self.spec_name) is self:
+            del self.forms[self.spec_name]
         for o in self.objects.values():
             o.destroy()
         if self.bus:

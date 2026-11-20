@@ -135,6 +135,8 @@ The designer works the way classic RAD tools did, and needs no AI:
 - **Run:** the green **▶ Start** button on the toolbar (or F5) saves and runs the
   panel; the red **■ End** button stops it. Start while it's running restarts it
   with your latest changes. The Code window has a Start button too.
+- **Several forms:** `f.Show("Settings", modal=True)` opens `Settings.json` as a dialog;
+  `f.Owner`, `f.Forms["Name"]`, `f.Hide()`.
 - **Menus:** Tools → Menu Editor (Ctrl+E) builds the panel's menu bar, VB-style;
   each item has a Click event (`mnuFileExit_Click`) and Checked/Enabled/Visible/Shortcut.
 - **Several at once:** drag a box or Ctrl+click to select several controls; move, nudge,
@@ -555,7 +557,7 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Not yet built
 
-- Multiple forms, Make EXE (in progress)
+- Make EXE (in progress)
 - PictureBox/Canvas drawing
 
 ## License

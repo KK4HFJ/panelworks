@@ -351,6 +351,47 @@ n8n's SQLite node can read it too.
 A Grid can also be filled from code: set **Columns**, then `AddRow(...)`, `Clear()`,
 `Rows = [[...], [...]]`; read `Row`, `Text` and `Cell(row, column)`.
 
+## Several forms (dialogs)
+
+A program can have more than one form, like VB. Make each one in the designer
+and save them in the same folder. `Settings.json` beside `Pump.json`, say. Then:
+
+```python
+# Pump.py, the main form
+def cmdSettings_Click(f):
+    f.Show("Settings", modal=True)       # waits here until the dialog closes
+    f.lblStatus.Caption = "Settings saved"
+
+def cmdLog_Click(f):
+    f.Show("LogViewer")                  # modeless: both windows stay usable
+```
+
+```python
+# Settings.py, the dialog
+def Form_Load(f):
+    f.txtSetpoint.Text = f.Owner.lblSet.Caption.split()[1]   # read the main form
+
+def cmdOK_Click(f):
+    f.Owner.lblSet.Caption = f"Setpoint {f.txtSetpoint.Text} %"
+    f.Unload()
+
+def cmdCancel_Click(f):
+    f.Unload()
+```
+
+![A main form and its Settings dialog](img/two-forms.png)
+
+- `f.Show("Name")` finds `Name.json` next to the current form (or a form whose
+  name is `Name`), runs its Form_Load, and returns it. Showing a form that's
+  already open just brings it to the front: each form has one copy, as in VB.
+- `modal=True` makes the caller wait, and keeps the user in the dialog until it closes.
+- `f.Owner` is the form that showed this one; `f.Main` is the first form;
+  `f.Forms["Name"]` reaches any open form's controls.
+- `f.Hide()` hides a form and keeps everything in it; `Show` brings it back.
+  `f.Unload()` closes it. Closing the main form closes them all.
+- Each form has its own code file, and its own MQTT and webhook settings.
+  Claude's MCP tools see the main form.
+
 ## Saving settings between runs
 
 A small JSON file next to the form is the simplest way:
