@@ -153,6 +153,26 @@ def cmdStart_Click(f):
     log(f, "Pump started")
 ```
 
+## Charts
+
+A **Chart** plots readings over time. Setting its `Value` adds a point:
+
+```python
+def ser1_DataArrival(f, line):
+    f.chtVolts.Value = float(line)          # one line per reading
+
+def tmrPoll_Timer(f):
+    f.chtRoom.AddPoint(read_temp(), "Temp")  # by series name
+    f.chtRoom.AddPoint(read_rh(), "RH")
+```
+
+Set **Series** (one name per line) for several lines, **Window** for how many
+seconds to show, and **AutoScale** off with **YMin**/**YMax** for a fixed scale
+(a tank 0–100 %). Often you need no code at all: subscribe the Chart's `Value`
+to an MQTT topic, or point a Serial **Fill** line at it.
+
+![Charts](img/chart.png)
+
 ## Timers
 
 A Timer fires its `Timer` event every `Interval` milliseconds while `Enabled`

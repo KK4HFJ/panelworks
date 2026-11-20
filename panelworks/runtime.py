@@ -884,6 +884,8 @@ try:                       # optional: MQTT control + JSON bind/publish/mirror
 except ImportError:        # paho-mqtt not installed
     pass
 
+from . import chart as _chart  # noqa: F401,E402  (Chart control)
+
 try:                       # optional: Serial control (pyserial)
     from . import serialport as _serialport  # noqa: F401,E402
 except ImportError:

@@ -231,10 +231,11 @@ properties. Enter one mapping per line:
 temp -> lblTemp.Caption
 light -> pbLight.Value
 env.hum -> lblHum.Caption
+temp -> chtTemp.Value
 ```
 
-Device sends: `{"temp": 21.5, "light": 612, "env": {"hum": 40}}`, and all three
-controls update, with no code at all. Plain `key=value` lines work too:
+Device sends: `{"temp": 21.5, "light": 612, "env": {"hum": 40}}`, and all the
+controls update (the last line plots temperature on a Chart), with no code at all. Plain `key=value` lines work too:
 `temp=21.5, light=612` or `temp:21.5`. A missing field leaves its control
 unchanged, and DataArrival still fires for every line.
 

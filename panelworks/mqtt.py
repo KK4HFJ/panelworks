@@ -347,7 +347,8 @@ class Bus:
         try:
             obj = self.form.obj(name)
             current = obj.get(prop)
-            if str(current) == str(value) or (raw and current == value):
+            if prop not in getattr(obj, "ALWAYS_SET", ()) and (
+                    str(current) == str(value) or (raw and current == value)):
                 return               # no change: avoids echo loops and cursor jumps
             self._source = source
             try:

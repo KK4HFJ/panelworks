@@ -55,7 +55,7 @@ python -m panelworks examples\cistern_mqtt.json
 `examples/hvac_console.json` + `hvac_console.py`
 
 Watches two ESP32s, a thermostat display and a relay board, through an internet
-broker with TLS. It shows:
+broker with TLS, with an hour-long **Chart** of room and outside temperature. It shows:
 
 - `"tls": true` with the broker's Let's Encrypt certificate;
 - connection details from **environment variables** (`PW_MQTT_HOST`,

@@ -43,11 +43,11 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Shape", "ProgressBar"]
+                "ListBox", "ComboBox", "Shape", "ProgressBar", "Chart"]
 NONVISUAL_ORDER = ["Timer", "MQTT", "Serial"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "Timer": "Timer", "MQTT": "MQTT",
+          "ProgressBar": "Progress", "Chart": "Chart", "Timer": "Timer", "MQTT": "MQTT",
           "Serial": "Serial"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")

@@ -85,7 +85,9 @@ options, applied in this order:
 | `retain` | Retain two-way publishes. | default `true` |
 
 Each property follows one topic; any number of controls (and properties)
-can follow the same topic. If a JSON field is missing from a message (a
+can follow the same topic. A **Chart**'s `Value` (and `Value2`..`Value4`) plots
+every message, even a repeated reading, so a trend line needs nothing more
+than a `subscribe`. If a JSON field is missing from a message (a
 device sending partial data while it boots), that message is skipped and the
 control keeps its last value.
 
@@ -102,6 +104,9 @@ control keeps its last value.
 "lblTemp":  {"type": "Label",
              "subscribe": {"Caption": {"topic": "home/cistern/telemetry", "json": "temp",
                                        "format": "{:.1f} °C"}}}
+
+"chtLevel": {"type": "Chart", "Title": "Cistern level", "Units": "%", "Window": 3600,
+             "subscribe": {"Value": {"topic": "home/cistern/telemetry", "json": "level"}}}
 
 "txtSetpoint": {"type": "TextBox",
                 "subscribe": {"Text": {"topic": "home/cistern/setpoint", "twoWay": true}}}

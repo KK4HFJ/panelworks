@@ -237,6 +237,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | ComboBox | List, ListIndex, ListCount, Text | AddItem, Clear | Click, Change |
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
+| Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Timer | Interval (ms), Enabled | | Timer |
 | MQTT | Broker, Port, ClientID, Username, Password, Subscriptions, AutoConnect, Connected | Connect, Disconnect, Publish, Subscribe, Unsubscribe | Connected, Disconnected, MessageArrived |
 | Serial | Port, Settings, Terminator, Fill, Output, Input, Line, PortOpen, AutoOpen, AutoReconnect, DTR, RTS | Open, Close, Write, SendLine, ClearInput, ListPorts | DataArrival(line), Connected, Disconnected, Error |

@@ -110,6 +110,30 @@ DOC = {
         "Max": "The value that fills the bar. Default 100.",
         "Enabled": "Always True.",
     },
+    "Chart": {
+        "_": "A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) adds a timestamped point, so a Chart can follow an MQTT topic or a Serial Fill with no code.",
+        "Value": "Set it to add a point to the first line (run time). Reads back the latest value.",
+        "Value2": "Add a point to the second line.",
+        "Value3": "Add a point to the third line.",
+        "Value4": "Add a point to the fourth line.",
+        "Series": "Line names, one per line in the designer (also the legend). Default `Value`.",
+        "Colors": "Line colours, one per line. Default blue, red, green, orange.",
+        "Window": "Seconds shown, e.g. 300 (5 minutes) or 3600 (an hour). Older points scroll off.",
+        "AutoScale": "True: the Y axis fits the data shown. False: fixed at YMin..YMax.",
+        "YMin": "Bottom of the Y axis when AutoScale is False.",
+        "YMax": "Top of the Y axis when AutoScale is False.",
+        "Title": "Text at the top left.",
+        "Units": "Shown after axis numbers and the latest values, e.g. `%` or `°C`.",
+        "Decimals": "Decimal places for the latest values (-1 = as received).",
+        "GridLines": "Horizontal grid lines.",
+        "LineWidth": "Line thickness in pixels.",
+        "Count": "Points held for the first line. Read-only.",
+        "ForeColor": "Colour of the title and axis text.",
+        "Enabled": "Always True.",
+        "AddPoint": "`AddPoint(value, series=0)`: add a point; series is a number (0 = first) or a name from Series.",
+        "Clear": "Remove all points.",
+        "Click": "The chart is clicked.",
+    },
     "Timer": {
         "_": "Invisible. Fires its Timer event every Interval milliseconds while Enabled.",
         "Interval": "Milliseconds between ticks. 0 stops it.",
@@ -186,7 +210,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Shape", "ProgressBar", "Timer", "MQTT", "Serial"]
+         "Shape", "ProgressBar", "Chart", "Timer", "MQTT", "Serial"]
 
 missing = []
 

@@ -381,6 +381,58 @@ A horizontal bar showing a value from 0 to Max. Good for tank levels and progres
 | Refresh | Redraw now, inside a long-running procedure. |
 | SetFocus | Move the keyboard focus to this control. |
 
+## Chart
+
+A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) adds a timestamped point, so a Chart can follow an MQTT topic or a Serial Fill with no code.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AutoScale | read/write | True: the Y axis fits the data shown. False: fixed at YMin..YMax. |
+| BackColor | read/write | Background colour: a name (`light yellow`) or `#rrggbb`. |
+| Colors | read/write | Line colours, one per line. Default blue, red, green, orange. |
+| Count | read-only | Points held for the first line. Read-only. |
+| Decimals | read/write | Decimal places for the latest values (-1 = as received). |
+| Enabled | read/write | Always True. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Colour of the title and axis text. |
+| GridLines | read/write | Horizontal grid lines. |
+| Height | read/write | Height in pixels. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| LineWidth | read/write | Line thickness in pixels. |
+| Series | read/write | Line names, one per line in the designer (also the legend). Default `Value`. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Title | read/write | Text at the top left. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Units | read/write | Shown after axis numbers and the latest values, e.g. `%` or `°C`. |
+| Value | run time | Set it to add a point to the first line (run time). Reads back the latest value. |
+| Value2 | run time | Add a point to the second line. |
+| Value3 | run time | Add a point to the third line. |
+| Value4 | run time | Add a point to the fourth line. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+| Window | read/write | Seconds shown, e.g. 300 (5 minutes) or 3600 (an hour). Older points scroll off. |
+| YMax | read/write | Top of the Y axis when AutoScale is False. |
+| YMin | read/write | Bottom of the Y axis when AutoScale is False. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| AddPoint | `AddPoint(value, series=0)`: add a point; series is a number (0 = first) or a name from Series. |
+| Clear | Remove all points. |
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f)` | The chart is clicked. |
+
 ## Timer
 
 Invisible. Fires its Timer event every Interval milliseconds while Enabled.
