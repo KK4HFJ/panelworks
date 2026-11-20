@@ -34,6 +34,7 @@ void loop() {
   if (Serial.available()) {
     String cmd = Serial.readStringUntil('\n');
     cmd.trim();
+    cmd.toUpperCase();                 // accept on / On / ON
     if (cmd == "ON")  { digitalWrite(LED_BUILTIN, HIGH); Serial.println("LED ON"); }
     if (cmd == "OFF") { digitalWrite(LED_BUILTIN, LOW);  Serial.println("LED OFF"); }
   }
@@ -43,6 +44,16 @@ void loop() {
 The board waits for a line of text. `ON` switches the LED on, `OFF` switches it
 off, and either way it **replies** with what it did. `LED_BUILTIN` is pin 13 on
 an Uno or Nano; on an ESP32 board that doesn't define it, write `2` instead.
+
+> **ESP32-S3 (and C3) boards with two USB-C sockets:** the one Windows lists as
+> "USB Serial Device" / "ESP32 Family Device" is the chip's native USB. On that
+> socket, set **Tools → USB CDC On Boot → Enabled** before uploading, and in
+> step 2 set the Serial control's **DTR** and **RTS** to **False**. On native USB
+> those lines are the chip's reset and bootloader signals, and opening the port
+> with them raised can leave it sitting in the bootloader (the Serial Monitor
+> shows only `ESP-ROM:esp32s3-...`). The other socket goes through a USB-serial
+> chip (CH343, CP2102) and needs neither setting. The onboard LED on most S3
+> boards is an RGB LED; `digitalWrite(LED_BUILTIN, ...)` lights it white.
 
 > **Close the Arduino IDE's Serial Monitor** (and Serial Plotter) when you're done.
 > Only one program can have a serial port open at a time; if the IDE has it, the
@@ -310,4 +321,6 @@ the board. With a `webhook` entry, lines can go to n8n instead (chapter 10).
 | Garbage characters | Settings speed doesn't match `Serial.begin(...)`. |
 | No DataArrival, but InBufferCount grows | The device doesn't end lines the way Terminator expects. Try `CR`, or `None`. |
 | First reading missing after opening | The Arduino reset (DTR, above). |
+| Only `ESP-ROM:esp32s3-...` appears and the board never answers | Native-USB ESP32-S3/C3 held in its bootloader by DTR/RTS. Set DTR and RTS to False and press the board's reset button once. Also check **USB CDC On Boot: Enabled**. |
+| Works in the Serial Monitor only with exact capitals | The sketch compares text exactly. `cmd.toUpperCase()` after `cmd.trim()` makes it forgiving. |
 | Linux: `Permission denied` | Add yourself to `dialout` (chapter 2) and log in again. |
