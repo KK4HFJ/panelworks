@@ -27,6 +27,7 @@ examples/pumppanel.json    <- a form: objects + properties
 examples/pumppanel.py      <- its event procedures
 examples/cistern_mqtt.*    <- a no-code panel driven entirely by MQTT subscriptions
 examples/n8n_demo.*        <- a panel whose event procedures live in n8n
+examples/led_panel.*       <- Start/Stop an Arduino's LED over USB serial
 examples/hvac_console.*    <- read-only HVAC console for real ESP32 devices over MQTT/TLS
 examples/n8n/              <- the matching n8n workflow, ready to import
 tests/fake_esp32.py        <- simulated cistern node to test it against
@@ -387,8 +388,42 @@ What it does better than MSComm:
   sends every line to the broker; `"subscribe": {"Output": "bench/cmd"}` sends
   broker messages to the device. `"webhook": {"DataArrival": ...}` hands lines to n8n.
 
-Try it: flash `examples/arduino_bench/arduino_bench.ino`, then
-`panelworks examples/arduino_bench.json`.
+### Try it: switch an Arduino's LED from a panel
+
+1. Upload `examples/led_panel/led_panel.ino` to an Uno, Nano or ESP32, then close
+   the Arduino IDE's Serial Monitor. Only one program can have the port open.
+2. Run the panel:
+   `.venv\Scripts\python -m panelworks examples\led_panel.json --mcp none`
+3. The label shows **Connected on COM…**. **Start** lights the board's LED, and
+   **Stop** turns it off. The lamp follows the board's *reply* (`LED ON` / `LED OFF`),
+   so it shows what really happened.
+4. Pull the USB cable and plug it back in: it reconnects by itself.
+
+The whole thing is five procedures:
+
+```python
+def cmdStart_Click(f):
+    f.ser1.Output = "ON"
+
+def cmdStop_Click(f):
+    f.ser1.Output = "OFF"
+
+def ser1_DataArrival(f, line):
+    if line == "LED ON":
+        f.shpLed.FillColor = "lime green"
+    elif line == "LED OFF":
+        f.shpLed.FillColor = "gray"
+
+def ser1_Connected(f):
+    f.lblStatus.Caption = "Connected on " + f.ser1.DeviceName
+
+def ser1_Error(f, message):
+    f.lblStatus.Caption = message
+```
+
+The manual's [Serial chapter](docs/manual/09-serial.md) builds it step by step in
+the designer. For readings, `examples/arduino_bench.*` shows **Fill** putting JSON
+values from the board into controls with no code.
 
 ## n8n (and any HTTP webhook)
 

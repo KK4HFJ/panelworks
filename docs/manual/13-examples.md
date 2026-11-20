@@ -80,6 +80,20 @@ the workflow replies with a greeting, a lamp colour and a log line. A poll every
 10 seconds shows n8n's clock. The Alert check box turns the lamp red through
 n8n. Import the workflow (chapter 10), publish it, set `N8N_WEBHOOK_BASE`, and run.
 
+## LED panel: switch an Arduino's LED
+
+![LED panel](img/led-panel.png)
+
+`examples/led_panel.json` + `led_panel.py`, sketch `examples/led_panel/led_panel.ino`
+
+Start and Stop buttons send `ON`/`OFF` over USB serial; the board switches its LED
+and replies, and the lamp follows the reply. The simplest serial panel, built
+step by step in chapter 9's tutorial.
+
+```
+python -m panelworks examples\led_panel.json --mcp none
+```
+
 ## Arduino bench: USB serial
 
 ![Arduino bench](../../examples/arduino_bench.png)

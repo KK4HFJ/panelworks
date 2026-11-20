@@ -7,31 +7,148 @@ MSComm job, without MSComm's headaches.
 Use Serial for devices **plugged into the PC**, and MQTT (chapter 8) for
 devices on the network. A Serial control can also bridge one to the other.
 
-## Quick start
+## Tutorial: switch an Arduino's LED from a panel
 
-1. Draw a **Serial** control. It goes in the tray, named `Serial1`; rename it
-   `ser1` or similar.
-2. **Port**: pick your device from the drop-down, which lists the ports present
-   with their names (`COM3 - USB-SERIAL CH340`), or leave it as `auto`.
-3. **Settings**: the speed your sketch uses in `Serial.begin(...)`, for example
-   `115200,n,8,1`.
-4. Double-click it and handle the lines it receives:
+This builds a panel with **Start** and **Stop** buttons that turn the Arduino's
+onboard LED on and off, and a lamp that shows what the board actually did. It
+takes about ten minutes, and the same pattern works for relays, pumps and
+anything else you can switch from a pin.
+
+![The finished LED panel](img/led-panel.png)
+
+The finished files are in the examples folder (`examples/led_panel.json`,
+`led_panel.py`, `led_panel/led_panel.ino`) if you'd rather run it first and
+read along.
+
+### Step 1: Load the sketch onto the Arduino
+
+Open the Arduino IDE, paste this in, choose your board and port, and click **Upload**:
+
+```cpp
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(115200);
+}
+
+void loop() {
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd == "ON")  { digitalWrite(LED_BUILTIN, HIGH); Serial.println("LED ON"); }
+    if (cmd == "OFF") { digitalWrite(LED_BUILTIN, LOW);  Serial.println("LED OFF"); }
+  }
+}
+```
+
+The board waits for a line of text. `ON` switches the LED on, `OFF` switches it
+off, and either way it **replies** with what it did. `LED_BUILTIN` is pin 13 on
+an Uno or Nano; on an ESP32 board that doesn't define it, write `2` instead.
+
+> **Close the Arduino IDE's Serial Monitor** (and Serial Plotter) when you're done.
+> Only one program can have a serial port open at a time; if the IDE has it, the
+> panel can't.
+
+### Step 2: Draw the form
+
+Start the designer and click **New**.
+
+1. Click the empty form. In Properties set **Name** → `LedPanel` and
+   **Caption** → `LED Control`.
+2. Draw a **CommandButton**: **Name** `cmdStart`, **Caption** `Start`.
+3. Draw a second **CommandButton** beside it: **Name** `cmdStop`, **Caption** `Stop`.
+4. Draw a **Shape** under them: **Name** `shpLed`, **FillColor** `gray`.
+   It's a circle by default, which makes a good indicator lamp.
+5. Draw a **Label** to the right of the shape, about 260 pixels wide:
+   **Name** `lblStatus`, **Caption** `Looking for the board...`.
+6. Double-click **Serial** in the Toolbox. It goes in the tray under the
+   form, because it's invisible when the panel runs. Set:
+   - **Name** → `ser1`
+   - **Port** → pick your board from the drop-down (it lists the ports
+     present, with their names), or leave it as `auto` for the first USB
+     serial device
+   - **Settings** → `115200,n,8,1`. The speed must match `Serial.begin(115200)`.
+7. **Ctrl+S**, and save as `LedPanel.json` in your panels folder.
+
+### Step 3: Write the code
+
+Press **F7** to open the Code window, select everything (Ctrl+A), and replace it with:
 
 ```python
+# Event procedures for LedPanel.
+
+
+def cmdStart_Click(f):
+    f.ser1.Output = "ON"
+
+
+def cmdStop_Click(f):
+    f.ser1.Output = "OFF"
+
+
 def ser1_DataArrival(f, line):
-    f.lblLast.Caption = line
+    # the board tells us what it actually did
+    if line == "LED ON":
+        f.shpLed.FillColor = "lime green"
+    elif line == "LED OFF":
+        f.shpLed.FillColor = "gray"
+
+
+def ser1_Connected(f):
+    f.lblStatus.Caption = "Connected on " + f.ser1.DeviceName
+
+
+def ser1_Disconnected(f):
+    f.lblStatus.Caption = "Unplugged - waiting for the board..."
+    f.shpLed.FillColor = "gray"
+
+
+def ser1_Error(f, message):
+    f.lblStatus.Caption = message
 ```
 
-5. Send to the device by setting **Output**:
+What each part does:
 
-```python
-def cmdOn_Click(f):
-    f.ser1.Output = "LED ON"        # sends "LED ON" plus the line ending
-```
+- **`f.ser1.Output = "ON"`** sends `ON` to the board, followed by a line ending,
+  which is what the sketch's `readStringUntil('\n')` waits for.
+- **`ser1_DataArrival(f, line)`** runs once for every line the board sends.
+  `line` is the text without its line ending, so `Serial.println("LED ON")`
+  arrives as exactly `"LED ON"`.
+- **`ser1_Connected`, `ser1_Disconnected`, `ser1_Error`** keep the status label
+  honest: which port was opened, when the cable is pulled, and why it can't connect.
 
-That's the whole cycle. The port opens when the panel starts and closes when it ends.
+### Step 4: Run it
 
-![The Port drop-down](img/serial-port-editor.png)
+Click the green **▶ Start** button. Within a second or two the label says
+**Connected on COM3** (or whichever port it found).
+
+- Click **Start**: the LED on the board lights, and the lamp turns green.
+- Click **Stop**: both go off.
+
+### Step 5: Try to break it
+
+- **Pull the USB cable.** The label says *Unplugged - waiting for the board...*.
+  Plug it back in, even into a different USB socket where Windows gives it a
+  new COM number, and it reconnects by itself, with no restart.
+- **Change the sketch** so it doesn't reply, and upload it. The LED still
+  switches, but the lamp stays gray.
+
+That last one is the point of the design: **the lamp follows the board's reply,
+not the button.** The panel shows what really happened, not what you hoped
+happened. For a pump or a valve that's the difference between "I pressed Start"
+and "the pump is running". In a real installation the reply would come from
+reading the relay's state or a current sensor, not just echoing the command.
+
+### Where to go from here
+
+- **More outputs:** add commands to the sketch (`RELAY1 ON`, `PWM 128`) and
+  buttons or a text box to the panel.
+- **Readings:** have the sketch also print JSON, `{"temp":21.5}`, once a
+  second, and use **Fill** (below) to show it without code. The
+  `arduino_bench` example does exactly that.
+- **Remote control:** wire `ser1` to MQTT (*Bridging serial to MQTT and n8n*,
+  below), and n8n, Node-RED or your phone can switch the LED too.
+- **Claude:** connect the panel to Claude Desktop (chapter 11) and ask it to
+  "turn the LED on and tell me what the board said".
 
 ## Lines, not chunks
 

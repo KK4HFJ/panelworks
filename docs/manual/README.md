@@ -15,7 +15,7 @@ A printable A4 copy of this whole manual is
 6. [Programming](06-programming.md): event procedures, properties, timers, threads, errors
 7. [The form file](07-form-file.md): the JSON format, values, `${VAR}`
 8. [MQTT](08-mqtt.md): subscribe, publish, mirror, the MQTT control
-9. [Serial](09-serial.md): Arduinos, GPS units, radios
+9. [Serial](09-serial.md): Arduinos, GPS units, radios. Includes a tutorial: switch an Arduino's LED from a panel
 10. [n8n and webhooks](10-n8n-webhooks.md): workflows as event procedures
 11. [Claude and MCP](11-claude-mcp.md): letting Claude drive and build panels
 12. [Control reference](12-control-reference.md): every property, method and event
