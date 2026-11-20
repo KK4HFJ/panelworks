@@ -434,9 +434,9 @@ Invisible MQTT client for code: subscribe in Form_Load or the Subscriptions prop
 
 | Event procedure | Fires when |
 |---|---|
+| `Name_MessageArrived(f, topic, payload, retained)` | A message arrived. Arguments: `topic, payload, retained`. |
 | `Name_Connected(f)` | Connected (or reconnected) to the broker. |
 | `Name_Disconnected(f)` | Lost the broker. It keeps retrying. |
-| `Name_MessageArrived(f, topic, payload, retained)` | A message arrived. Arguments: `topic, payload, retained`. |
 | `Name_Error(f, message)` | Connection error. Argument: `message`. Reported once per problem, not every retry. |
 
 ## Serial

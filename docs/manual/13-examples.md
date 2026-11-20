@@ -1,7 +1,7 @@
 # 13. Example panels
 
 The `examples` folder has complete panels to run, read, and copy from. Open
-any of them in the designer (`panelworks-designer examples\pumppanel.json`) to
+any of them in the designer (`python -m panelworks.designer examples\pumppanel.json`) to
 see how it's built, or run it directly.
 
 ## Pump panel: plain code, no connections
@@ -21,7 +21,7 @@ programming. It shows:
 - a **ListBox** log with the newest entry on top, trimmed to 50 lines.
 
 ```
-panelworks examples\pumppanel.json --mcp none
+python -m panelworks examples\pumppanel.json --mcp none
 ```
 
 With Claude connected (chapter 11), this is the panel to try "press Start" and
@@ -41,7 +41,7 @@ is on, so the whole panel also appears on the broker.
 ```
 mosquitto
 python tests\fake_esp32.py
-panelworks examples\cistern_mqtt.json
+python -m panelworks examples\cistern_mqtt.json
 ```
 
 `tests/fake_esp32.py` pretends to be the cistern node, so no hardware is needed.
@@ -66,7 +66,7 @@ broker with TLS. It shows:
 set PW_MQTT_HOST=mqtt.example.com
 set PW_MQTT_USER=panelworks
 set PW_MQTT_PASS=...
-panelworks examples\hvac_console.json --mcp none
+python -m panelworks examples\hvac_console.json --mcp none
 ```
 
 ## n8n demo: event procedures in a workflow

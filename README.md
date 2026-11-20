@@ -7,6 +7,10 @@ draw new controls while the app runs), by devices over **MQTT** (subscribe
 properties to topics, publish on events, mirror the whole form) and by
 automations over **webhooks** (an n8n workflow can be an event procedure).
 
+**📖 [The PanelWorks Manual](docs/manual/README.md)**: installing, a click-by-click
+first panel, the designer, programming, MQTT, serial, n8n, Claude, and the full control
+reference. Also as a printable A4 **[PDF](docs/PanelWorks-Manual.pdf)**.
+
 ![Claude drives a PanelWorks form over MCP](docs/demo.gif)
 
 *Recorded session: an MCP client (as Claude would) adds an E-STOP button to a

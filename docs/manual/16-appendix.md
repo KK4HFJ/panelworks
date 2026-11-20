@@ -29,6 +29,9 @@
 
 ## Command line
 
+On Windows, write `python -m panelworks` for `panelworks` (with the venv
+activated), because Smart App Control blocks the unsigned `panelworks.exe`.
+
 ```
 panelworks FORM.json                      run, with MCP over HTTP at 127.0.0.1:8765
 panelworks FORM.json --mcp stdio          run for Claude Desktop / Claude Code (stdio)

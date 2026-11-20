@@ -91,6 +91,21 @@ Then open the designer:
 .venv\Scripts\python -m panelworks.designer
 ```
 
+### Activating the venv (a shortcut for typing)
+
+Instead of typing `.venv\Scripts\python` every time, *activate* the venv in a
+Command Prompt:
+
+```
+cd C:\dev\panelworks
+.venv\Scripts\activate
+```
+
+The prompt now starts with `(.venv)`, and plain `python` means the venv's
+Python until you close the window. The rest of this manual writes commands as
+`python -m panelworks ...`, which assumes an activated venv (or replace
+`python` with the full `C:\dev\panelworks\.venv\Scripts\python`).
+
 ### Step 6: A desktop shortcut for the designer
 
 So you never need the Command Prompt to start designing:

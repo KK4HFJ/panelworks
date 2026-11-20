@@ -674,7 +674,7 @@ class Designer:
         if n == "Form":
             data = {k: self.extras[k] for k in ("mqtt", "webhooks") if k in self.extras}
             self.conn_help.configure(text='Form-level links, e.g. "mqtt": {"broker": "localhost"} and '
-                                          '"webhooks": {"baseUrl": "${N8N_WEBHOOK_BASE}"}. See README.')
+                                          '"webhooks": {"baseUrl": "${N8N_WEBHOOK_BASE}"}. See manual chapters 8 and 10.')
         else:
             data = {}
             if o._bind:

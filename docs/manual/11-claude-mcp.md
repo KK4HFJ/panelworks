@@ -54,7 +54,7 @@ its panels close too.
 Run the panel with the default HTTP transport:
 
 ```
-panelworks examples\pumppanel.json
+python -m panelworks examples\pumppanel.json
 ```
 
 It prints `MCP: http://127.0.0.1:8765/mcp`. Then, in Claude Code:
