@@ -78,6 +78,13 @@ def check():
     except (urllib.error.URLError, OSError, ValueError) as e:
         out["error"] = f"Couldn't reach GitHub ({getattr(e, 'reason', e)})."
         return out
+    try:                                    # the version number on GitHub, for the dialog
+        import re as _re
+        init = _get(f"{API}/contents/panelworks/__init__.py?ref={BRANCH}", accept="application/vnd.github.raw")
+        m = _re.search(r'__version__\s*=\s*"([^"]+)"', init)
+        out["remote_version"] = m.group(1) if m else None
+    except (urllib.error.URLError, OSError, ValueError):
+        out["remote_version"] = None
     st = cmp.get("status")
     # compare local...main: "ahead" means main is ahead of us, i.e. we're behind
     out["status"] = {"ahead": "behind", "behind": "ahead", "identical": "current"}.get(st, st or "unknown")

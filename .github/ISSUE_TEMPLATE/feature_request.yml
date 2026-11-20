@@ -1,0 +1,20 @@
+name: Feature request
+description: An idea to make PanelWorks better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to build or do?
+      description: The real situation is the most useful part, e.g. "a panel for my solar charge controller that ...".
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: How you'd like it to work. If Visual Basic (or another tool) did it well, say how.
+  - type: textarea
+    id: else
+    attributes:
+      label: Anything else

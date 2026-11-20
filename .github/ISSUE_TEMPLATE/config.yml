@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: The PanelWorks Manual
+    url: https://github.com/KK4HFJ/panelworks/blob/main/docs/manual/README.md
+    about: Installing, the designer, programming, MQTT, serial, n8n, Claude, and troubleshooting.
+  - name: Security issue
+    url: https://github.com/KK4HFJ/panelworks/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.

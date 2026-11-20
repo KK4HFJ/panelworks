@@ -579,11 +579,15 @@ class Designer:
                 put("To update by hand, in a Command Prompt:\n  cd " + updates.ROOT +
                     "\n  git pull\n  .venv\\Scripts\\python -m pip install -e \".[mqtt]\"")
             elif r["status"] == "current":
-                msg.configure(text=f"PanelWorks is up to date (version {short}).")
+                msg.configure(text=f"PanelWorks is up to date: version {__version__} ({short}).")
                 self.btn_update.pack_forget()
             elif r["status"] == "behind":
                 n = r["behind"]
-                msg.configure(text=f"{n} update{'s' if n != 1 else ''} available. You have {short}.")
+                newer = r.get("remote_version")
+                have = f"version {__version__} ({short})"
+                msg.configure(text=f"{n} update{'s' if n != 1 else ''} available"
+                                   + (f": version {newer}" if newer and newer != __version__ else "")
+                                   + f". You have {have}.")
                 put("What's new (newest first):\n")
                 for sha, date, text in r["commits"][:25]:
                     put(f"  {date}  {text}")

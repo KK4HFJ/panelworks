@@ -1,0 +1,51 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open ...\n2. Click ...\n3. See ..."
+  - type: textarea
+    id: errors
+    attributes:
+      label: Error messages
+      description: From the status bar, the Immediate window (Ctrl+G) or the console. Paste as text.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: PanelWorks version
+      description: Help → About in the designer
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows 11, Windows 10, macOS, Linux, Raspberry Pi OS, Other]
+    validations:
+      required: true
+  - type: checkboxes
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - label: Designer / Code window
+        - label: A control (say which below)
+        - label: Serial
+        - label: MQTT
+        - label: n8n / webhooks
+        - label: Claude / MCP
+        - label: Make EXE
+        - label: Accessibility
+        - label: Manual / docs

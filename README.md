@@ -562,6 +562,12 @@ can wait for "user pressed Start" without freezing the window.
 
 - PictureBox/Canvas drawing
 
+## Contributing, security, conduct
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) (report
+vulnerabilities privately), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md),
+[ACCESSIBILITY.md](ACCESSIBILITY.md) and the [CHANGELOG](CHANGELOG.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Free to use, modify and share, with no warranty.
