@@ -98,6 +98,12 @@ Claude Code over HTTP: start with the default `--mcp http`, then
 
 ![PanelWorks Designer](docs/designer.png)
 
+**Desktop shortcut (Windows), no console window:** right-click the desktop, then
+New > Shortcut, with the location
+`C:\path\to\panelworks\.venv\Scripts\pythonw.exe -m panelworks.designer`.
+Set **Start in** to the project folder. Under **Change Icon...**, browse to
+`panelworks\assets\panelworks.ico`.
+
 ```
 panelworks-designer                       # new form
 panelworks-designer my_panel.json         # open (or create) a form

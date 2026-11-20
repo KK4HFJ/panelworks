@@ -33,3 +33,6 @@ panelworks-designer = "panelworks.designer:main"
 
 [tool.setuptools]
 packages = ["panelworks"]
+
+[tool.setuptools.package-data]
+panelworks = ["assets/*.ico", "assets/*.png"]

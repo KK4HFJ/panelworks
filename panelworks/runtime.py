@@ -581,6 +581,8 @@ class Form:
             self.hooks = Webhooks(self, self.webhooks_cfg)
 
         self.root.title(spec.get("caption", self.spec_name))
+        from .util import set_window_icon
+        set_window_icon(self.root)
         self.root.geometry(f'{spec.get("width", 400)}x{spec.get("height", 300)}')
         if "backColor" in spec:
             self.root.configure(bg=spec["backColor"])

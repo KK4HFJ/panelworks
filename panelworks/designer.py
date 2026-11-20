@@ -130,6 +130,8 @@ class Designer:
     def __init__(self, path=None):
         self.root = tk.Tk()
         self.root.title("PanelWorks Designer")
+        from .util import set_window_icon
+        set_window_icon(self.root)
         self.root.geometry("1180x720")
         self.default_bg = self.root.cget("bg")
         self.path = None
