@@ -46,11 +46,12 @@ an Uno or Nano; on an ESP32 board that doesn't define it, write `2` instead.
 
 > **ESP32-S3 (and C3) boards with two USB-C sockets:** the one Windows lists as
 > "USB Serial Device" / "ESP32 Family Device" is the chip's native USB. On that
-> socket, set **Tools → USB CDC On Boot → Enabled** before uploading, and in
-> step 2 set the Serial control's **DTR** and **RTS** to **False**. On native USB
-> those lines are the chip's reset and bootloader signals, and opening the port
-> with them raised can leave it sitting in the bootloader (the Serial Monitor
-> shows only `ESP-ROM:esp32s3-...`). The other socket goes through a USB-serial
+> socket, set **Tools → USB CDC On Boot → Enabled** before uploading. On native
+> USB the DTR and RTS lines are the chip's reset and bootloader signals.
+> PanelWorks recognises Espressif's native USB and leaves them low, unless you
+> set DTR or RTS yourself. (Older PanelWorks versions needed DTR and RTS set to
+> False by hand. If the Serial Monitor only ever shows `ESP-ROM:esp32s3-...`,
+> that's the bootloader; press the board's reset button.) The other socket goes through a USB-serial
 > chip (CH343, CP2102) and needs neither setting. The onboard LED on most S3
 > boards is an RGB LED; `digitalWrite(LED_BUILTIN, ...)` lights it white.
 
@@ -182,11 +183,17 @@ for `None`); **Write** sends exactly what you give it.
 | Port value | Opens |
 |---|---|
 | `COM3`, `/dev/ttyUSB0` | That port. |
-| `auto` | The first USB serial device found. |
-| `auto:Arduino` | The first port whose name contains "Arduino". Also `auto:CH340`, `auto:CP210`, `auto:FTDI`, `auto:Silicon Labs`, any text from the drop-down. |
+| `auto` | The USB serial device, when exactly one is plugged in. |
+| `auto:CH340` | The port whose name contains "CH340". Also `auto:CP210`, `auto:FTDI`, `auto:Arduino`, `auto:USB Serial Device`, any text from the drop-down. |
 | `socket://192.168.1.50:23` | A network serial server (ser2net, ESP-Link, a terminal server). |
 | `rfc2217://host:port` | An RFC 2217 serial server (adjustable baud). |
 | `loop://` | A loopback for testing: everything sent comes straight back. |
+
+**`auto` never guesses.** If more than one device matches (an S3, plus two
+CH340 boards running your HVAC, say), the panel doesn't open any of them. It
+reports `'auto' matches 3 devices: COM5 (...), COM6 (...), COM7 (...)` through
+`Error` and keeps waiting. Set Port to the one you mean, or a more specific
+`auto:` text. A test panel can't end up talking to the wrong board.
 
 `auto:...` matters because Windows often gives a board a **different COM number**
 after it's plugged into another USB socket. A panel set to `auto:CH340` finds
@@ -279,8 +286,9 @@ applies at once. A mistake (`fast,n,8,1`) is refused with a message saying what'
 Most Arduinos (Uno, Nano, Mega) **reset when a program opens the port**,
 because the DTR line pulses. That's why the first second of data is missing and
 setup() runs again. If that's a problem, set **DTR** to False before the port
-opens (in the designer). ESP32 boards use DTR and RTS for their boot button,
-and normally behave with the defaults.
+opens (in the designer). On ESP32 boards DTR and RTS drive the boot and reset
+pins. PanelWorks leaves them low on Espressif's native USB (S2, S3, C3, C6)
+unless you set them, and boards with a CH340/CP2102 chip behave with the defaults.
 
 ## Text encodings
 
@@ -320,6 +328,6 @@ the board. With a `webhook` entry, lines can go to n8n instead (chapter 10).
 | Garbage characters | Settings speed doesn't match `Serial.begin(...)`. |
 | No DataArrival, but InBufferCount grows | The device doesn't end lines the way Terminator expects. Try `CR`, or `None`. |
 | First reading missing after opening | The Arduino reset (DTR, above). |
-| Only `ESP-ROM:esp32s3-...` appears and the board never answers | Native-USB ESP32-S3/C3 held in its bootloader by DTR/RTS. Set DTR and RTS to False and press the board's reset button once. Also check **USB CDC On Boot: Enabled**. |
+| Only `ESP-ROM:esp32s3-...` appears and the board never answers | The chip is in its bootloader. Press the board's reset button once. Check **USB CDC On Boot: Enabled**, and that DTR/RTS aren't set True in the form (PanelWorks leaves them low on native USB by default). |
 | Works in the Serial Monitor only with exact capitals | The sketch compares text exactly. `cmd.toUpperCase()` after `cmd.trim()` makes it forgiving. |
 | Linux: `Permission denied` | Add yourself to `dialout` (chapter 2) and log in again. |

@@ -106,7 +106,8 @@ class CodeWindow:
         t.bind("<Configure>", lambda e: self._draw_gutter())
         for seq, fn in (("<Control-s>", self.save), ("<Control-f>", self.find), ("<F3>", self.find_next),
                         ("<Control-z>", self.undo), ("<Control-y>", self.redo), ("<Control-Z>", self.redo),
-                        ("<F5>", self.d.run_form), ("<F7>", lambda: self.d.root.lift())):
+                        ("<F5>", self.d.run_form), ("<F7>", lambda: self.d.root.lift()),
+                        ("<Control-g>", self.d.immediate)):
             self.top.bind(seq, lambda e, fn=fn: (fn(), "break")[1])
 
         self.load()

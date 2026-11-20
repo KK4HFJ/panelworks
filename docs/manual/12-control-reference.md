@@ -449,7 +449,7 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 |---|---|---|
 | AutoOpen | read/write | Open the port when the form loads. Default True. |
 | AutoReconnect | read/write | Reopen by itself after an unplug, or keep trying until the device appears. Default True. |
-| DTR | read/write | Data Terminal Ready line. Many Arduinos reset when it rises on open; set False to avoid the reset. |
+| DTR | read/write | Data Terminal Ready line. Many Arduinos reset when it rises on open; set False to avoid the reset. Left low on ESP32 native USB unless set here. |
 | DeviceName | read-only | The device actually opened (useful with `auto`). Read-only. |
 | Encoding | read/write | Text encoding. Default `utf-8`; `latin-1` for raw 8-bit data. |
 | Fill | read/write | Lines like `temp -> lblTemp.Caption`. Fields of incoming JSON lines (or `key=value` lines) are copied to those properties. |
@@ -458,9 +458,9 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | LastError | read-only | The last error, or empty. Read-only. |
 | Line | read-only | The last complete line received. Read-only. |
 | Output | run time | Set it to send text plus the Terminator (run time only). Reads back empty. |
-| Port | read/write | `COM3`, `/dev/ttyUSB0`, `auto` (first USB serial device), `auto:Arduino` (first whose name contains the text), or a URL: `socket://host:port`, `rfc2217://host:port`, `loop://`. |
+| Port | read/write | `COM3`, `/dev/ttyUSB0`, `auto` (the one USB serial device; refuses if several), `auto:CH340` (the one port whose name contains the text), or a URL: `socket://host:port`, `rfc2217://host:port`, `loop://`. |
 | PortOpen | run time | True while open. Set True/False to open or close (run time only). |
-| RTS | read/write | Request To Send line. |
+| RTS | read/write | Request To Send line. Left low on ESP32 native USB unless set here. |
 | Settings | read/write | `baud,parity,databits,stopbits`, e.g. `9600,n,8,1` or `115200,n,8,1`. Can be changed while open. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Terminator | read/write | Line ending: `LF` (default; also accepts CR+LF), `CR`, `CRLF`, or `None` for raw chunks. |

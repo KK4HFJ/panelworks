@@ -321,13 +321,41 @@ above it that names your `.py` file says where.
 AttributeError: Form has no object or member 'lblHelo'
 ```
 
-**Debugging with print**: `print(...)` writes to the console, like VB's
-`Debug.Print`. To see it, run the panel from a Command Prompt instead of
-the Start button:
+**Debugging with print**: `print(...)` is PanelWorks' `Debug.Print`. Its output
+appears in the **Immediate window** (below) when you run with ▶ Start, or in the
+console when you run a panel from a Command Prompt.
 
-```
-C:\dev\panelworks\.venv\Scripts\python -m panelworks C:\Users\you\Documents\PanelWorks\Hello.json --mcp none
-```
+## The Immediate window
+
+![The Immediate window](img/immediate.png)
+
+**View → Immediate Window**, **Ctrl+G** (as in VB), or the **Immediate** toolbar
+button. While a panel runs it shows, live:
+
+- everything your code `print()`s,
+- errors, in red, with the traceback (the last red line says what went wrong,
+  and the line naming your `.py` file says where),
+- messages from PanelWorks itself (`[mqtt] ...`, `[serial] ...`, `[webhook] ...`), in grey.
+
+You can also type at the running panel, VB-style, and press Enter:
+
+| Type | Does |
+|---|---|
+| `? lblStatus.Caption` | Show a property (`print f.lblStatus.Caption` works too) |
+| `? lblStatus` | Show every property of a control |
+| `lblStatus.Caption = "Hello"` | Set a property. Values are Python literals: `42`, `3.5`, `True`, `"text"`, `["a", "b"]` |
+| `lstLog.AddItem("x", 0)` | Call a method |
+| `cmdStart_Click` | Fire an event, as if it happened |
+| `cls` | Clear the window |
+| Up / Down | Previous lines |
+
+This is the quickest way to try things: poke a property, fire an event, and see
+what your code prints, without editing anything. Typed lines go through the same
+safe channel Claude uses, so they can only read and set properties, call methods
+and fire events. They can't run arbitrary code inside the panel.
+
+The window keeps collecting output while hidden, and starts a new section each
+time you press Start.
 
 ## The thread rule (for the curious)
 

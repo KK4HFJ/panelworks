@@ -252,6 +252,9 @@ def control_port(form_path):
     return 47000 + zlib.crc32(key) % 2000
 
 
+CONTROL_HEADER = "X-PanelWorks"          # required on every control-channel request
+
+
 class _ControlServer(ThreadingHTTPServer):
     daemon_threads = True
 
@@ -305,12 +308,24 @@ class _ControlHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _trusted(self):
+        """Only PanelWorks itself may use this channel. A web page can POST to
+        127.0.0.1 without asking (a 'simple' cross-site request), but it can't add
+        a custom header without a CORS preflight we never answer, and DNS-rebinding
+        tricks arrive with the wrong Host header. Both are refused."""
+        host = (self.headers.get("Host") or "").split(":")[0]
+        return self.headers.get(CONTROL_HEADER) == "1" and host in ("127.0.0.1", "localhost")
+
     def do_GET(self):
+        if not self._trusted():
+            return self._send(403, {"ok": False, "error": "forbidden"})
         ready = getattr(self.server, "impl", None) is not None
         self._send(200 if ready else 503, {"form": getattr(self.server, "form_name", None),
                                            "ready": ready})
 
     def do_POST(self):
+        if not self._trusted():
+            return self._send(403, {"ok": False, "error": "forbidden"})
         impl = getattr(self.server, "impl", None)
         if impl is None:
             return self._send(503, {"ok": False, "error": "form still loading"})
@@ -337,7 +352,8 @@ def relay_caller(form_path, wait_seconds=20):
     deadline = time.time() + wait_seconds
     while True:                          # wait for the owner to finish loading
         try:
-            with urllib.request.urlopen(url, timeout=2) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={CONTROL_HEADER: "1"}),
+                                        timeout=2) as r:
                 if json.loads(r.read()).get("ready"):
                     break
         except (urllib.error.URLError, OSError, ValueError):
@@ -348,7 +364,7 @@ def relay_caller(form_path, wait_seconds=20):
 
     def call(tool, /, **kw):
         body = json.dumps({"tool": tool, "args": kw}).encode()
-        req = urllib.request.Request(url, body, {"Content-Type": "application/json"})
+        req = urllib.request.Request(url, body, {"Content-Type": "application/json", CONTROL_HEADER: "1"})
         timeout = (kw.get("timeout_seconds") or 30) + 10 if tool == "wait_for_event" else 30
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:

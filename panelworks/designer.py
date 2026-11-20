@@ -270,6 +270,7 @@ class Designer:
         v = tk.Menu(m, tearoff=0)
         v.add_command(label="Code", accelerator="F7", command=self.show_code)
         v.add_command(label="Code in external editor", command=self.code_external)
+        v.add_command(label="Immediate Window", accelerator="Ctrl+G", command=self.immediate)
         m.add_cascade(label="View", menu=v)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label="About PanelWorks", command=self.about)
@@ -303,6 +304,7 @@ class Designer:
                            font=("Helvetica", 10, "bold"), state="disabled")
         sep()
         btn("Code", lambda: self.code_window(), "Open the Code window (F7)")
+        btn("Immediate", self.immediate, "Live output of the running panel, and type at it (Ctrl+G)")
 
     def _build_layout(self):
         self._build_toolbar()
@@ -417,6 +419,7 @@ class Designer:
         r.bind("<Control-o>", lambda e: self.open_dialog())
         r.bind("<Control-n>", lambda e: self.new_form() if self._ok_to_discard() else None)
         r.bind("<Control-w>", lambda e: self.close_form())
+        r.bind("<Control-g>", lambda e: self.immediate())
         r.bind("<Control-comma>", lambda e: self.preferences())
         r.bind("<F5>", lambda e: self.run_form())
         r.bind("<F7>", lambda e: self.show_code())
@@ -466,6 +469,15 @@ class Designer:
         from .util import recent_list
         items = [p for p in recent_list() if os.path.exists(p)]
         return items[0] if items else None
+
+    def immediate(self):
+        """View > Immediate Window (Ctrl+G), like VB's."""
+        w = getattr(self, "_immwin", None)
+        if w is None or not w.alive():
+            from .immediate import ImmediateWindow
+            w = self._immwin = ImmediateWindow(self)
+        w.show()
+        return w
 
     def close_form(self):
         """File > Close: back to an empty designer, without quitting."""
@@ -1557,6 +1569,9 @@ class Designer:
         self._proc = proc
         proc._log = log
         proc._err = []                         # recent output, for the error box and status bar
+        proc._lines = []                       # everything, for the Immediate window
+        proc._name = os.path.basename(self.path)
+        self._last_proc = proc
         def follow():
             with open(log, encoding="utf-8", errors="replace") as fh:
                 while True:
@@ -1571,6 +1586,9 @@ class Designer:
                             time.sleep(0.1)
                             continue
                     for ln in line.splitlines(keepends=True):
+                        proc._lines.append(ln)
+                        if len(proc._lines) > 20000:
+                            del proc._lines[:10000]
                         proc._err.append(ln)
                         del proc._err[:-200]
                         if ln.strip() and not ln.startswith((" ", "Traceback")) and (
@@ -1594,7 +1612,7 @@ class Designer:
             last = getattr(proc, "_last_err", None)
             if last and last != getattr(proc, "_shown_err", None):
                 proc._shown_err = last         # a handler raised: say so, the panel keeps running
-                self.say(f"Panel error: {last[:150]}")
+                self.say(f"Panel error: {last[:130]}   (Ctrl+G shows the details)")
             self.root.after(500, lambda: self._watch_run(proc))
             return
         self._proc = None

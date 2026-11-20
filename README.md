@@ -135,6 +135,9 @@ The designer works the way classic RAD tools did, and needs no AI:
 - **Run:** the green **▶ Start** button on the toolbar (or F5) saves and runs the
   panel; the red **■ End** button stops it. Start while it's running restarts it
   with your latest changes. The Code window has a Start button too.
+- **Immediate window (Ctrl+G):** live `print()` output and errors from the running
+  panel, and VB-style lines typed at it: `? lblStatus.Caption`,
+  `shpLed.FillColor = "red"`, `cmdStart_Click`.
 - **File → Open Recent:** your last 10 forms, newest first.
 - **File → Examples:** opens a *copy* of a bundled example (with its code and Arduino
   sketch) in your panels folder, so the originals stay clean for `git pull`.
@@ -379,8 +382,11 @@ What it does better than MSComm:
   bytes arrived. `Serial.println`'s CR+LF is handled. Set **Terminator** to `CR`,
   `CRLF`, or `None` (raw chunks) if your device differs.
 - **No COM-number guessing.** The designer's Port drop-down lists the ports
-  present, with their USB names. `auto` picks the first USB serial device;
-  `auto:Arduino` (or `auto:CH340`, `auto:CP210`) the first whose name matches.
+  present, with their USB names. `auto` picks the USB serial device;
+  `auto:CH340` (or `auto:CP210`, `auto:Arduino`) the one whose name matches. If
+  several match, it refuses and lists them, so a panel never opens the wrong board.
+- **ESP32-S3/C3 native USB** is recognised, and DTR/RTS are left low so opening the
+  port can't drop the chip into its bootloader.
   A COM number that changes after a replug no longer breaks the panel.
 - **Unplug and replug:** **AutoReconnect** (on by default) reopens it, firing
   `Disconnected` and then `Connected`.

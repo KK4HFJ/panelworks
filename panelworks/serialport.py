@@ -2,8 +2,9 @@
 Serial for PanelWorks: the "Serial" control, VB's MSComm done the way it should
 have been.
 
-  Port        "COM3", "/dev/ttyUSB0", "auto" (first USB serial device),
-              "auto:Arduino" (first port whose description contains "Arduino"),
+  Port        "COM3", "/dev/ttyUSB0", "auto" (the one USB serial device),
+              "auto:CH340" (the one port whose description contains "CH340");
+              auto refuses to guess when several devices match,
               or any pyserial URL: "socket://192.168.1.50:23" (ser2net, ESP-Link),
               "rfc2217://host:port", "loop://" (testing).
   Settings    "9600,n,8,1" - baud, parity (n/e/o/m/s), data bits, stop bits.
@@ -78,21 +79,43 @@ def port_choices():
     return items + ["auto", "auto:Arduino", "auto:CP210", "auto:CH340", "loop://"]
 
 
+ESPRESSIF_VID = 0x303A    # native USB on ESP32-S2/S3/C3/C6: DTR/RTS are its reset/boot lines
+
+
+def _port_label(p):
+    desc = p.description if p.description and p.description not in ("n/a", p.device) else ""
+    return f"{p.device} ({desc})" if desc else p.device
+
+
 def resolve_port(name):
-    """'auto' / 'auto:text' -> a real device, or None if nothing matches right now."""
+    """'auto' / 'auto:text' -> a real device. None if nothing matches right now.
+    Refuses to guess: if several devices match, raises with the list, so a panel
+    never opens the wrong board (a relay controller, say) by accident."""
     name = str(name).strip()
     if " - " in name and not name.startswith(("socket:", "rfc2217:")):
         name = name.split(" - ", 1)[0]          # picked from the dropdown with its label
     if not name.lower().startswith("auto"):
         return name
     want = name[5:].strip().lower() if ":" in name else ""
-    for p in sorted(list_ports.comports(), key=lambda p: (p.vid is None, p.device)):
-        if want:
-            text = " ".join(str(x) for x in (p.device, p.description, p.manufacturer, p.product) if x).lower()
-            if want in text:
-                return p.device
-        elif p.vid is not None:                  # plain "auto": first USB serial device
-            return p.device
+    ports = sorted(list_ports.comports(), key=lambda p: p.device)
+    if want:
+        hits = [p for p in ports if want in " ".join(
+            str(x) for x in (p.device, p.description, p.manufacturer, p.product) if x).lower()]
+    else:
+        hits = [p for p in ports if p.vid is not None]     # USB serial devices only
+    if not hits:
+        return None
+    if len(hits) > 1:
+        raise serial.SerialException(
+            f"'{name}' matches {len(hits)} devices: {', '.join(_port_label(p) for p in hits)}. "
+            "Set Port to the one you mean (or a more specific auto:text)")
+    return hits[0].device
+
+
+def _port_info(device):
+    for p in list_ports.comports():
+        if p.device == device:
+            return p
     return None
 
 
@@ -160,7 +183,8 @@ class SerialControl(VBObject):
                          _reconnect=True, _dtr=True, _rts=True, _fill=[], _encoding="utf-8",
                          _ser=None, _thread=None, _stop=None, _want_open=False,
                          _input="", _line="", _partial="", _last_error="",
-                         _write_lock=threading.Lock(), _reported=False).items():
+                         _write_lock=threading.Lock(), _reported=False,
+                         _dtr_set=False, _rts_set=False).items():
             object.__setattr__(self, k, v)
 
     # ---- lifecycle -------------------------------------------------------------------
@@ -209,12 +233,14 @@ class SerialControl(VBObject):
     def get_DTR(self): return self._dtr
     def set_DTR(self, v):
         object.__setattr__(self, "_dtr", bool(v))
+        object.__setattr__(self, "_dtr_set", True)
         if self._ser is not None and self._ser.is_open:
             self._ser.dtr = bool(v)
 
     def get_RTS(self): return self._rts
     def set_RTS(self, v):
         object.__setattr__(self, "_rts", bool(v))
+        object.__setattr__(self, "_rts_set", True)
         if self._ser is not None and self._ser.is_open:
             self._ser.rts = bool(v)
 
@@ -308,7 +334,14 @@ class SerialControl(VBObject):
             raise serial.SerialException(f"no serial device matches '{self._port}'")
         ser = serial.serial_for_url(name, do_not_open=True, timeout=0.2, write_timeout=2,
                                     **parse_settings(self._settings))
-        ser.dtr, ser.rts = self._dtr, self._rts
+        dtr, rts = self._dtr, self._rts
+        info = _port_info(name)
+        if info is not None and info.vid == ESPRESSIF_VID:
+            # ESP32-S3/C3 native USB: raised DTR/RTS can reset the chip into its
+            # bootloader. Leave them low unless the form sets them on purpose.
+            dtr = self._dtr if self._dtr_set else False
+            rts = self._rts if self._rts_set else False
+        ser.dtr, ser.rts = dtr, rts
         ser.open()
         return ser
 

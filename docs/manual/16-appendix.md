@@ -8,6 +8,7 @@
 |---|---|
 | F5 | Start: save and run (also the green ▶ button) |
 | F7 | Code window |
+| Ctrl+G | Immediate window (also from the Code window) |
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save (form and code) |
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |

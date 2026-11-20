@@ -27,7 +27,7 @@ chapter translates the rest.
 | `InputBox("Name?")` | `simpledialog.askstring("Title", "Name?", parent=f.root)` |
 | `Unload Me` / `End` | `f.Unload()` |
 | `On Error GoTo Handler` | `try:` … `except Exception as e:` |
-| `Debug.Print x` | `print(x)` |
+| `Debug.Print x` | `print(x)`, shown in the Immediate window (Ctrl+G) |
 | `DoEvents` | Not needed; use a Timer or a thread (chapter 6) |
 | `vbRed`, `RGB(255, 0, 0)`, `&HFF&` | `"red"`, `"#ff0000"` |
 | `True` / `False` | `True` / `False` (capitals, as in VB) |
@@ -65,6 +65,7 @@ chapter translates the rest.
 ## Things VB never did
 
 - **Renaming a control renames its code** (chapter 5).
+- **The Immediate window keeps working while the program runs**, and an error doesn't put you in break mode.
 - **Syntax errors are caught when you save**, with the line marked.
 - **Properties follow devices with no code**: MQTT `subscribe`, Serial `Fill`.
 - **n8n workflows can be event procedures.**

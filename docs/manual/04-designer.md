@@ -7,7 +7,7 @@ The designer is laid out the way VB's was:
 | Area | What it's for |
 |---|---|
 | **Menu bar** | File, Edit, View, Help |
-| **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code |
+| **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code, Immediate |
 | **Toolbox** (left) | The controls you can draw |
 | **Form** (middle) | Your window, on a grey workspace, with a dot grid |
 | **Tray** (under the form) | Invisible controls: Timer, MQTT, Serial |
@@ -105,7 +105,8 @@ runs the panel in its own window, exactly as it will run for real.
   to close the running copy and start the new one.
 - **■ End** stops the running panel. So does closing its window.
 - If an event procedure raises an error, the panel keeps running and the
-  status bar shows **Panel error: ...** with the message.
+  status bar shows **Panel error: ...** with the message. **Ctrl+G** opens the
+  Immediate window with the full details (chapter 6).
 - If the panel can't start at all, a box shows the reason.
 
 Unlike VB, the designer stays fully usable while the panel runs: you can keep
@@ -181,6 +182,7 @@ variable, if set, still overrides the editor setting.
 |---|---|
 | F5 | Start (save and run) |
 | F7 | Code window |
+| Ctrl+G | Immediate window |
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
