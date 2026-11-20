@@ -169,6 +169,7 @@ DOC = {
         "Columns": "Column names from the last RecordSource query. Read-only.",
         "LastError": "The last error, or empty. Read-only.",
         "Log": "`Log()` logs the LogFields now; `Log({\"weight\": 1234, \"ticket\": \"A17\"})` logs your own values (new columns are added). Returns the row.",
+        "AddColumns": "`AddColumns(\"plate\", \"gross\", ...)`: make sure these columns exist (added if missing). Handy in Form_Load before the first Log.",
         "Query": "`Query(sql=None, params=None)`: run a SELECT, get a list of dicts. `?` placeholders with params.",
         "Execute": "`Execute(sql, params=None)`: run any SQL (UPDATE, DELETE...); returns rows changed.",
         "Refresh": "Re-run RecordSource and update bound Grids.",

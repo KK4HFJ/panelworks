@@ -28,6 +28,7 @@ examples/pumppanel.py      <- its event procedures
 examples/cistern_mqtt.*    <- a no-code panel driven entirely by MQTT subscriptions
 examples/n8n_demo.*        <- a panel whose event procedures live in n8n
 examples/led_panel.*       <- Start/Stop an Arduino's LED over USB serial
+examples/truck_scale.*     <- weighbridge: serial scale, chart, tickets in SQLite, menu (+ simulator)
 examples/hvac_console.*    <- read-only HVAC console for real ESP32 devices over MQTT/TLS
 examples/n8n/              <- the matching n8n workflow, ready to import
 tests/fake_esp32.py        <- simulated cistern node to test it against

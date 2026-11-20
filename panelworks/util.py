@@ -111,7 +111,7 @@ def examples_dir():
     return d if os.path.isdir(d) else None
 
 
-EXAMPLE_ORDER = ["led_panel", "pumppanel", "arduino_bench", "cistern_mqtt", "n8n_demo", "hvac_console"]
+EXAMPLE_ORDER = ["led_panel", "pumppanel", "arduino_bench", "truck_scale", "cistern_mqtt", "n8n_demo", "hvac_console"]
 
 
 def list_examples():

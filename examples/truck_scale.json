@@ -1,0 +1,47 @@
+{
+  "name": "TruckScale",
+  "caption": "Truck Scale - Recycling",
+  "width": 760,
+  "height": 600,
+  "code": "truck_scale.py",
+  "menu": [
+    {"name": "mnuFile", "caption": "&File", "items": [
+      {"name": "mnuFileExport", "caption": "&Export tickets to CSV...", "shortcut": "Ctrl+E"},
+      {"caption": "-"},
+      {"name": "mnuFileExit", "caption": "E&xit"}]},
+    {"name": "mnuView", "caption": "&View", "items": [
+      {"name": "mnuViewChart", "caption": "Weight &chart", "checked": true}]}
+  ],
+  "objects": {
+    "lblWeight":  {"type": "Label", "Caption": "------", "FontSize": 40, "FontBold": true, "Alignment": "Right",
+                   "Left": 15, "Top": 10, "Width": 300, "Height": 64},
+    "lblUnit":    {"type": "Label", "Caption": "lb", "FontSize": 18, "Left": 322, "Top": 34, "Width": 40, "Height": 30},
+    "shpState":   {"type": "Shape", "FillColor": "gray", "Left": 380, "Top": 26, "Width": 30, "Height": 30},
+    "lblState":   {"type": "Label", "Caption": "no scale", "FontSize": 12, "Left": 418, "Top": 30, "Width": 330, "Height": 24},
+    "lblLink":    {"type": "Label", "Caption": "", "ForeColor": "#555555", "Left": 15, "Top": 76, "Width": 730, "Height": 20},
+    "chtWeight":  {"type": "Chart", "Title": "Platform (last 5 min)", "Units": "lb", "Window": 300,
+                   "AutoScale": false, "YMin": 0, "YMax": 120000,
+                   "Left": 15, "Top": 100, "Width": 730, "Height": 140},
+    "fraTruck":   {"type": "Frame", "Caption": "Truck", "Left": 15, "Top": 250, "Width": 380, "Height": 150},
+    "lblPlate":   {"type": "Label", "Caption": "Plate", "Left": 28, "Top": 274, "Width": 80, "Height": 24},
+    "txtPlate":   {"type": "TextBox", "Text": "", "Left": 110, "Top": 274, "Width": 140, "Height": 24},
+    "lblCust":    {"type": "Label", "Caption": "Customer", "Left": 28, "Top": 304, "Width": 80, "Height": 24},
+    "txtCust":    {"type": "TextBox", "Text": "", "Left": 110, "Top": 304, "Width": 270, "Height": 24},
+    "lblMat":     {"type": "Label", "Caption": "Material", "Left": 28, "Top": 334, "Width": 80, "Height": 24},
+    "cboMat":     {"type": "ComboBox", "List": ["Aluminum", "Copper", "Brass", "Steel", "Cardboard", "Mixed"],
+                   "Text": "Steel", "Left": 110, "Top": 334, "Width": 140, "Height": 24},
+    "cmdIn":      {"type": "CommandButton", "Caption": "Weigh IN (loaded)", "Enabled": false,
+                   "Left": 28, "Top": 364, "Width": 170, "Height": 28},
+    "cmdOut":     {"type": "CommandButton", "Caption": "Weigh OUT (empty)", "Enabled": false,
+                   "Left": 210, "Top": 364, "Width": 170, "Height": 28},
+    "lblYard":    {"type": "Label", "Caption": "On the yard (weighed in)", "FontBold": true,
+                   "Left": 410, "Top": 250, "Width": 335, "Height": 22},
+    "lstYard":    {"type": "ListBox", "Left": 410, "Top": 274, "Width": 335, "Height": 126},
+    "lblTickets": {"type": "Label", "Caption": "Tickets", "FontBold": true, "Left": 15, "Top": 408, "Width": 200, "Height": 22},
+    "grdTickets": {"type": "Grid", "DataSource": "datTickets", "Left": 15, "Top": 432, "Width": 730, "Height": 150},
+    "ser1":       {"type": "Serial", "Port": "socket://127.0.0.1:4001", "Settings": "9600,n,8,1", "Terminator": "LF"},
+    "datTickets": {"type": "Data", "DatabaseName": "truck_scale.db", "Table": "tickets",
+                   "RecordSource": "SELECT id AS ticket, time, plate, customer, material, gross, tare, net FROM tickets ORDER BY id DESC LIMIT 200"},
+    "datYard":    {"type": "Data", "DatabaseName": "truck_scale.db", "Table": "yard"}
+  }
+}

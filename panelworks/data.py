@@ -203,6 +203,23 @@ class Data(VBObject):
         self.fire("Logged", row)
         return row
 
+    def m_AddColumns(self, *names):
+        """AddColumns("plate", "gross", ...): make sure these columns exist in Table
+        (they're added if missing; existing data is kept). Returns the ones added."""
+        self._open()
+        if len(names) == 1 and isinstance(names[0], (list, tuple)):
+            names = names[0]
+        have = {r[1] for r in self._conn.execute(f"PRAGMA table_info({self._table})")}
+        added = []
+        for n in names:
+            n = str(n).strip()
+            if not _IDENT.match(n):
+                raise ValueError(f"'{n}' can't be a column name")
+            if n not in have:
+                self._conn.execute(f"ALTER TABLE {self._table} ADD COLUMN {n}")
+                added.append(n)
+        return added
+
     def m_Query(self, sql=None, params=None):
         """Run a SELECT and return the rows as a list of dicts (default: RecordSource)."""
         self._open()

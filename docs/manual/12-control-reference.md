@@ -642,6 +642,7 @@ Invisible SQLite database beside the form (VB's Data control), with no-code logg
 
 | Method | Description |
 |---|---|
+| AddColumns | `AddColumns("plate", "gross", ...)`: make sure these columns exist (added if missing). Handy in Form_Load before the first Log. |
 | Clear | Delete every row of Table. No confirmation: ask the user first. |
 | Execute | `Execute(sql, params=None)`: run any SQL (UPDATE, DELETE...); returns rows changed. |
 | ExportCSV | `ExportCSV(path=None, sql=None)`: write the records to a CSV file (opens in Excel); returns the path. |

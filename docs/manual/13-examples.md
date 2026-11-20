@@ -118,6 +118,36 @@ With nothing wired to A0 and A1 the readings float randomly, which is enough
 to see it working. A TMP36 on A0 and a light-dependent resistor divider on A1
 make it real.
 
+## Truck scale: a recycling yard's weighbridge
+
+![Truck scale](../../examples/truck_scale.png)
+
+`examples/truck_scale.json` + `truck_scale.py`, simulator `examples/truck_scale/scale_sim.py`
+
+The most complete example. A scale indicator's continuous output arrives over
+**Serial**; the panel shows the weight big, a lamp for stable / in motion /
+overload, and a **Chart** of the platform. A loaded truck **weighs in** (gross);
+after unloading it **weighs out** (tare); the ticket (plate, customer, material,
+gross, tare, net) goes into a **Data** table and shows in a **Grid**. Weighing is
+only allowed when the reading is stable. Trucks on the yard are kept in their
+own table, so nothing is lost if the PC restarts mid-shift. There's a **Frame**
+for the truck details, and a **menu**: File → Export tickets to CSV, View → Weight chart.
+
+Without a scale, run the simulator first. It pretends to be an indicator,
+trucks arriving by themselves, and you can type a weight to put one on:
+
+```
+python examples\truck_scale\scale_sim.py
+python -m panelworks examples\truck_scale.json --mcp none
+```
+
+**With a real indicator:** set `ser1`'s **Port** to its COM port and **Settings** to
+its baud rate (often `9600,n,8,1`), and check the line format. The code expects
+the common `ST,GS,+0012340lb` style (A&D, Avery and many others: ST = stable,
+US = in motion, OL = overload). For another format, change the `LINE` pattern at
+the top of `truck_scale.py`; the Immediate window (Ctrl+G) with
+`print(line)` in `ser1_DataArrival` shows exactly what your indicator sends.
+
 ## Copying an example
 
 Copy both files (`.json` and `.py`) to your own folder and open the copy in the
