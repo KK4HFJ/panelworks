@@ -86,8 +86,8 @@ def show(value):
     return str(value)
 
 
-def open_in_editor(path, line=1):
-    """Open a code file at a line, without ever executing it."""
+def open_in_editor(path, line=1, force_external=False):
+    """Open a code file at a line in an outside editor, without ever executing it."""
     editor = os.environ.get("PANELWORKS_EDITOR")
     try:
         if editor:
@@ -145,6 +145,7 @@ class Designer:
         self._defaults = {}
         self._mtime = None
         self._editor_widget = None
+        self._codewin = None
 
         self._build_menu()
         self._build_layout()
@@ -180,6 +181,10 @@ class Designer:
         e.add_command(label="Bring to front", command=lambda: self._restack(front=True))
         e.add_command(label="Send to back", command=lambda: self._restack(front=False))
         m.add_cascade(label="Edit", menu=e)
+        v = tk.Menu(m, tearoff=0)
+        v.add_command(label="Code", accelerator="F7", command=self.show_code)
+        v.add_command(label="Code in external editor", command=self.code_external)
+        m.add_cascade(label="View", menu=v)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label="About", command=lambda: messagebox.showinfo(
             "PanelWorks Designer", f"PanelWorks {__version__}\nDraw forms, write Object_Event code in Python,\n"
@@ -239,7 +244,7 @@ class Designer:
         self.events.pack(fill="both", expand=True)
         self.events.bind("<Double-Button-1>", lambda e: self._event_open())
         tk.Label(ef, text="● = has code.  Double-click an event to write or open\n"
-                          "its procedure in the form's .py file.",
+                          "its procedure in the Code window (F7).",
                  justify="left", fg="gray30", font=("Helvetica", 8)).pack(anchor="w", pady=4)
 
         cf = tk.Frame(self.tabs)
@@ -299,6 +304,7 @@ class Designer:
         r.bind("<Control-o>", lambda e: self.open_dialog())
         r.bind("<Control-n>", lambda e: self.new_form() if self._ok_to_discard() else None)
         r.bind("<F5>", lambda e: self.run_form())
+        r.bind("<F7>", lambda e: self.show_code())
         for seq, fn in (("<Delete>", self.delete_selected), ("<Control-z>", self.undo),
                         ("<Control-d>", self.duplicate_selected)):
             r.bind(seq, lambda e, fn=fn: None if self._typing() else fn())
@@ -335,11 +341,17 @@ class Designer:
         except (OSError, ValueError) as e:
             messagebox.showerror("Open", f"Could not open {path}:\n{e}", parent=self.root)
             return
+        same_file = self.path == os.path.abspath(path)
+        cw = self.code_window(create=False)
+        if cw and not same_file and not cw.close():
+            return
         self.path = os.path.abspath(path)
         self.undo_stack.clear()
         self.load_spec(spec)
         self._set_dirty(False)
         self._mtime = self._disk_mtime()
+        if self._codewin and self._codewin.alive():
+            self._codewin.refresh_lists()
         self.say(f"Opened {self.path}")
 
     def load_spec(self, spec, keep_selection=None):
@@ -543,6 +555,8 @@ class Designer:
         self.handle.lift()
 
     def refresh_panels(self):
+        if self._codewin and self._codewin.alive():
+            self._codewin.refresh_lists()
         n = self.selected
         o = self.host.objects.get(n)
         self.sel_label.configure(text=f"Form  ({self.form['name']})" if n == "Form" else f"{n}   ({o.TYPE})")
@@ -800,6 +814,8 @@ class Designer:
         return c if os.path.isabs(c) else os.path.normpath(os.path.join(os.path.dirname(self.path), c))
 
     def _code_text(self):
+        if self._codewin and self._codewin.alive():
+            return self._codewin.content()
         p = self._code_path()
         try:
             with open(p, encoding="utf-8") as f:
@@ -821,8 +837,63 @@ class Designer:
             self.select(n)
             self.open_handler(n, evs[0])
 
+    def code_window(self, create=True):
+        if self._codewin and self._codewin.alive():
+            return self._codewin
+        if not create or not self._ensure_code_file():
+            return None
+        from .codeeditor import CodeWindow
+        self._codewin = CodeWindow(self)
+        return self._codewin
+
+    def show_code(self):
+        cw = self.code_window()
+        if cw:
+            cw.top.deiconify()
+            cw.top.lift()
+            cw.text.focus_set()
+            if self.selected in self.host.objects or self.selected == "Form":
+                cw.obj_box.set(self.selected)
+                cw._fill_procs()
+
+    def code_external(self):
+        if not self._ensure_code_file():
+            return
+        cw = self.code_window(create=False)
+        if cw and cw.modified and not cw.save():
+            return
+        open_in_editor(self._code_path(), 1, force_external=True)
+
+    def _ensure_code_file(self):
+        """The form needs a saved path and a code file before there can be code."""
+        if not self.path:
+            if not messagebox.askyesno("Save first", "The form needs to be saved before it can have code.\n"
+                                                     "Save it now?", parent=self.root) or not self.save_as():
+                return False
+        if not self.form.get("code"):
+            self.form["code"] = os.path.splitext(os.path.basename(self.path))[0] + ".py"
+            self._set_dirty(True)
+            self.save()
+        p = self._code_path()
+        if not os.path.exists(p):
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(f"# Event procedures for {self.form['name']}.\n"
+                        "# Name them Object_Event; each one receives the form as f,\n"
+                        "# so f.Label1.Caption = \"Hello\" works like Me.Label1.Caption.\n")
+        return True
+
     def open_handler(self, n, ev, launch_editor=True):
-        """Make sure n_ev exists in the code file (writing a stub if needed) and open it."""
+        """Make sure n_ev exists (writing a stub if needed) and show it: in the built-in
+        code window normally, in an outside editor if PANELWORKS_EDITOR is set, or just
+        written to the file when launch_editor is False (scripts and tests)."""
+        cw = self.code_window(create=False)
+        if launch_editor and not os.environ.get("PANELWORKS_EDITOR") or cw:
+            cw = cw or self.code_window()
+            if not cw:
+                return None
+            line = cw.goto(n, ev)
+            self.refresh_panels()
+            return self._code_path(), line
         if not self.path:
             if not messagebox.askyesno("Save first", "The form needs to be saved before it can have code.\n"
                                                      "Save it now?", parent=self.root) or not self.save_as():
@@ -1077,6 +1148,9 @@ class Designer:
         return True
 
     def run_form(self):
+        cw = self.code_window(create=False)
+        if cw and cw.modified and not cw.save():
+            return
         if (self.dirty or not self.path) and not self.save():
             return
         try:
@@ -1119,6 +1193,9 @@ class Designer:
         self.root.after(1500, self._watch_file)
 
     def _ok_to_discard(self):
+        cw = self.code_window(create=False)
+        if cw and not cw.close():
+            return False
         if not self.dirty:
             return True
         r = messagebox.askyesnocancel("Unsaved changes", "Save changes to this form first?", parent=self.root)

@@ -31,6 +31,7 @@ panelworks/mcp_bridge.py   <- MCP server, single-instance lock and relay
 panelworks/mqtt.py         <- MQTT control, subscribe / publish / mirror
 panelworks/webhooks.py     <- HTTP webhooks (n8n): events out, replies drive the form
 panelworks/designer.py     <- the visual form designer
+panelworks/codeeditor.py   <- its built-in Code window
 panelworks/cli.py          <- the `panelworks` command
 ```
 
@@ -111,14 +112,32 @@ The designer works the way classic RAD tools did, and needs no AI:
   nudge 1 px (Shift: 10 px). Drag the grip at the form's corner to resize the form.
 - **Properties:** pick a row, edit below. True/False and fixed choices get a drop-down,
   colours get a picker, lists are one item per line.
-- **Code:** double-click a control (or an event on the **Events** tab). The designer
-  writes a `def Command1_Click(f):` stub in the form's `.py` file and opens it in
-  VS Code if installed, otherwise Notepad (set `PANELWORKS_EDITOR` to choose).
-  It never runs the file to open it.
+- **Code:** double-click a control (or an event on the **Events** tab, or press **F7**)
+  to open the built-in **Code window**. See below.
 - **Connections:** MQTT `subscribe` / `publish` and n8n `webhook` entries for the
   selected control, or `mqtt` / `webhooks` for the form, edited as JSON.
 - **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, **F5 run**.
   Timers and MQTT controls sit in the tray under the form, as they did in VB.
+
+### The Code window
+
+![Designer with the Code window](docs/codewindow.png)
+
+Like VB's: pick an **Object** and a **Procedure** at the top to jump to it. If the
+procedure doesn't exist yet, a stub is written with `pass` selected, ready to type over.
+The dropdowns follow the cursor, and **●** marks procedures that already have code.
+`(General)` lists your own helper functions.
+
+- Python colouring, line numbers, Tab = 4 spaces, auto-indent after `:` and
+  dedent after `pass`/`return`, Shift+Tab to un-indent, Ctrl+Z / Ctrl+Y.
+- **Ctrl+S** saves after a syntax check. A mistake gets its line marked red and
+  the reason shown, so a panel never fails to start over a missing bracket.
+  **Check** runs the same test without saving.
+- **Ctrl+F** / **F3** find. **F5** saves code and form, then runs the panel.
+- **External...** opens the file in VS Code (or Notepad). Set `PANELWORKS_EDITOR`
+  to make an outside editor the default for double-clicks instead.
+- If the `.py` changes on disk (Claude, another editor) and you have no unsaved
+  edits, it reloads. If you do, it warns you before saving over it.
 
 Set a Label's **AutoSize** to True and it resizes to fit its caption and font,
 including captions your code or an MQTT subscription sets later. While it's on,
