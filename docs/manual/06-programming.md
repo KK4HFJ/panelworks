@@ -302,6 +302,55 @@ def cmdName_Click(f):
         f.Caption = name
 ```
 
+## Logging to a database (Data and Grid)
+
+A **Data** control (it sits in the tray) is a SQLite database file beside your
+form, `<form>.db` unless you set DatabaseName. Tell it what a row holds, and
+how often, in **LogFields** and **LogEvery**:
+
+```
+level = barLevel.Value
+pump = shpPump.FillColor
+temp = lblTemp.Caption
+```
+
+With LogEvery = 60, it logs a row a minute, with a timestamp, and no code. The
+columns are created for you, and adding a line later just adds a column.
+Numbers are stored as numbers. Draw a **Grid**, set its **DataSource** to the
+Data control, and it shows the newest rows, updating as they're logged.
+
+![A Data control logging to a Grid](img/data-grid.png)
+
+In code:
+
+```python
+def cmdCapture_Click(f):
+    f.datLog.Log()                                   # log the LogFields now
+
+def cmdTicket_Click(f):
+    f.datTickets.Log({"ticket": f.txtTicket.Text,    # or your own values
+                      "gross": gross, "tare": tare, "net": gross - tare})
+
+def datLog_Logged(f, row):
+    f.lblLast.Caption = f"Logged #{row['id']} at {row['time']}"
+
+def cmdExport_Click(f):
+    path = f.datLog.ExportCSV()                      # opens in Excel / LibreOffice
+    f.MsgBox(f"Saved {path}")
+
+def cmdToday_Click(f):
+    rows = f.datLog.Query("SELECT AVG(level) AS avg FROM log WHERE time >= date('now','localtime')")
+    f.lblAvg.Caption = f"Average today: {rows[0]['avg']:.1f} %"
+```
+
+**RecordSource** is the query a bound Grid shows (default: newest 100 rows).
+Set it to anything, e.g. `SELECT time, level FROM log WHERE level < 20 ORDER BY id DESC`.
+The `.db` file opens in any SQLite tool (DB Browser for SQLite is free), and
+n8n's SQLite node can read it too.
+
+A Grid can also be filled from code: set **Columns**, then `AddRow(...)`, `Clear()`,
+`Rows = [[...], [...]]`; read `Row`, `Text` and `Cell(row, column)`.
+
 ## Saving settings between runs
 
 A small JSON file next to the form is the simplest way:

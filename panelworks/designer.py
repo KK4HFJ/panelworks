@@ -43,18 +43,18 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Chart"]
-NONVISUAL_ORDER = ["Timer", "MQTT", "Serial"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Chart", "Grid"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Data"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "Chart": "Chart", "Frame": "Frame", "Timer": "Timer", "MQTT": "MQTT",
+          "ProgressBar": "Progress", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
           "Serial": "Serial"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
               "WebhookResponse": "data", "WebhookError": "message", "Error": "message",
-              "MqttError": "message", "DataArrival": "line"}
+              "MqttError": "message", "DataArrival": "line", "Logged": "row"}
 EVENT_HELP = {"Click": "is clicked", "DblClick": "is double-clicked", "Change": "text changes",
               "KeyPress": "gets a key press", "GotFocus": "gets the focus", "LostFocus": "loses the focus",
               "Timer": "interval elapses", "Load": "opens", "Unload": "closes",
@@ -62,7 +62,7 @@ EVENT_HELP = {"Click": "is clicked", "DblClick": "is double-clicked", "Change": 
               "Disconnected": "loses the broker", "Error": "has a connection error",
               "WebhookResponse": "gets a webhook reply", "WebhookError": "webhook call fails",
               "MqttError": "MQTT link has an error",
-              "DataArrival": "receives a line"}
+              "DataArrival": "receives a line", "Logged": "logs a row"}
 
 
 def rename_in_code(text, old, new, events):
@@ -133,10 +133,19 @@ class DesignHost:
     """Stands in for a running Form so real controls can live on the design
     surface: events go nowhere, timers do nothing useful, nothing connects."""
 
-    def __init__(self, canvas):
+    def __init__(self, canvas, designer=None):
         self.root = canvas
         self.objects = {}
         self._groups = {}
+        self._d = designer
+
+    @property
+    def path(self):                       # so a Data control shows where its .db will be
+        return self._d.path if self._d else None
+
+    @property
+    def spec_name(self):
+        return self._d.form.get("name", "Form1") if self._d else "Form1"
 
     def fire(self, *args, **kwargs):
         return None
@@ -421,7 +430,7 @@ class Designer:
         self.tray = tk.Frame(self.formframe, bg="gray85")
         self.tray.pack(fill="x")
         self.ws.create_window(24, 24, window=self.formframe, anchor="nw")
-        self.host = DesignHost(self.canvas)
+        self.host = DesignHost(self.canvas, self)
 
         self.grip = tk.Frame(self.canvas, width=9, height=9, bg="gray25", cursor="bottom_right_corner")
         self.grip.bind("<ButtonPress-1>", self._form_grip_press)
@@ -932,9 +941,12 @@ class Designer:
             self._tray_button(o)
         return o
 
-    def _bind_design(self, o):
-        w = o.widget
+    def _bind_design(self, o, w=None):
         n = o.Name
+        if w is None:
+            w = o.widget
+            for child in w.winfo_children():          # e.g. the table inside a Grid
+                self._bind_design(o, child)
         w.bind("<ButtonPress-1>", lambda e: self._obj_press(e, n))
         w.bind("<B1-Motion>", lambda e: self._obj_motion(e))
         w.bind("<ButtonRelease-1>", lambda e: self._drag_release(e))

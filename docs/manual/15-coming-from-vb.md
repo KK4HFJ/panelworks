@@ -40,6 +40,8 @@ chapter translates the rest.
 |---|---|
 | Label, CommandButton, TextBox, CheckBox, OptionButton, ListBox, ComboBox, Shape, Timer | Same names, same main properties and events |
 | ProgressBar (Common Controls) | ProgressBar |
+| Data control + DBGrid | **Data** (SQLite, logs rows with no code) + **Grid** |
+| MSChart | **Chart** (live trend lines) |
 | MSComm | **Serial**: whole lines, ports by name, auto-reconnect (chapter 9) |
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |

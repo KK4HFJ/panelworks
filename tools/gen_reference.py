@@ -141,6 +141,42 @@ DOC = {
         "Clear": "Remove all points.",
         "Click": "The chart is clicked.",
     },
+    "Grid": {
+        "_": "A table of rows and columns (VB's DBGrid). Set DataSource to a Data control to show its records, refreshed after every Log; or fill it from code.",
+        "DataSource": "Name of a Data control whose RecordSource this grid shows. Empty: fill it yourself.",
+        "Columns": "Column headings, one per line. Set automatically when bound to a Data control.",
+        "Rows": "All rows, as a list of lists. Setting it replaces them.",
+        "RowCount": "Number of rows. Read-only.",
+        "Row": "Index of the selected row (0 = first), or -1. Setting it selects and scrolls to that row.",
+        "Text": "The selected row's values separated by tabs. Read-only.",
+        "Enabled": "Always True.",
+        "AddRow": "`AddRow(v1, v2, ...)` or `AddRow([v1, v2])`: add a row at the end.",
+        "Clear": "Remove every row.",
+        "Cell": "`Cell(row, column)`: one value; column is a number or a heading.",
+        "Refresh": "Re-run the bound Data control's RecordSource.",
+        "Click": "A row was selected.",
+        "DblClick": "A row was double-clicked.",
+    },
+    "Data": {
+        "_": "Invisible SQLite database beside the form (VB's Data control), with no-code logging. See chapter 6, *Logging to a database*.",
+        "DatabaseName": "The database file. Empty: `<form name>.db` next to the form. A relative name is relative to the form's folder.",
+        "Path": "Full path of the database file. Read-only.",
+        "Table": "Table to log to and read from. Default `log`.",
+        "LogFields": "What a logged row holds, one per line: `column = Object.Property`, e.g. `level = barLevel.Value`. Columns are created automatically.",
+        "LogEvery": "Seconds between automatic rows (0 = only when Log() is called).",
+        "RecordSource": "The SELECT a bound Grid shows. Default: the newest 100 rows of Table.",
+        "RecordCount": "Rows in Table. Read-only.",
+        "Columns": "Column names from the last RecordSource query. Read-only.",
+        "LastError": "The last error, or empty. Read-only.",
+        "Log": "`Log()` logs the LogFields now; `Log({\"weight\": 1234, \"ticket\": \"A17\"})` logs your own values (new columns are added). Returns the row.",
+        "Query": "`Query(sql=None, params=None)`: run a SELECT, get a list of dicts. `?` placeholders with params.",
+        "Execute": "`Execute(sql, params=None)`: run any SQL (UPDATE, DELETE...); returns rows changed.",
+        "Refresh": "Re-run RecordSource and update bound Grids.",
+        "ExportCSV": "`ExportCSV(path=None, sql=None)`: write the records to a CSV file (opens in Excel); returns the path.",
+        "Clear": "Delete every row of Table. No confirmation: ask the user first.",
+        "Logged": "A row was logged. Argument: `row`, a dict including id and time.",
+        "Error": "Opening or logging failed. Argument: `message`.",
+    },
     "Timer": {
         "_": "Invisible. Fires its Timer event every Interval milliseconds while Enabled.",
         "Interval": "Milliseconds between ticks. 0 stops it.",
@@ -213,11 +249,11 @@ FORM_DOC = {
     "Unload!": "The form is closing.",
 }
 
-ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retained",
+ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retained", "Logged": "f, row",
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Frame", "Shape", "ProgressBar", "Chart", "Timer", "MQTT", "Serial"]
+         "Frame", "Shape", "ProgressBar", "Chart", "Grid", "Timer", "MQTT", "Serial", "Data"]
 
 missing = []
 
@@ -269,7 +305,7 @@ Properties marked read-only are still shown in the designer, greyed out.
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
 
-**All visible controls** (everything except Timer, MQTT and Serial) also have
+**All visible controls** (everything except Timer, MQTT, Serial and Data) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in

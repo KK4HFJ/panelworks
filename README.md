@@ -241,6 +241,8 @@ a traceback and logs the error in the event log; the app keeps running.
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
+| Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
+| Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
 | Timer | Interval (ms), Enabled | | Timer |
 | MQTT | Broker, Port, ClientID, Username, Password, Subscriptions, AutoConnect, Connected | Connect, Disconnect, Publish, Subscribe, Unsubscribe | Connected, Disconnected, MessageArrived |
 | Serial | Port, Settings, Terminator, Fill, Output, Input, Line, PortOpen, AutoOpen, AutoReconnect, DTR, RTS | Open, Close, Write, SendLine, ClearInput, ListPorts | DataArrival(line), Connected, Disconnected, Error |
@@ -551,7 +553,7 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Not yet built
 
-- Menus on panels, multiple forms, a Data control, Make EXE (in progress)
+- Menus on panels, multiple forms, Make EXE (in progress)
 - PictureBox/Canvas drawing
 
 ## License

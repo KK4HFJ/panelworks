@@ -975,6 +975,7 @@ except ImportError:        # paho-mqtt not installed
     pass
 
 from . import chart as _chart  # noqa: F401,E402  (Chart control)
+from . import data as _data  # noqa: F401,E402  (Data and Grid controls)
 
 try:                       # optional: Serial control (pyserial)
     from . import serialport as _serialport  # noqa: F401,E402

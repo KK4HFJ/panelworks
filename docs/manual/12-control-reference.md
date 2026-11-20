@@ -13,7 +13,7 @@ Properties marked read-only are still shown in the designer, greyed out.
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
 
-**All visible controls** (everything except Timer, MQTT and Serial) also have
+**All visible controls** (everything except Timer, MQTT, Serial and Data) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
@@ -468,6 +468,48 @@ A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) a
 |---|---|
 | `Name_Click(f)` | The chart is clicked. |
 
+## Grid
+
+A table of rows and columns (VB's DBGrid). Set DataSource to a Data control to show its records, refreshed after every Log; or fill it from code.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Columns | read/write | Column headings, one per line. Set automatically when bound to a Data control. |
+| DataSource | read/write | Name of a Data control whose RecordSource this grid shows. Empty: fill it yourself. |
+| Enabled | read/write | Always True. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| Height | read/write | Height in pixels. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Row | read/write | Index of the selected row (0 = first), or -1. Setting it selects and scrolls to that row. |
+| RowCount | read-only | Number of rows. Read-only. |
+| Rows | read/write | All rows, as a list of lists. Setting it replaces them. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Text | read-only | The selected row's values separated by tabs. Read-only. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| AddRow | `AddRow(v1, v2, ...)` or `AddRow([v1, v2])`: add a row at the end. |
+| Cell | `Cell(row, column)`: one value; column is a number or a heading. |
+| Clear | Remove every row. |
+| Refresh | Re-run the bound Data control's RecordSource. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f)` | A row was selected. |
+| `Name_DblClick(f)` | A row was double-clicked. |
+
 ## Timer
 
 Invisible. Fires its Timer event every Interval milliseconds while Enabled.
@@ -571,6 +613,43 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | `Name_Connected(f)` | The port opened. |
 | `Name_Disconnected(f)` | The port closed or the device was unplugged. |
 | `Name_Error(f, message)` | A problem opening or reading. Argument: `message`. |
+
+## Data
+
+Invisible SQLite database beside the form (VB's Data control), with no-code logging. See chapter 6, *Logging to a database*.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Columns | read-only | Column names from the last RecordSource query. Read-only. |
+| DatabaseName | read/write | The database file. Empty: `<form name>.db` next to the form. A relative name is relative to the form's folder. |
+| LastError | read-only | The last error, or empty. Read-only. |
+| LogEvery | read/write | Seconds between automatic rows (0 = only when Log() is called). |
+| LogFields | read/write | What a logged row holds, one per line: `column = Object.Property`, e.g. `level = barLevel.Value`. Columns are created automatically. |
+| Path | read-only | Full path of the database file. Read-only. |
+| RecordCount | read-only | Rows in Table. Read-only. |
+| RecordSource | read/write | The SELECT a bound Grid shows. Default: the newest 100 rows of Table. |
+| Table | read/write | Table to log to and read from. Default `log`. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Clear | Delete every row of Table. No confirmation: ask the user first. |
+| Execute | `Execute(sql, params=None)`: run any SQL (UPDATE, DELETE...); returns rows changed. |
+| ExportCSV | `ExportCSV(path=None, sql=None)`: write the records to a CSV file (opens in Excel); returns the path. |
+| Log | `Log()` logs the LogFields now; `Log({"weight": 1234, "ticket": "A17"})` logs your own values (new columns are added). Returns the row. |
+| Query | `Query(sql=None, params=None)`: run a SELECT, get a list of dicts. `?` placeholders with params. |
+| Refresh | Re-run RecordSource and update bound Grids. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Logged(f, row)` | A row was logged. Argument: `row`, a dict including id and time. |
+| `Name_Error(f, message)` | Opening or logging failed. Argument: `message`. |
 
 ## Events every control can also send elsewhere
 
