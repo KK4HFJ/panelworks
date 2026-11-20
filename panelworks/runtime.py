@@ -667,6 +667,8 @@ class Form:
         if self.mqtt_cfg:
             from .mqtt import Bus
             self.bus = Bus(self, self.mqtt_cfg)
+        self.web_cfg = spec.get("web")
+        self.web = None
         self.webhooks_cfg = spec.get("webhooks")
         self.hooks = None
         if self.webhooks_cfg is not None or any(
@@ -701,9 +703,24 @@ class Form:
         self._pump_after = self.root.after(20, self._pump)
         self._load_after = self.root.after(0, self._load)
 
+    def start_web(self, cfg=None):
+        """Serve the phone view (see webview.py). Returns the WebView, or None on error."""
+        from .webview import WebView
+        try:
+            self.web = WebView(self, cfg if cfg is not None else (self.web_cfg or {})).start()
+        except OSError as e:
+            print(f"[web] couldn't start the phone view: {e}")
+            self.web = None
+            return None
+        how = "PIN " + self.web.pin + (" (made up for this run: set one with \"pin\")" if self.web.pin_was_generated else "")
+        print(f"[web] phone view: {'  '.join(self.web.urls())}   {how}")
+        return self.web
+
     def _load(self):
         self._load_after = None
         self._loaded = True
+        if self.web_cfg is not None and self.web is None and self.owner is None:
+            self.start_web()
         if self.bus:
             self.bus.start()
         if self.hooks:
@@ -862,6 +879,8 @@ class Form:
                     other.m_Unload()
         self._closing = True
         self.fire("Form", "Unload")
+        if self.web:
+            threading.Thread(target=self.web.stop, daemon=True).start()
         if self.forms.get(self.spec_name) is self:
             del self.forms[self.spec_name]
         for o in self.objects.values():
@@ -927,6 +946,7 @@ class Form:
             **({"code": self.code_file} if self.code_file else {}),
             **({"mqtt": self.mqtt_cfg} if self.mqtt_cfg else {}),
             **({"webhooks": self.webhooks_cfg} if self.webhooks_cfg is not None else {}),
+            **({"web": self.web_cfg} if self.web_cfg is not None else {}),
             **({"menu": self._menu_spec()} if getattr(self, "_menu_top", None) else {}),
             "objects": {n: {"type": o.TYPE, **o.persist(),
                             **({o._bind_key: o._bind} if o._bind else {}),

@@ -56,7 +56,11 @@ def ser1_Disconnected(f):
 
 
 def ser1_Error(f, message):
-    f.lblLink.Caption = message + "   (demo: run examples/truck_scale/scale_sim.py)"
+    if f.ser1.Port.startswith("socket://127.0.0.1") and ("10061" in message or "refused" in message.lower()):
+        # the demo address and nothing listening: say what to do first
+        f.lblLink.Caption = "No scale yet: start the simulator (examples\\truck_scale\\scale_sim.py); it connects by itself."
+    else:
+        f.lblLink.Caption = message
 
 
 # ---- weighing ----------------------------------------------------------------------

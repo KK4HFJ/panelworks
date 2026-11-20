@@ -28,6 +28,10 @@ def main():
     ap.add_argument("--mcp", choices=["http", "stdio", "none"], default="http")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--web", nargs="?", const=8080, type=int, metavar="PORT",
+                    help="serve the phone view on this port (default 8080)")
+    ap.add_argument("--pin", help="PIN for the phone view (default: the form's, or a random one)")
+    ap.add_argument("--readonly", action="store_true", help="phone view can look but not touch")
     a = ap.parse_args()
 
     if a.design:
@@ -52,6 +56,15 @@ def main():
         sys.exit(f"{a.form} is already open in another window.")
 
     form = load_form(a.form)
+    if a.web or a.pin or a.readonly:
+        cfg = dict(form.web_cfg or {})
+        if a.web:
+            cfg["port"] = a.web
+        if a.pin:
+            cfg["pin"] = a.pin
+        if a.readonly:
+            cfg["readonly"] = True
+        form.web_cfg = cfg
     if ctl:
         mcp_bridge.serve_control(ctl, form)
     if a.mcp != "none":

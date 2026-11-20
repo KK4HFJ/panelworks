@@ -308,6 +308,7 @@ class Designer:
         m.add_cascade(label="Format", menu=fm)
         tl = tk.Menu(m, tearoff=0)
         tl.add_command(label="Menu Editor...", accelerator="Ctrl+E", command=self.menu_editor)
+        tl.add_command(label="Phone View...", command=lambda: self.phone_view())
         m.add_cascade(label="Tools", menu=tl)
         h = tk.Menu(m, tearoff=0)
         h.add_command(label="Check for Updates...", command=lambda: self.updates_dialog())
@@ -649,6 +650,62 @@ class Designer:
         for aid in self.root.tk.call("after", "info"):
             self.root.tk.call("after", "cancel", aid)
         self.root.destroy()
+
+    # ------------------------------------------------------------ phone view
+    def phone_view(self):
+        """Tools > Phone View: serve this panel to phones on the home network."""
+        cfg = dict(self.extras.get("web") or {})
+        top = tk.Toplevel(self.root)
+        top.title("Phone View")
+        top.transient(self.root)
+        top.resizable(False, False)
+        f = tk.Frame(top, padx=12, pady=10)
+        f.pack()
+        on = tk.BooleanVar(top, "web" in self.extras)
+        port = tk.StringVar(top, str(cfg.get("port", 8080)))
+        pin = tk.StringVar(top, str(cfg.get("pin", "${PANELWORKS_PIN}")))
+        ro = tk.BooleanVar(top, bool(cfg.get("readonly", False)))
+        tk.Checkbutton(f, text="Serve this panel to phones on my network while it runs", variable=on,
+                       font=("Helvetica", 10, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
+        tk.Label(f, text="Port").grid(row=1, column=0, sticky="w", pady=3)
+        tk.Entry(f, textvariable=port, width=8).grid(row=1, column=1, sticky="w")
+        tk.Label(f, text="PIN").grid(row=2, column=0, sticky="w", pady=3)
+        tk.Entry(f, textvariable=pin, width=24).grid(row=2, column=1, sticky="w")
+        tk.Checkbutton(f, text="Read-only (phones can look but not touch)", variable=ro).grid(
+            row=3, column=0, columnspan=2, sticky="w")
+        tk.Label(f, justify="left", fg="gray30", font=("Helvetica", 8), text=(
+            "Leave the PIN as ${PANELWORKS_PIN} and set it once with  setx PANELWORKS_PIN 4321\n"
+            "so it isn't in the form file. With no PIN set, a random one is made each run.\n"
+            "When the panel runs, the Immediate window (Ctrl+G) shows the address and PIN.\n"
+            "Away from home: use Tailscale on the PC and phone; don't open a port on the router.")
+                 ).grid(row=4, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+        def ok():
+            if on.get():
+                try:
+                    p = int(port.get())
+                    assert 1024 <= p <= 65535
+                except (ValueError, AssertionError):
+                    return messagebox.showerror("Phone View", "Port: a number from 1024 to 65535.", parent=top)
+                new = {"port": p, "pin": pin.get().strip()}
+                if ro.get():
+                    new["readonly"] = True
+                self._checkpoint()
+                self.extras["web"] = new
+            else:
+                self._checkpoint()
+                self.extras.pop("web", None)
+            self._set_dirty(True)
+            self.refresh_panels()
+            top.destroy()
+            self.say("Phone view " + ("on: press Start, then Ctrl+G shows the address and PIN." if on.get() else "off."))
+
+        bar = tk.Frame(top, padx=12, pady=8)
+        bar.pack(fill="x")
+        tk.Button(bar, text="Cancel", width=9, command=top.destroy).pack(side="right")
+        tk.Button(bar, text="OK", width=9, command=ok).pack(side="right", padx=6)
+        self._phone = {"top": top, "on": on, "port": port, "pin": pin, "ro": ro, "ok": ok}
+        return top
 
     # ------------------------------------------------------------ Make EXE
     def make_exe(self, start=False):
@@ -1531,9 +1588,10 @@ class Designer:
         # connections
         self.conn_text.delete("1.0", "end")
         if n == "Form":
-            data = {k: self.extras[k] for k in ("mqtt", "webhooks") if k in self.extras}
-            self.conn_help.configure(text='Form-level links, e.g. "mqtt": {"broker": "localhost"} and '
-                                          '"webhooks": {"baseUrl": "${N8N_WEBHOOK_BASE}"}. See manual chapters 8 and 10.')
+            data = {k: self.extras[k] for k in ("mqtt", "webhooks", "web") if k in self.extras}
+            self.conn_help.configure(text='Form-level links, e.g. "mqtt": {"broker": "localhost"}, '
+                                          '"webhooks": {"baseUrl": "${N8N_WEBHOOK_BASE}"}, "web": {"pin": "${PANELWORKS_PIN}"} '
+                                          '(phone view). See manual chapters 8, 10 and 11.')
         else:
             data = {}
             if o._bind:
@@ -1779,11 +1837,11 @@ class Designer:
         n = self.selected
         self._checkpoint()
         if n == "Form":
-            bad = set(data) - {"mqtt", "webhooks"}
+            bad = set(data) - {"mqtt", "webhooks", "web"}
             if bad:
-                messagebox.showerror("Connections", f"Form level takes mqtt and webhooks, not {', '.join(bad)}", parent=self.root)
+                messagebox.showerror("Connections", f"Form level takes mqtt, webhooks and web, not {', '.join(bad)}", parent=self.root)
                 return
-            for k in ("mqtt", "webhooks"):
+            for k in ("mqtt", "webhooks", "web"):
                 if k in data:
                     self.extras[k] = data[k]
                 else:

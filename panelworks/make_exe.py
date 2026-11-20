@@ -110,7 +110,7 @@ def build(form, name=None, console=False, out_dir=None, log=print):
         shutil.copytree(d, os.path.join(app, os.path.basename(d)))
     launcher = os.path.join(work, f"{name}.py")
     open(launcher, "w", encoding="utf-8").write(LAUNCHER.format(main=os.path.basename(form)))
-    hidden = ["panelworks.chart", "panelworks.data", "panelworks.menus"]
+    hidden = ["panelworks.chart", "panelworks.data", "panelworks.menus", "panelworks.webview"]
     for opt in ("paho.mqtt.client", "serial", "serial.tools.list_ports"):
         if importlib.util.find_spec(opt.split(".")[0]) is not None:
             hidden.append(opt)
