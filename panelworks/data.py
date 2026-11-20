@@ -75,7 +75,12 @@ class Data(VBObject):
             self._error(f"opening {self.get_Path()}: {e}")
             return
         self._schedule()
-        self._notify_grids()
+        # fill bound grids after Form_Load, which may still be adding columns to a new database
+        root = getattr(self._form, "root", None)
+        if root is not None:
+            root.after(0, self._notify_grids)
+        else:
+            self._notify_grids()
 
     def destroy(self):
         object.__setattr__(self, "_every", 0)

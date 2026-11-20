@@ -39,6 +39,7 @@ complete description.
 | `backColor` | | Window background colour. |
 | `mqtt` | | Form-level MQTT connection (chapter 8). |
 | `webhooks` | | Form-level n8n/webhook settings (chapter 10). |
+| `web` | | The phone view: `port`, `pin`, `readonly`, `host` (chapter 16). |
 | `menu` | | The menu bar: a list of items, each with `name`, `caption` and optional `shortcut`, `checked`, `enabled`, `visible`, and `items` for a submenu. `{"caption": "-"}` is a separator. The Menu Editor writes it. |
 | `objects` | | The controls, by name. |
 

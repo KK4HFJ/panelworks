@@ -130,7 +130,7 @@ def snapshot(form):
     from .menus import MenuItem
     def walk(nodes, path):
         for it in nodes or []:
-            if isinstance(it, MenuItem) and it._visible:
+            if isinstance(it, MenuItem) and it._visible and it._phone:
                 label = path + it._caption.replace("&&", "\0").replace("&", "").replace("\0", "&")
                 if it._children:
                     walk(it._children, label + " › ")
@@ -148,6 +148,8 @@ def act(form, req):
     o = form.obj(name)
     if o.TYPE in HIDDEN_TYPES and o.TYPE != "Menu":
         raise ValueError("not a control")
+    if o.TYPE == "Menu" and not (o._phone and o._visible):
+        raise ValueError("that menu item isn't available on the phone")
     if o.TYPE != "Menu" and (not o.get_Visible() or not o.get_Enabled()):
         raise ValueError(f"{name} is disabled")
     t = o.TYPE
@@ -347,6 +349,8 @@ main{padding:10px;max-width:640px;margin:0 auto}
 .card>h2{font-size:14px;color:#555;margin:0 0 6px;font-weight:600}
 .row{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
 .row>*{flex:1 1 auto}.lbl{min-width:0;overflow-wrap:anywhere}.lbl.big{font-weight:700}
+.row.pair>.lbl:first-child{flex:0 0 32%;color:#444}.row.pair>:nth-child(2){flex:1 1 60%}
+.block{margin:10px 0}.block>.lbl{margin-bottom:4px}
 .lamp{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid #333}.lamp.sq{border-radius:4px}
 button.cmd{width:100%;font-size:17px;padding:13px;border:0;border-radius:10px;background:var(--blue);color:#fff}
 button.cmd:disabled{background:#b8c0cc}
@@ -412,14 +416,27 @@ function render(it){
   case'Chart':return chart(it);
   case'Grid':return `<div class="grid" style="flex:1 1 100%"><table><tr>${it.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${it.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
   default:return ''}}
+const FIELDS=['TextBox','ComboBox'];
+function rowHtml(r){const pair=r.length==2&&r[0].type=='Label'&&FIELDS.includes(r[1].type);
+  return `<div class="row${pair?' pair':''}">${r.map(render).join('')}</div>`}
+function blocks(items){ // a label right above a control is its caption: keep them together
+  const used=new Set(),out=[];
+  const CAPTIONED=['ListBox','Grid','Chart','TextBox','ComboBox','ProgressBar'];
+  const sameRow=lb=>items.some(c=>c!==lb&&c.type!='Label'&&Math.abs((c.y+c.h/2)-(lb.y+lb.h/2))<Math.max(12,lb.h/2));
+  for(const lb of items.filter(i=>i.type=='Label'&&!sameRow(i))){
+    const below=items.find(c=>!used.has(c.name)&&CAPTIONED.includes(c.type)&&Math.abs(c.x-lb.x)<16&&c.y>=lb.y+lb.h-4&&c.y-(lb.y+lb.h)<14&&c.w>lb.w*0.6);
+    if(below&&!used.has(lb.name)){used.add(lb.name);used.add(below.name);
+      out.push({y:lb.y,x:lb.x,html:`<div class="block">${render(lb)}${rowHtml([below])}</div>`})}}
+  for(const r of rows(items.filter(i=>!used.has(i.name))))out.push({y:r[0].y,x:r[0].x,html:rowHtml(r)});
+  return out}
 function draw(s){
   if(editing)return;                       // don't replace a field while it's being typed in
   $('#title').textContent=s.caption;document.title=s.caption;document.body.classList.toggle('ro',s.readonly);
   const top=s.items.filter(i=>!i.frame&&i.type!='Frame'),frames=s.items.filter(i=>i.type=='Frame');
-  const blocks=[...rows(top).map(r=>({y:r[0].y,html:`<div class="row">${r.map(render).join('')}</div>`})),
-    ...frames.map(f=>({y:f.y,html:`<div class="card${f.enabled?'':' off'}"><h2>${esc(f.caption)}</h2>${rows(s.items.filter(i=>i.frame==f.name)).map(r=>`<div class="row">${r.map(render).join('')}</div>`).join('')}</div>`}))]
-    .sort((a,b)=>a.y-b.y);
-  const html=`<div class="card">`+blocks.map(b=>b.html.startsWith('<div class="card')?'</div>'+b.html+'<div class="card">':b.html).join('')+`</div>`;
+  const all=[...blocks(top),
+    ...frames.map(f=>({y:f.y,x:f.x,html:`<div class="card${f.enabled?'':' off'}"><h2>${esc(f.caption)}</h2>${blocks(s.items.filter(i=>i.frame==f.name)).sort((a,b)=>a.y-b.y||a.x-b.x).map(b=>b.html).join('')}</div>`}))]
+    .sort((a,b)=>a.y-b.y||a.x-b.x);
+  const html=`<div class="card">`+all.map(b=>b.html.startsWith('<div class="card')?'</div>'+b.html+'<div class="card">':b.html).join('')+`</div>`;
   $('#main').innerHTML=html.replace(/<div class="card"><\/div>/g,'');
   $('#menuBtn').style.display=s.menu.length?'':'none';
   $('#menuItems').innerHTML=s.menu.map(m=>`<button${m.enabled?'':' disabled'} onclick="$('#menu').style.display='none';act('${m.name}','click')">${m.checked?'✓ ':''}${esc(m.caption)}</button>`).join('');

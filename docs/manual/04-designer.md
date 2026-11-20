@@ -56,7 +56,8 @@ The mouse position (form coordinates) is shown in the status bar while you draw.
    separator line. A **Name** is suggested as you type (`mnuFile`, then
    `mnuFileExport` for an item under it); type your own to override.
 2. Optionally pick a **Shortcut** (Ctrl+E, F5...) and tick **Checked**,
-   **Enabled**, **Visible**.
+   **Enabled**, **Visible**, and **On phone** (untick for items like Exit that
+   shouldn't be offered in the phone view, chapter 16).
 3. **Next** adds an item below; **Insert** adds one above. **→** indents the item
    under the one above it (a submenu item), **←** takes it back out. **↑ ↓** move it.
 4. **OK**. The menu shows as a strip at the top of the form; click it to edit again.

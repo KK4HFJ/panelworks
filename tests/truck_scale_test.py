@@ -26,14 +26,14 @@ pump(2)
 check("connects to the scale", f.lblLink.Caption.startswith("Scale connected"), f.lblLink.Caption)
 scale.put(61240); pump(0.6)
 check("in motion: amber, buttons off", f.lblState.Caption == "in motion: wait" and not f.cmdIn.Enabled, f.lblState.Caption)
-pump(4)
+pump(7)
 check("settles: stable, weight shown", f.lblState.Caption == "stable" and f.lblWeight.Caption == "61,240", f.lblWeight.Caption)
 f.txtPlate.Text = "tn 4kx-221"; f.txtCust.Text = "Dale Hollow Salvage"; f.cboMat.Text = "Aluminum"
 f.cmdIn.Click(); pump(0.3)
 check("weigh in puts the truck on the yard list", f.lstYard.ListCount == 1 and "TN 4KX-221" in f.lstYard.List[0], f.lstYard.List)
 scale.put(0); pump(5)
 check("empty platform: can't weigh", not f.cmdIn.Enabled)
-scale.put(27880); pump(5)
+scale.put(27880); pump(7)
 f.lstYard.ListIndex = 0; pump(0.3)
 check("Weigh OUT enabled once a yard truck is picked and stable", f.cmdOut.Enabled)
 f.cmdOut.Click(); pump(0.5)
@@ -45,7 +45,7 @@ scale.put(130000); pump(5)
 check("overload is flagged red", f.lblState.Caption == "OVERLOAD" and f.shpState.FillColor == "red")
 scale.put(0); pump(4)
 # the yard survives a restart
-scale.put(45000); pump(5); f.txtPlate.Text = "KY 88"; f.cmdIn.Click(); pump(0.3)
+scale.put(45000); pump(7); f.txtPlate.Text = "KY 88"; f.cmdIn.Click(); pump(0.3)
 if "--shot" in sys.argv:
     scale.put(52000); pump(1.2)
     subprocess.run(["import", "-window", "root", "-crop", f"{f.root.winfo_width()}x{f.root.winfo_height()}+0+0",
@@ -58,4 +58,27 @@ check("menu: Export CSV", (g.mnuFileExport.Click(), os.path.exists(os.path.join(
 g.mnuViewChart.Click()
 check("menu: View > Chart toggles the chart", not g.chtWeight.Visible and not g.mnuViewChart.Checked)
 g.m_Unload(); g.root.update(); stop.set()
+
+# ---- error log: indicator + View > Error log (a second form) -----------------------
+from panelworks import util
+copy_dir = tempfile.mkdtemp()
+dest = util.copy_example(os.path.join(ROOT, "examples", "truck_scale.json"), copy_dir)
+check("File > Examples copies the log form too", os.path.exists(os.path.join(copy_dir, "truck_scale_log.json"))
+      and os.path.exists(os.path.join(copy_dir, "truck_scale_log.py")))
+check("the log form isn't listed as its own example", all(st != "truck_scale_log" for st, _, _ in util.list_examples()))
+h = load_form(dest)                          # no simulator now: errors pile up in the log
+h.root.after(1500, h.root.quit); h.root.mainloop()
+check("problems show only a short indicator", h.lblAlert.Caption.startswith("⚠") and len(h.lblLink.Caption) < 60,
+      (h.lblAlert.Caption, h.lblLink.Caption))
+h.mnuViewLog.Click(); h.root.update()
+lw = h.Forms.get("ScaleLog")
+check("View > Error log opens the log with the details", lw is not None and lw.lstLog.ListCount >= 1
+      and any("scale_sim" in x for x in lw.lstLog.List) and not any("no such column" in x for x in lw.lstLog.List),
+      lw and lw.lstLog.List)
+check("opening the log clears the indicator", h.lblAlert.Caption == "")
+h.code.note(h, "test problem"); h.root.update()
+check("new entries appear in the open log, newest first", lw.lstLog.List[0].endswith("test problem") and h.lblAlert.Caption)
+lw.cmdClear.Click()
+check("Clear empties it", lw.lstLog.ListCount == 0 and h.code.log == [])
+h.m_Unload(); h.root.update()
 print("ALL PASS" if ok else "SOME CHECKS FAILED")

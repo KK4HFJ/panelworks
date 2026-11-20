@@ -64,7 +64,7 @@ def tk_sequence(shortcut):
 
 
 # ---- flat (Menu Editor) <-> tree (form file) -------------------------------------------
-FIELDS = ("caption", "name", "shortcut", "checked", "enabled", "visible")
+FIELDS = ("caption", "name", "shortcut", "checked", "enabled", "visible", "phone")
 
 
 def tree_to_flat(tree, level=0):
@@ -72,7 +72,8 @@ def tree_to_flat(tree, level=0):
     for it in tree or []:
         flat.append({"level": level, "caption": it.get("caption", ""), "name": it.get("name", ""),
                      "shortcut": it.get("shortcut", ""), "checked": bool(it.get("checked", False)),
-                     "enabled": bool(it.get("enabled", True)), "visible": bool(it.get("visible", True))})
+                     "enabled": bool(it.get("enabled", True)), "visible": bool(it.get("visible", True)),
+                     "phone": bool(it.get("phone", True))})
         flat += tree_to_flat(it.get("items"), level + 1)
     return flat
 
@@ -91,6 +92,8 @@ def flat_to_tree(flat):
             node["enabled"] = False
         if not e.get("visible", True):
             node["visible"] = False
+        if not e.get("phone", True):
+            node["phone"] = False
         lvl = min(e["level"], stack[-1][0] + 1)          # can't skip a level
         while stack[-1][0] >= lvl:
             stack.pop()
@@ -139,7 +142,8 @@ class MenuItem(VBObject):
         super().__init__(form, name, {})
         for k, v in dict(_caption=spec.get("caption", name), _shortcut=spec.get("shortcut", ""),
                          _checked=bool(spec.get("checked", False)), _enabled=bool(spec.get("enabled", True)),
-                         _visible=bool(spec.get("visible", True)), _children=[]).items():
+                         _visible=bool(spec.get("visible", True)), _phone=bool(spec.get("phone", True)),
+                         _children=[]).items():
             object.__setattr__(self, k, v)
 
     def _changed(self):
@@ -153,6 +157,8 @@ class MenuItem(VBObject):
     def set_Enabled(self, v): object.__setattr__(self, "_enabled", bool(v)); self._changed()
     def get_Visible(self): return self._visible
     def set_Visible(self, v): object.__setattr__(self, "_visible", bool(v)); self._changed()
+    def get_Phone(self): return self._phone
+    def set_Phone(self, v): object.__setattr__(self, "_phone", bool(v))
     def get_Shortcut(self): return self._shortcut
     def set_Shortcut(self, v):
         tk_sequence(v)
@@ -173,6 +179,8 @@ class MenuItem(VBObject):
             node["enabled"] = False
         if not self._visible:
             node["visible"] = False
+        if not self._phone:
+            node["phone"] = False
         if self._children:
             node["items"] = [c.to_spec() if isinstance(c, MenuItem) else {"caption": "-"}
                              for c in self._children]

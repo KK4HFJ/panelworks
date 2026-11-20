@@ -22,7 +22,8 @@ A printable A4 copy of this whole manual is
 13. [Example panels](13-examples.md): what each example shows
 14. [Troubleshooting](14-troubleshooting.md): problems and cures
 15. [Coming from Visual Basic](15-coming-from-vb.md): VB6 to PanelWorks, side by side
-16. [Appendix](16-appendix.md): shortcuts, command line, signatures
+16. [Phone view](16-phone-view.md): use any panel from a phone, safely
+17. [Appendix](99-appendix.md): shortcuts, command line, signatures
 
 *PanelWorks is by Steve Spence (KK4HFJ), kk4hfj.com. MIT licence.*
 

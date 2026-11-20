@@ -144,6 +144,8 @@ The designer works the way classic RAD tools did, and needs no AI:
   each item has a Click event (`mnuFileExit_Click`) and Checked/Enabled/Visible/Shortcut.
 - **Several at once:** drag a box or Ctrl+click to select several controls; move, nudge,
   delete or set a property on all of them; **Format** menu to align, make same size, space evenly.
+- **Phone view:** any running panel on a phone, laid out automatically: Tools → Phone View,
+  or `--web`. PIN-protected, read-only option; use Tailscale away from home.
 - **Updates:** the designer checks GitHub once a day; an orange **⬆ Update** button
   shows what's new and runs `git pull` for you (Help → Check for Updates).
 - **Immediate window (Ctrl+G):** live `print()` output and errors from the running

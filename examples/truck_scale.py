@@ -3,12 +3,43 @@
 # ticket records net = gross - tare. Trucks on the yard are kept in a table,
 # so nothing is lost if the PC restarts mid-shift.
 import re
+import time
 
 MIN_WEIGHT = 2000          # lb: below this the platform counts as empty
 LINE = re.compile(r"^(ST|US|OL),(GS|NT),([+-]?\d+)\s*(lb|kg)", re.I)
 
 weight = 0                 # last reading
 stable = False
+log = []                   # problems and connection changes, shown by View > Error log
+unread = 0
+
+
+def note(f, text, problem=True):
+    """Add to the error log; problems light the red indicator until the log is opened."""
+    global unread
+    line = time.strftime("%H:%M:%S  ") + text
+    log.append(line)
+    del log[:-500]
+    if problem:
+        unread += 1
+        f.lblAlert.Caption = f"\u26a0 {unread} new problem{'s' if unread != 1 else ''}"
+    if "ScaleLog" in f.Forms:                       # the log window is open: add it there too
+        f.Forms["ScaleLog"].lstLog.AddItem(line, 0)
+
+
+def show_log(f):
+    global unread
+    unread = 0
+    f.lblAlert.Caption = ""
+    f.Show("ScaleLog")
+
+
+def lblAlert_Click(f):
+    show_log(f)
+
+
+def mnuViewLog_Click(f):
+    show_log(f)
 
 
 def Form_Load(f):
@@ -47,20 +78,29 @@ def lamp(f, colour, text):
 
 
 def ser1_Connected(f):
-    f.lblLink.Caption = f"Scale connected on {f.ser1.DeviceName}"
+    f.lblLink.Caption = f"Scale connected ({f.ser1.DeviceName})"
+    note(f, f"Scale connected on {f.ser1.DeviceName}", problem=False)
 
 
 def ser1_Disconnected(f):
     lamp(f, "gray", "no scale")
-    f.lblLink.Caption = "Scale disconnected, waiting for it..."
+    f.lblLink.Caption = "Scale not connected, waiting for it..."
+    note(f, "Scale disconnected")
 
 
 def ser1_Error(f, message):
+    f.lblLink.Caption = "Scale not connected, waiting for it..."
     if f.ser1.Port.startswith("socket://127.0.0.1") and ("10061" in message or "refused" in message.lower()):
-        # the demo address and nothing listening: say what to do first
-        f.lblLink.Caption = "No scale yet: start the simulator (examples\\truck_scale\\scale_sim.py); it connects by itself."
-    else:
-        f.lblLink.Caption = message
+        message += "  -> demo: start examples\\truck_scale\\scale_sim.py; the panel connects by itself"
+    note(f, message)
+
+
+def datTickets_Error(f, message):
+    note(f, "Tickets database: " + message)
+
+
+def datYard_Error(f, message):
+    note(f, "Yard database: " + message)
 
 
 # ---- weighing ----------------------------------------------------------------------

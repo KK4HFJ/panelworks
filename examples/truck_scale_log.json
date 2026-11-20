@@ -1,0 +1,32 @@
+{
+  "name": "ScaleLog",
+  "caption": "Truck Scale - Error log",
+  "code": "truck_scale_log.py",
+  "width": 560,
+  "height": 300,
+  "objects": {
+    "lstLog": {
+      "type": "ListBox",
+      "Left": 10,
+      "Top": 10,
+      "Width": 540,
+      "Height": 240
+    },
+    "cmdClear": {
+      "type": "CommandButton",
+      "Caption": "Clear",
+      "Left": 10,
+      "Top": 260,
+      "Width": 90,
+      "Height": 30
+    },
+    "cmdClose": {
+      "type": "CommandButton",
+      "Caption": "Close",
+      "Left": 460,
+      "Top": 260,
+      "Width": 90,
+      "Height": 30
+    }
+  }
+}

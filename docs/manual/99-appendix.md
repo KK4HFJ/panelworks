@@ -44,6 +44,7 @@ panelworks FORM.json --mcp stdio          run for Claude Desktop / Claude Code (
 panelworks FORM.json --mcp none           run as a plain desktop app
 panelworks FORM.json --port 8766          MCP HTTP on another port
 panelworks FORM.json --host 0.0.0.0       MCP HTTP reachable from the network (careful)
+panelworks FORM.json --web [PORT] [--pin 4321] [--readonly]   phone view (chapter 16)
 panelworks --design [FORM.json]           open the designer
 panelworks-designer [FORM.json]           same
 panelworks --version
@@ -56,6 +57,7 @@ python -m panelworks ...                  if the command isn't on the PATH
 | Variable | Used for |
 |---|---|
 | `PANELWORKS_EDITOR` | Open code in this editor instead of the built-in Code window |
+| `PANELWORKS_PIN` | The phone view's PIN, when the form says `"pin": "${PANELWORKS_PIN}"` |
 | Any `${NAME}` in a form | Values in `mqtt`, `webhooks`, MQTT control connection properties (chapter 7) |
 
 ## Files

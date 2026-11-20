@@ -87,4 +87,19 @@ check("live state reflects changes", any(i["name"] == "txtSetpoint" and i["text"
 check("5 wrong PINs lock logins", "Too many" in results["lockout"])
 check("read-only refuses actions", results["ro"][0] == 403)
 f.m_Unload(); f.root.update()
+# menu items marked phone: false are left off the phone and refused
+import types as _t
+from panelworks.runtime import Form
+from panelworks import webview
+g = Form({"name": "Mn", "menu": [{"name": "mnuFile", "caption": "&File", "items": [
+    {"name": "mnuFileExport", "caption": "&Export"}, {"name": "mnuFileExit", "caption": "E&xit", "phone": False}]}],
+    "objects": {"lbl": {"type": "Label"}}})
+g.root.after(50, g.root.quit); g.root.mainloop()
+menu = [m["name"] for m in webview.snapshot(g)["menu"]]
+check("menu items marked 'not on phone' are left off", menu == ["mnuFileExport"], menu)
+try:
+    webview.act(g, {"object": "mnuFileExit", "action": "click"}); check("...and refused if tapped anyway", False)
+except ValueError:
+    check("...and refused if tapped anyway", True)
+g.m_Unload(); g.root.update()
 print("ALL PASS" if ok else "SOME CHECKS FAILED")

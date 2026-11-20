@@ -671,6 +671,7 @@ item is an object named in the editor, e.g. `mnuFileExit`.
 | Enabled | read/write | False greys the item out. |
 | Visible | read/write | False hides the item. |
 | Shortcut | read/write | Key that chooses it: `Ctrl+O`, `Ctrl+Shift+S`, `F5`... |
+| Phone | read/write | False leaves the item off the phone view's menu (chapter 16). |
 
 **Methods**
 

@@ -82,4 +82,5 @@ PanelWorks fixes some of VB's long-standing annoyances:
 - **Chapter 12** is the complete control reference.
 - **Chapters 13–15** cover the example panels, troubleshooting, and a
   translation guide for VB programmers.
+- **Chapter 16** covers the phone view: any running panel, on a phone.
 - **The appendix** lists keyboard shortcuts and command-line options.

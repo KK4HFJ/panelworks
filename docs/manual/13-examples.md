@@ -124,14 +124,17 @@ make it real.
 
 `examples/truck_scale.json` + `truck_scale.py`, simulator `examples/truck_scale/scale_sim.py`
 
-The most complete example. A scale indicator's continuous output arrives over
+The most complete example (also shown on a phone in chapter 16). A scale indicator's continuous output arrives over
 **Serial**; the panel shows the weight big, a lamp for stable / in motion /
 overload, and a **Chart** of the platform. A loaded truck **weighs in** (gross);
 after unloading it **weighs out** (tare); the ticket (plate, customer, material,
 gross, tare, net) goes into a **Data** table and shows in a **Grid**. Weighing is
 only allowed when the reading is stable. Trucks on the yard are kept in their
 own table, so nothing is lost if the PC restarts mid-shift. There's a **Frame**
-for the truck details, and a **menu**: File → Export tickets to CSV, View → Weight chart.
+for the truck details, and a **menu**: File → Export tickets to CSV, View → Weight chart,
+View → Error log. Problems (scale disconnected, database errors) go into an
+**error log** in a second window, and only a red *⚠ 1 new problem* indicator shows
+on the panel. Click it, or press Ctrl+L, to read them.
 
 Without a scale, run the simulator first. It pretends to be an indicator,
 trucks arriving by themselves, and you can type a weight to put one on:

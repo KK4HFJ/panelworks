@@ -827,7 +827,7 @@ class Designer:
         f = tk.Frame(top, padx=10, pady=8)
         f.pack(fill="both")
         v = {k: tk.StringVar(top) for k in ("caption", "name", "shortcut")}
-        b = {k: tk.BooleanVar(top, k != "checked") for k in ("checked", "enabled", "visible")}
+        b = {k: tk.BooleanVar(top, k != "checked") for k in ("checked", "enabled", "visible", "phone")}
         tk.Label(f, text="Caption:").grid(row=0, column=0, sticky="w")
         e_cap = tk.Entry(f, textvariable=v["caption"], width=28)
         e_cap.grid(row=0, column=1, columnspan=2, sticky="w", pady=2)
@@ -837,7 +837,8 @@ class Designer:
         ttk.Combobox(f, textvariable=v["shortcut"], values=KEYS, width=14).grid(row=2, column=1, sticky="w", pady=2)
         opts = tk.Frame(f)
         opts.grid(row=3, column=0, columnspan=4, sticky="w", pady=(2, 6))
-        for k, label in (("checked", "Checked"), ("enabled", "Enabled"), ("visible", "Visible")):
+        for k, label in (("checked", "Checked"), ("enabled", "Enabled"), ("visible", "Visible"),
+                         ("phone", "On phone")):
             tk.Checkbutton(opts, text=label, variable=b[k]).pack(side="left", padx=(0, 10))
         tk.Label(f, text="Use & before the access key (&File), and - for a separator line.",
                  fg="gray40", font=("Helvetica", 8)).grid(row=4, column=0, columnspan=4, sticky="w")
@@ -866,7 +867,7 @@ class Designer:
         def load(i):
             state["i"], state["loading"] = i, True
             e = flat[i] if i is not None else {"caption": "", "name": "", "shortcut": "",
-                                                "checked": False, "enabled": True, "visible": True}
+                                                "checked": False, "enabled": True, "visible": True, "phone": True}
             for k in v:
                 v[k].set(e.get(k, ""))
             for k in b:
@@ -923,7 +924,7 @@ class Designer:
             lvl = flat[i]["level"] if i is not None else 0
             at = (i + 1 if after else i) if i is not None else len(flat)
             flat.insert(at, {"level": lvl, "caption": "", "name": "", "shortcut": "",
-                             "checked": False, "enabled": True, "visible": True})
+                             "checked": False, "enabled": True, "visible": True, "phone": True})
             redraw(at)
             e_cap.focus_set()
 
@@ -955,8 +956,8 @@ class Designer:
                     code, procs, refs = rename_in_code(code, old, e["name"], ["Click"])
                     if procs or refs:
                         renamed.append(f"{old} -> {e['name']}")
-            tree = flat_to_tree([{k: e[k] for k in ("level",) + tuple(("caption", "name", "shortcut",
-                                 "checked", "enabled", "visible"))} for e in flat])
+            tree = flat_to_tree([{k: e.get(k, True) for k in ("level",) + tuple(("caption", "name", "shortcut",
+                                 "checked", "enabled", "visible", "phone"))} for e in flat])
             if tree:
                 self.extras["menu"] = tree
             else:

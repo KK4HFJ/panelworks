@@ -121,8 +121,9 @@ def list_examples():
     if not d:
         return []
     out = []
+    stems = [n[:-5] for n in os.listdir(d) if n.endswith(".json")]
     for name in sorted(os.listdir(d), key=lambda n: (EXAMPLE_ORDER.index(n[:-5]) if n[:-5] in EXAMPLE_ORDER else 99, n)):
-        if name.endswith(".json"):
+        if name.endswith(".json") and not any(name.startswith(st + "_") for st in stems if st != name[:-5]):
             p = os.path.join(d, name)
             try:
                 with open(p, encoding="utf-8-sig") as f:
@@ -150,6 +151,16 @@ def copy_example(src, dest_dir, replace=False):
     files = [stem + ".json"]
     if spec.get("code") and not os.path.isabs(spec["code"]):
         files.append(spec["code"])
+    for fn in os.listdir(sdir):                      # companion forms: truck_scale_log.json + its code
+        if fn.startswith(stem + "_") and fn.endswith(".json"):
+            files.append(fn)
+            try:
+                with open(os.path.join(sdir, fn), encoding="utf-8-sig") as fh:
+                    c = json.load(fh).get("code")
+                if c and not os.path.isabs(c):
+                    files.append(c)
+            except (OSError, ValueError):
+                pass
     for rel in files:
         if os.path.exists(os.path.join(sdir, rel)):
             shutil.copy2(os.path.join(sdir, rel), os.path.join(dest_dir, rel))
