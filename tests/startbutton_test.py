@@ -21,4 +21,23 @@ d.btn_end.invoke(); d.root.update()
 check("End stops it", proc.poll() is not None and not d._running())
 check("button back to Start, End disabled", d.btn_start["text"].endswith("Start") and str(d.btn_end["state"]) == "disabled")
 d.dirty = False; d.root.destroy()
+
+# a handler that raises every 50 ms must not freeze the panel (stderr pipe drained)
+import json
+work2 = tempfile.mkdtemp()
+with open(os.path.join(work2, "Boom.py"), "w") as fh:
+    fh.write("def tmr_Timer(f):\n    raise ValueError('boom ' + 'x' * 400)\n")
+with open(os.path.join(work2, "Boom.json"), "w") as fh:
+    json.dump({"name": "Boom", "code": "Boom.py", "objects": {
+        "tmr": {"type": "Timer", "Interval": 20, "Enabled": True}}}, fh)
+d = Designer(os.path.join(work2, "Boom.json")); d.root.update()
+d.run_form()
+t0 = time.time()
+while time.time() - t0 < 6:
+    d.root.update(); time.sleep(0.05)
+alive = d._running()
+err_bytes = sum(len(x) for x in d._proc._err) if d._proc else 0
+check("panel survives a stream of handler errors", alive)
+check("designer shows the error", "boom" in d._msg, d._msg[:60])
+d.end_run(); d.dirty = False; d.root.destroy()
 print("ALL PASS" if ok else "SOME CHECKS FAILED")

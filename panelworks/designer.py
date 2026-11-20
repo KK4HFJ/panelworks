@@ -27,6 +27,8 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
 import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, ttk
 
@@ -1318,6 +1320,14 @@ class Designer:
             messagebox.showerror("Run", str(e), parent=self.root)
             return
         self._proc = proc
+        proc._err = []                         # stderr, drained as it comes so the pipe never fills
+        def drain():
+            for line in proc.stderr:
+                proc._err.append(line)
+                del proc._err[:-200]
+                if line.strip() and not line.startswith((" ", "Traceback")):
+                    proc._last_err = line.strip()
+        threading.Thread(target=drain, daemon=True).start()
         self.btn_start.configure(text="\u25B6 Restart")
         self.btn_end.configure(state="normal")
         self.say(f"Running {os.path.basename(self.path)}. Close its window or press End to stop it.")
@@ -1331,6 +1341,10 @@ class Designer:
         if proc is not getattr(self, "_proc", None):
             return                              # an older run; a newer one is being watched
         if proc.poll() is None:
+            last = getattr(proc, "_last_err", None)
+            if last and last != getattr(proc, "_shown_err", None):
+                proc._shown_err = last         # a handler raised: say so, the panel keeps running
+                self.say(f"Panel error: {last[:150]}")
             self.root.after(500, lambda: self._watch_run(proc))
             return
         self._proc = None
@@ -1339,7 +1353,8 @@ class Designer:
         if getattr(proc, "_ended", False):
             self.say("Stopped.")
             return
-        err = (proc.stderr.read() or "").strip()
+        time.sleep(0.1)                        # let the drain thread catch the last lines
+        err = "".join(getattr(proc, "_err", [])).strip()
         if proc.returncode:
             messagebox.showerror("Run", err[-1500:] or f"Exited with code {proc.returncode}",
                                  parent=self.root)
