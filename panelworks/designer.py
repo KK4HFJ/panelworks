@@ -43,11 +43,11 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Shape", "ProgressBar", "Chart"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Chart"]
 NONVISUAL_ORDER = ["Timer", "MQTT", "Serial"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "Chart": "Chart", "Timer": "Timer", "MQTT": "MQTT",
+          "ProgressBar": "Progress", "Chart": "Chart", "Frame": "Frame", "Timer": "Timer", "MQTT": "MQTT",
           "Serial": "Serial"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
@@ -983,9 +983,22 @@ class Designer:
         if len(names) < need:
             self.say("Select several controls first: Ctrl+click them, or drag a box around them.")
             return None
+        self._fmt_before = {f: (self.host.objects[f].get("Left"), self.host.objects[f].get("Top"),
+                                self.host.objects[f].contents())
+                            for f in names if self.host.objects[f].TYPE == "Frame"}
         return [self.host.objects[n] for n in names]
 
     def _fmt_done(self, what):
+        sel = set(self.sel_names())
+        for f, (x, y, inside) in getattr(self, "_fmt_before", {}).items():   # frames carry contents
+            fo = self.host.objects[f]
+            dx, dy = fo.get("Left") - x, fo.get("Top") - y
+            for m in inside:
+                if m not in sel and (dx or dy):
+                    om = self.host.objects[m]
+                    om.set("Left", max(0, om.get("Left") + dx))
+                    om.set("Top", max(0, om.get("Top") + dy))
+        self._fmt_before = {}
         self._draw_selection()
         self._refresh_values()
         self._set_dirty(True)
@@ -1118,6 +1131,15 @@ class Designer:
     def _visual(self, n):
         o = self.host.objects.get(n)
         return o is not None and hasattr(o, "widget") and o.TYPE not in NONVISUAL_ORDER
+
+    def _with_contents(self, names):
+        """names plus everything inside any selected Frame (they travel together)."""
+        out = list(names)
+        for n in names:
+            o = self.host.objects.get(n)
+            if o is not None and o.TYPE == "Frame":
+                out += [m for m in o.contents() if m not in out]
+        return out
 
     def sel_names(self):
         """The selected visual controls (several, or the one), primary last."""
@@ -1628,7 +1650,7 @@ class Designer:
             self._draw_selection(); self.refresh_panels()
         else:
             self.select(n)
-        names = self.sel_names() or [n]
+        names = self._with_contents(self.sel_names() or [n])
         self._drag = {"mode": "move", "name": n, "start": (e.x_root, e.y_root), "moved": False,
                       "orig": {m: (self.host.objects[m].get("Left"), self.host.objects[m].get("Top"))
                                for m in names}}
@@ -1788,7 +1810,7 @@ class Designer:
 
     # ------------------------------------------------------------- misc ui
     def nudge(self, dx, dy):
-        names = self.sel_names()
+        names = self._with_contents(self.sel_names())
         if not names:
             return
         objs = [self.host.objects[n] for n in names]

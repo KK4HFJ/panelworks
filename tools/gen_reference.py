@@ -69,7 +69,7 @@ DOC = {
     "OptionButton": {
         "_": "A radio button. Buttons with the same Group are mutually exclusive.",
         "Caption": "The text beside the button.",
-        "Group": "Group name. Buttons sharing a group act as one set. Default `default`.",
+        "Group": "Group name. Buttons sharing a group act as one set. Left as `default`, buttons inside a Frame use the frame's name, so each frame is its own set.",
         "Value": "True when this button is the selected one in its group. Set True to select it (fires Click).",
         "Click": "This button was selected.",
     },
@@ -95,6 +95,13 @@ DOC = {
         "Clear": "Remove all items and empty the text.",
         "Click": "An item was chosen from the list.",
         "Change": "The user typed in the box.",
+    },
+    "Frame": {
+        "_": "A captioned box that groups controls, like VB's Frame. Anything drawn inside its rectangle belongs to it: it moves with the frame in the designer, is hidden or disabled with it at run time, and OptionButtons inside it form their own group.",
+        "Caption": "The title on the frame's border.",
+        "Enabled": "False disables the frame and everything inside it (run time).",
+        "Visible": "False hides the frame and everything inside it (run time).",
+        "Click": "The frame (not a control on it) is clicked.",
     },
     "Shape": {
         "_": "A rectangle or circle. Most often an indicator lamp.",
@@ -210,7 +217,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Shape", "ProgressBar", "Chart", "Timer", "MQTT", "Serial"]
+         "Frame", "Shape", "ProgressBar", "Chart", "Timer", "MQTT", "Serial"]
 
 missing = []
 

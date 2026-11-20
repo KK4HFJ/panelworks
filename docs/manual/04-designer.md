@@ -46,6 +46,24 @@ instead of drawing again.
 
 The mouse position (form coordinates) is shown in the status bar while you draw.
 
+## Frames
+
+![Two frames, each its own option group](img/frames.png)
+
+A **Frame** groups controls under a caption, as in VB. Draw the frame first, then
+draw (or drag) controls inside it. A control belongs to a frame when it sits
+entirely inside the frame's rectangle:
+
+- moving the frame (drag, arrow keys, Format menu) carries its contents;
+- OptionButtons inside a frame form **their own group**, so "Power source" and
+  "Mode" above each keep one choice. Leave their Group as `default` for this;
+- at run time, `f.fraMode.Visible = False` or `.Enabled = False` hides or disables
+  the frame and everything in it.
+
+Deleting a frame leaves its contents where they are (VB deleted them too; this
+way nothing is lost by accident, and Ctrl+Z still works either way). To start a
+selection box inside a frame, start the drag just outside it.
+
 ## Selecting several controls
 
 ![Three labels selected](img/multiselect.png)

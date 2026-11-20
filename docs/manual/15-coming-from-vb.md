@@ -42,10 +42,10 @@ chapter translates the rest.
 | ProgressBar (Common Controls) | ProgressBar |
 | MSComm | **Serial**: whole lines, ports by name, auto-reconnect (chapter 9) |
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
-| Frame | Not yet: draw a Shape with `Shape: Rectangle` behind the controls |
-| OptionButtons grouped by Frame | OptionButtons grouped by their **Group** property |
+| Frame | **Frame**: controls drawn inside it move, hide and disable with it |
+| OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
 | Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
-| PictureBox, Image, Line, menus, MDI, multiple forms | Not yet built |
+| PictureBox, Image, Line, MDI | Not yet built |
 
 ## Differences worth knowing
 

@@ -215,7 +215,7 @@ A radio button. Buttons with the same Group are mutually exclusive.
 | FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
-| Group | read/write | Group name. Buttons sharing a group act as one set. Default `default`. |
+| Group | read/write | Group name. Buttons sharing a group act as one set. Left as `default`, buttons inside a Frame use the frame's name, so each frame is its own set. |
 | Height | read/write | Height in pixels. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
@@ -317,6 +317,41 @@ A drop-down list the user can also type into.
 |---|---|
 | `Name_Click(f)` | An item was chosen from the list. |
 | `Name_Change(f)` | The user typed in the box. |
+
+## Frame
+
+A captioned box that groups controls, like VB's Frame. Anything drawn inside its rectangle belongs to it: it moves with the frame in the designer, is hidden or disabled with it at run time, and OptionButtons inside it form their own group.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| BackColor | read/write | Background colour: a name (`light yellow`) or `#rrggbb`. |
+| Caption | read/write | The title on the frame's border. |
+| Enabled | read/write | False disables the frame and everything inside it (run time). |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Text colour: a name or `#rrggbb`. |
+| Height | read/write | Height in pixels. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Visible | read/write | False hides the frame and everything inside it (run time). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f)` | The frame (not a control on it) is clicked. |
 
 ## Shape
 

@@ -145,7 +145,7 @@ class Control(VBObject):
         object.__setattr__(self, "_geom", {"x": 10, "y": 10, "width": w, "height": h})
         object.__setattr__(self, "_visible", True)
         object.__setattr__(self, "_font", {"family": "Helvetica", "size": 10, "bold": False})
-        object.__setattr__(self, "_tkfont", tkfont.Font(family="Helvetica", size=10))
+        object.__setattr__(self, "_tkfont", tkfont.Font(root=form.root, family="Helvetica", size=10))
         object.__setattr__(self, "widget", self.create(form.root))
         self._apply_font()
         self._place()
@@ -358,8 +358,15 @@ class OptionButton(ColourMixin, Control):
     def get_Caption(self): return self.widget.cget("text")
     def set_Caption(self, v): self.widget.configure(text=str(v))
 
+    def persist(self):
+        props = super().persist()
+        if getattr(self, "_auto_group", False):      # group came from its Frame: not saved
+            props["Group"] = "default"
+        return props
+
     def get_Group(self): return self._group
     def set_Group(self, v):
+        object.__setattr__(self, "_auto_group", False)
         object.__setattr__(self, "_group", str(v))
         self.widget.configure(variable=self._form._option_group(str(v)))
 
@@ -503,6 +510,85 @@ class ProgressBar(Control):
     def set_Value(self, v): self.widget.configure(value=max(0.0, min(float(v), self.get_Max())))
 
 
+class Frame(ColourMixin, Control):
+    """A captioned box that groups controls, like VB's Frame. Controls drawn inside
+    its rectangle belong to it: they move with it in the designer, are hidden or
+    disabled with it at run time, and OptionButtons inside it form their own group."""
+    TYPE = "Frame"
+    EVENTS = ("Click",)
+    DEFAULT_SIZE = (200, 120)
+
+    def create(self, parent):
+        w = tk.LabelFrame(parent, text=self.Name, padx=4, pady=2)
+        w.bind("<Button-1>", lambda e: self.fire("Click"))
+        return w
+
+    def _place(self):
+        super()._place()
+        try:
+            self.widget.lower()                    # always behind what's drawn on it
+        except tk.TclError:
+            pass
+
+    def get_Caption(self): return self.widget.cget("text")
+    def set_Caption(self, v): self.widget.configure(text=str(v))
+
+    def contents(self, deep=True):
+        """Names of the visual controls inside this frame's rectangle (nested frames' too)."""
+        x, y, w, h = self.get_Left(), self.get_Top(), self.get_Width(), self.get_Height()
+        out = []
+        for n, o in self._form.objects.items():
+            if o is self or not hasattr(o, "widget") or not hasattr(o, "get_Left"):
+                continue
+            ox, oy = o.get_Left(), o.get_Top()
+            if x <= ox and y <= oy and ox + o.get_Width() <= x + w and oy + o.get_Height() <= y + h:
+                out.append(n)
+        return out
+
+    def set_Visible(self, v):
+        Control.set_Visible(self, v)
+        if getattr(self._form, "_loaded", False):          # run time: VB hides the contents too
+            for n in self.contents():
+                self._form.objects[n].set("Visible", v)
+
+    def get_Enabled(self): return getattr(self, "_enabled", True)
+
+    def set_Enabled(self, v):
+        v = bool(v)
+        if v != self.get_Enabled():                  # a LabelFrame has no state: grey the caption
+            if not v:
+                object.__setattr__(self, "_fg_was", self.widget.cget("fg"))
+            self.widget.configure(fg=getattr(self, "_fg_was", "black") if v else "gray55")
+        object.__setattr__(self, "_enabled", v)
+        if getattr(self._form, "_loaded", False):
+            for n in self.contents():
+                try:
+                    self._form.objects[n].set("Enabled", v)
+                except Exception:
+                    pass
+
+
+def frame_of(form, name):
+    """The innermost Frame containing control `name`, or None."""
+    best = None
+    for o in form.objects.values():
+        if isinstance(o, Frame) and name in o.contents():
+            if best is None or o.get_Width() * o.get_Height() < best.get_Width() * best.get_Height():
+                best = o
+    return best
+
+
+def auto_option_groups(form):
+    """OptionButtons left in the 'default' group take their frame's name as group,
+    so each frame is its own set of choices (as in VB)."""
+    for n, o in form.objects.items():
+        if o.TYPE == "OptionButton" and o.get_Group() == "default":
+            fr = frame_of(form, n)
+            if fr is not None:
+                o.set_Group(fr.Name)
+                object.__setattr__(o, "_auto_group", True)     # not saved back to the file
+
+
 class Timer(VBObject):
     """Invisible, like VB's Timer. Interval in ms; Interval 0 or Enabled False stops it."""
     TYPE = "Timer"
@@ -539,7 +625,7 @@ class Timer(VBObject):
 
 CONTROL_TYPES = {cls.TYPE: cls for cls in
                  (Label, CommandButton, TextBox, CheckBox, OptionButton,
-                  ListBox, ComboBox, Shape, ProgressBar, Timer)}
+                  ListBox, ComboBox, Shape, ProgressBar, Frame, Timer)}
 
 
 def register_control(cls):
@@ -598,6 +684,10 @@ class Form:
 
         for name, ospec in spec.get("objects", {}).items():
             self._add(name, ospec)
+        auto_option_groups(self)
+        for o in self.objects.values():            # frames stay behind their contents
+            if isinstance(o, Frame):
+                o.widget.lower()
 
         self._pump_after = self.root.after(20, self._pump)
         self._load_after = self.root.after(0, self._load)

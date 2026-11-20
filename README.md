@@ -237,6 +237,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | OptionButton | Caption, Value, Group | | Click |
 | ListBox | List, ListIndex, ListCount, Text | AddItem, RemoveItem, Clear | Click, DblClick |
 | ComboBox | List, ListIndex, ListCount, Text | AddItem, Clear | Click, Change |
+| Frame | Caption; contents move, hide and disable with it; its OptionButtons form their own group | | Click |
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
@@ -550,8 +551,8 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Not yet built
 
-- Multi-select and alignment tools in the designer
-- Frame/container controls, menus, PictureBox/Canvas drawing, multiple forms
+- Menus on panels, multiple forms, a Data control, Make EXE (in progress)
+- PictureBox/Canvas drawing
 
 ## License
 
