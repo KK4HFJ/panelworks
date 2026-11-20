@@ -61,6 +61,24 @@ EVENT_HELP = {"Click": "is clicked", "DblClick": "is double-clicked", "Change": 
               "MqttError": "MQTT link has an error"}
 
 
+def rename_in_code(text, old, new, events):
+    """Rename a control throughout its form's code. Returns (text, procedures, references).
+
+    - def Old_Event(  -> def New_Event(   only for that control's real events
+    - f.Old / f["Old"] / f.obj("Old")      -> the new name (whole words only)
+    """
+    procs = refs = 0
+    for ev in events:
+        text, n = re.subn(rf"^(\s*def\s+){re.escape(old)}_{re.escape(ev)}(\s*\()",
+                          rf"\g<1>{new}_{ev}\g<2>", text, flags=re.M)
+        procs += n
+    text, n = re.subn(rf"(?<![\w.])f\.{re.escape(old)}\b", f"f.{new}", text)
+    refs += n
+    text, n = re.subn(rf"""(\bf\[|\.obj\()(["']){re.escape(old)}\2""", rf"\g<1>\g<2>{new}\g<2>", text)
+    refs += n
+    return text, procs, refs
+
+
 def snap(v, step=SNAP):
     return int(round(v / step) * step)
 
@@ -774,7 +792,8 @@ class Designer:
             return
         if not new.isidentifier() or new in ("Form", "Me") or new in self.host.objects:
             raise ValueError(f"'{new}' must be a new, valid name (letters, digits, _; not starting with a digit)")
-        self._checkpoint()
+        events = set(self._events_for(old)) | {"WebhookResponse", "WebhookError"}
+        self._checkpoint(include_code=True)
         spec = self.build_spec()
         objs = {}
         for k, v in spec["objects"].items():
@@ -785,13 +804,48 @@ class Designer:
             else:
                 objs[k] = v
         spec["objects"] = objs
+        sends = self._rename_in_sends(spec, old, new)
         self.load_spec(spec, keep_selection=new)
         self._set_dirty(True)
+
+        procs = refs = 0
         code = self._code_text()
-        if re.search(rf"^def\s+{re.escape(old)}_", code, re.M):
-            self.say(f"Renamed {old} to {new}. Its event procedures in the code file still say {old}_...; rename them too.")
-        else:
-            self.say(f"Renamed {old} to {new}.")
+        if code:
+            changed, procs, refs = rename_in_code(code, old, new, events)
+            if changed != code:
+                cw = self.code_window()             # show the change; it's saved with the form
+                if cw:
+                    cw.replace_all(changed)
+        parts = []
+        if procs:
+            parts.append(f"{procs} procedure{'s' * (procs != 1)}")
+        if refs:
+            parts.append(f"{refs} reference{'s' * (refs != 1)} in code")
+        if sends:
+            parts.append(f"{sends} webhook field{'s' * (sends != 1)}")
+        self.say(f"Renamed {old} to {new}" + (f": updated {', '.join(parts)}. Ctrl+S saves form and code; "
+                                              "Ctrl+Z undoes both." if parts else "."))
+
+    @staticmethod
+    def _rename_in_sends(spec, old, new):
+        """Webhook 'send' lists name controls as "Obj.Prop" - keep them pointing at the right one."""
+        count = 0
+
+        def fix(cfg):
+            nonlocal count
+            for entry in (cfg if isinstance(cfg, list) else [cfg]):
+                if isinstance(entry, dict) and isinstance(entry.get("send"), list):
+                    for i, ref in enumerate(entry["send"]):
+                        if isinstance(ref, str) and ref.startswith(old + "."):
+                            entry["send"][i] = new + ref[len(old):]
+                            count += 1
+        for o in spec["objects"].values():
+            for cfg in (o.get("webhook") or {}).values():
+                fix(cfg)
+        poll = (spec.get("webhooks") or {}).get("poll")
+        if poll:
+            fix(poll)
+        return count
 
     def _refresh_values(self):
         rows = {p: v for p, v, ro in self._prop_rows()}
@@ -1142,23 +1196,37 @@ class Designer:
         self.titlebar.configure(text=self.form.get("caption", ""))
 
     # -------------------------------------------------------------- undo
-    def _checkpoint(self):
-        self.undo_stack.append(json.dumps(self.build_spec()))
+    def _checkpoint(self, include_code=False):
+        code = self._code_text() if include_code and self._code_path() else None
+        self.undo_stack.append(json.dumps({"spec": self.build_spec(), "code": code}))
         del self.undo_stack[:-50]
 
     def undo(self):
         if not self.undo_stack:
             self.say("Nothing to undo.")
             return
-        spec = json.loads(self.undo_stack.pop())
-        self.load_spec(spec, keep_selection=self.selected)
+        entry = json.loads(self.undo_stack.pop())
+        self.load_spec(entry["spec"], keep_selection=self.selected)
         self._set_dirty(True)
-        self.say("Undone.")
+        code = entry.get("code")
+        if code is not None and code != self._code_text():
+            cw = self.code_window(create=False)
+            if cw:
+                cw.replace_all(code)
+            else:
+                with open(self._code_path(), "w", encoding="utf-8") as f:
+                    f.write(code)
+            self.say("Undone (form and code).")
+        else:
+            self.say("Undone.")
 
     # --------------------------------------------------------- save / run
     def save(self):
         if not self.path:
             return self.save_as()
+        cw = self.code_window(create=False)
+        if cw and cw.modified and not cw.save():
+            return False
         return self._write(self.path)
 
     def save_as(self):

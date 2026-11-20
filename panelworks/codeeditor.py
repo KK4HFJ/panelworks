@@ -136,6 +136,21 @@ class CodeWindow:
     def content(self):
         return self.text.get("1.0", "end-1c")
 
+    def replace_all(self, new_text):
+        """Swap in new code (rename, undo) as one undoable step, keeping the view."""
+        if new_text == self.content():
+            return
+        pos, view = self.text.index("insert"), self.text.yview()[0]
+        self.text.edit_separator()
+        self.text.delete("1.0", "end")
+        self.text.insert("1.0", new_text)
+        self.text.edit_separator()
+        self.text.mark_set("insert", pos)
+        self.text.yview_moveto(view)
+        self.highlight()
+        self.refresh_lists()
+        self._title()
+
     def save(self):
         if not self.check():
             if not messagebox.askyesno("Syntax error", "This code has a syntax error (highlighted in red), "

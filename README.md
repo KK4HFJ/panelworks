@@ -144,6 +144,10 @@ The dropdowns follow the cursor, and **●** marks procedures that already have 
   to make an outside editor the default for double-clicks instead.
 - If the `.py` changes on disk (Claude, another editor) and you have no unsaved
   edits, it reloads. If you do, it warns you before saving over it.
+- **Renaming a control keeps the code in step** (VB orphaned it into General):
+  `Text1_Change` becomes `txtName_Change`, `f.Text1` / `f["Text1"]` references
+  follow, and so do webhook `send` fields. The Code window shows the change
+  unsaved; Ctrl+S in the designer saves form and code, and Ctrl+Z undoes both.
 
 Set a Label's **AutoSize** to True and it resizes to fit its caption and font,
 including captions your code or an MQTT subscription sets later. While it's on,
