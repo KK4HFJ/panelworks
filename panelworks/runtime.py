@@ -702,8 +702,17 @@ class Form:
         path = path or self.path
         if not path:
             raise ValueError("No path given and form was not loaded from a file")
-        with open(path, "w") as f:
-            json.dump(self.to_spec(), f, indent=2)
+        spec = self.to_spec()
+        if self.code_file and not os.path.isabs(self.code_file) and self.path:
+            # keep the code module findable when saving to a different folder
+            code_abs = os.path.join(os.path.dirname(os.path.abspath(self.path)), self.code_file)
+            try:
+                spec["code"] = os.path.relpath(code_abs, os.path.dirname(os.path.abspath(path)))
+            except ValueError:             # Windows: different drive, no relative path exists
+                spec["code"] = code_abs
+            spec["code"] = spec["code"].replace(os.sep, "/")
+        with open(path, "w", encoding="utf-8") as f:   # forms are always UTF-8
+            json.dump(spec, f, indent=2, ensure_ascii=False)
         return os.path.abspath(path)
 
     def describe(self):
@@ -823,7 +832,7 @@ def load_code(path):
 
 
 def load_form(path):
-    with open(path) as f:
+    with open(path, encoding="utf-8-sig") as f:   # UTF-8, tolerate a Notepad BOM
         spec = json.load(f)
     return Form(spec, path=path)
 
