@@ -231,6 +231,8 @@ class Designer:
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="New", accelerator="Ctrl+N", command=lambda: self.new_form() if self._ok_to_discard() else None)
         f.add_command(label="Open...", accelerator="Ctrl+O", command=self.open_dialog)
+        self.recent_menu = tk.Menu(f, tearoff=0, postcommand=self._fill_recent)
+        f.add_cascade(label="Open Recent", menu=self.recent_menu)
         f.add_command(label="Reload from disk", command=lambda: self.open_form(self.path) if self.path and self._ok_to_discard() else None)
         f.add_separator()
         f.add_command(label="Save", accelerator="Ctrl+S", command=self.save)
@@ -429,6 +431,42 @@ class Designer:
         if p:
             self.open_form(p)
 
+    # ------------------------------------------------------------ Open Recent
+    def _fill_recent(self):
+        """Rebuilt each time the menu opens, so other designer windows' opens show too."""
+        from .util import recent_list
+        m = self.recent_menu
+        m.delete(0, "end")
+        items = recent_list()
+        if not items:
+            m.add_command(label="(no recent forms)", state="disabled")
+            return
+        for i, p in enumerate(items, start=1):
+            exists = os.path.exists(p)
+            label = f"{i}  {os.path.basename(p)}   {os.path.dirname(p)}" + ("" if exists else "   (missing)")
+            m.add_command(label=label, underline=0 if i < 10 else -1,
+                          state="normal" if exists else "disabled",
+                          command=lambda p=p: self.open_recent(p))
+        m.add_separator()
+        m.add_command(label="Clear Recently Opened", command=self._clear_recent)
+
+    def _clear_recent(self):
+        from .util import recent_clear
+        recent_clear()
+        self.say("Recent forms list cleared.")
+
+    def open_recent(self, path):
+        from .util import recent_remove
+        if not os.path.exists(path):
+            recent_remove(path)
+            messagebox.showwarning("Open Recent", f"{path}\nno longer exists; removed it from the list.",
+                                   parent=self.root)
+            return
+        if os.path.abspath(path) == self.path and not self.dirty:
+            return                               # already open
+        if self._ok_to_discard():
+            self.open_form(path)
+
     def open_form(self, path):
         try:
             with open(path, encoding="utf-8-sig") as f:
@@ -447,6 +485,8 @@ class Designer:
         self._mtime = self._disk_mtime()
         if self._codewin and self._codewin.alive():
             self._codewin.refresh_lists()
+        from .util import recent_add
+        recent_add(self.path)
         self.say(f"Opened {self.path}")
 
     def load_spec(self, spec, keep_selection=None):
@@ -1302,6 +1342,8 @@ class Designer:
             return False
         self._mtime = self._disk_mtime()
         self._set_dirty(False)
+        from .util import recent_add
+        recent_add(path)
         self.say(f"Saved {path}")
         return True
 

@@ -61,6 +61,7 @@ python -m panelworks ...                  if the command isn't on the PATH
 | `docs/manual/` | This manual |
 | `panelworks/` | The program itself |
 | `tests/` | Automated tests and simulators (`fake_esp32.py`) |
+| `%APPDATA%\PanelWorks\` (Windows), `~/.config/panelworks/` | Your settings: the Open Recent list |
 
 ## Event procedure signatures
 

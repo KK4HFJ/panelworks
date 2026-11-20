@@ -115,6 +115,11 @@ editing and press Restart.
 
 - **New** (Ctrl+N) starts an empty form.
 - **Open** (Ctrl+O) opens a `.json` form.
+- **File → Open Recent** lists the last 10 forms you opened or saved, newest
+  first, with their folders. A form that has been moved or deleted is greyed out
+  and marked *(missing)*. **Clear Recently Opened** empties the list. The list is
+  shared by every designer window and kept in `%APPDATA%\PanelWorks\recent.json`
+  (`~/.config/panelworks/` on macOS and Linux).
 - **Save** (Ctrl+S) saves the form, **and the code if the Code window has unsaved
   changes**. The title bar shows `*` while there are unsaved changes.
 - **Save As...** saves under a new name or folder. The link to the code file
