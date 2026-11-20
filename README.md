@@ -83,12 +83,15 @@ key, and watch the commas:
 {
   "mcpServers": {
     "pumppanel": {
-      "command": "C:/dev/panelworks/.venv/Scripts/panelworks.exe",
-      "args": ["C:/dev/panelworks/examples/pumppanel.json", "--mcp", "stdio"]
+      "command": "C:/dev/panelworks/.venv/Scripts/python.exe",
+      "args": ["-m", "panelworks", "C:/dev/panelworks/examples/pumppanel.json", "--mcp", "stdio"]
     }
   }
 }
 ```
+
+(Use the venv's `python.exe -m panelworks`, not `panelworks.exe`: Windows 11's Smart
+App Control blocks the unsigned `.exe` launcher pip creates, while `python.exe` is signed.)
 
 Restart Claude Desktop; the panel window opens and Claude can ask it things like
 "press Start", "what's the cistern level?", or "add a Stop-All button under Start".

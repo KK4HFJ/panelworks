@@ -192,7 +192,7 @@ def build_server(call):
     @mcp.tool()
     def add_object(name: str, type: str, properties: dict | None = None) -> dict:
         """Draw a new control on the form. Types: Label, CommandButton, TextBox,
-        CheckBox, OptionButton, ListBox, ComboBox, Shape, ProgressBar, Timer, MQTT.
+        CheckBox, OptionButton, ListBox, ComboBox, Shape, ProgressBar, Timer, MQTT, Serial.
         Example: add_object('Command2', 'CommandButton',
         {'Caption': 'Stop', 'Left': 10, 'Top': 80, 'Width': 80, 'Height': 30})"""
         return call("add_object", name=name, type=type, properties=properties)

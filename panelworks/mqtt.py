@@ -151,7 +151,7 @@ class MqttLink:
 class MQTTControl(VBObject):
     """Invisible MQTT client. Subscribe in Form_Load, react in Name_MessageArrived."""
     TYPE = "MQTT"
-    EVENTS = ("Connected", "Disconnected", "MessageArrived", "Error")
+    EVENTS = ("MessageArrived", "Connected", "Disconnected", "Error")   # first = double-click default
     PERSIST_ORDER = ("Broker", "Port", "TLS", "CAFile", "ClientID", "Username", "Password",
                      "Subscriptions")
 

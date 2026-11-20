@@ -1,0 +1,151 @@
+# 4. The Designer
+
+![The designer](img/hello-designer.png)
+
+The designer is laid out the way VB's was:
+
+| Area | What it's for |
+|---|---|
+| **Menu bar** | File, Edit, View, Help |
+| **Toolbar** | New, Open, Save · **▶ Start**, **■ End** · Code |
+| **Toolbox** (left) | The controls you can draw |
+| **Form** (middle) | Your window, on a grey workspace, with a dot grid |
+| **Tray** (under the form) | Invisible controls: Timer, MQTT, Serial |
+| **Properties / Events / Connections** (right) | Everything about the selected object |
+| **Status bar** (bottom) | Mouse position, messages, errors from a running panel |
+
+Start it with `panelworks-designer` (optionally followed by a form file), with
+`panelworks --design MyPanel.json`, or from the desktop shortcut (chapter 2).
+
+## Drawing controls
+
+- **Drag:** click a tool in the Toolbox, then drag a rectangle on the form.
+- **Click:** click a tool, then click the form for a standard-size control.
+- **Double-click a tool** to drop one in at the top-left without aiming.
+
+Invisible controls (Timer, MQTT, Serial) always go to the **tray** under the
+form. Click a tray button to select the control; double-click it to open
+its main event procedure.
+
+After drawing, the tool goes back to **Pointer**, so the next click selects
+instead of drawing again.
+
+## Selecting, moving, sizing
+
+- **Click** a control to select it. A dashed outline and a black **grip**
+  (bottom-right) show the selection. Click the empty form to select the **Form**.
+- **Drag** to move. Moves snap to 5 pixels so things line up.
+- **Drag the grip** to resize. Drag the grip at the form's own bottom-right
+  corner to resize the form.
+- **Arrow keys** nudge 1 pixel; **Shift+arrows** nudge 10.
+- **Del** deletes the selected control; **Ctrl+D** duplicates it.
+- **Edit → Bring to front / Send to back** changes which control is on top
+  where they overlap.
+- **Ctrl+Z** undoes, up to 50 steps, including deletes, moves, renames and
+  connection edits.
+
+The mouse position (form coordinates) is shown in the status bar while you draw.
+
+## The Properties window
+
+Pick a row, then edit it in the **Edit** box under the list:
+
+- **Text and numbers:** type, then press **Enter** or click **Apply**.
+- **True/False and fixed choices** (Alignment, Shape, Terminator): pick from
+  the drop-down; it applies at once.
+- **Colours** (BackColor, ForeColor, FillColor...): type a name like
+  `light yellow` or a code like `#ffcc00`, or click **Pick...** for a colour chooser.
+- **Lists** (a ListBox's List, MQTT Subscriptions, Serial Fill): one item per
+  line, then **Apply**.
+- **Suggestions** (a Serial Port lists the ports present): pick one or type your own.
+
+Grey rows are **read-only**. They show a value (ListCount, Connected, InBufferCount)
+but can't be set at design time.
+
+**Name** is special: renaming a control also renames its event procedures,
+its references in your code, and any webhook fields that mention it. See
+*Renaming* in chapter 5.
+
+The **Form**'s properties are Name, Caption, Width, Height, BackColor, and
+**Code**, the name of its code file (normally `<Name>.py`, set automatically
+the first time you open the code).
+
+## The Events tab
+
+Lists every event the selected object has, for example `cmdStart_Click (is clicked)`.
+A **●** marks the ones that already have code. Double-click an event to write
+it (a new empty procedure is added) or jump to it in the Code window.
+
+Double-clicking a control on the form does the same for its main event
+(Click for a button, Change for a text box, Timer for a timer...).
+
+## The Connections tab
+
+Wires the selected object to MQTT and n8n, as JSON, with no code:
+
+```json
+{
+  "subscribe": {"Caption": "home/cistern/level"},
+  "publish":   {"Click": {"topic": "home/pump/cmd", "payload": "ON"}},
+  "webhook":   {"Click": {"url": "pump-report", "send": ["lblLevel.Caption"]}}
+}
+```
+
+Edit the text and click **Apply**. If the JSON has a mistake, a message
+says where, and nothing changes. With the **Form** selected, this tab holds the
+form-level `mqtt` (broker) and `webhooks` (n8n) settings. Chapters 8 and 10
+explain every option.
+
+## Running: ▶ Start and ■ End
+
+**▶ Start** (or **F5**, or **File → Start**) saves the form and its code, then
+runs the panel in its own window, exactly as it will run for real.
+
+- While it runs, the button reads **▶ Restart**. Click it after making changes
+  to close the running copy and start the new one.
+- **■ End** stops the running panel. So does closing its window.
+- If an event procedure raises an error, the panel keeps running and the
+  status bar shows **Panel error: ...** with the message.
+- If the panel can't start at all, a box shows the reason.
+
+Unlike VB, the designer stays fully usable while the panel runs: you can keep
+editing and press Restart.
+
+## Files: New, Open, Save
+
+- **New** (Ctrl+N) starts an empty form.
+- **Open** (Ctrl+O) opens a `.json` form.
+- **Save** (Ctrl+S) saves the form, **and the code if the Code window has unsaved
+  changes**. The title bar shows `*` while there are unsaved changes.
+- **Save As...** saves under a new name or folder. The link to the code file
+  is adjusted so it's still found.
+- **File → Reload from disk** throws away your changes and reloads the file.
+
+The form file only stores properties you changed from their defaults, so it
+stays short and readable. Chapter 7 describes the format.
+
+### Working alongside Claude or another editor
+
+The designer watches the form it has open. If the file changes on disk (Claude
+saved the form, you edited it in VS Code, `git pull` updated it) the designer
+reloads it. If you have unsaved changes, it asks first. The Code window does the
+same for the `.py` file.
+
+So you can rough out a panel by talking to Claude, then polish it by hand, or the
+other way round.
+
+## Keyboard shortcuts
+
+| Key | Does |
+|---|---|
+| F5 | Start (save and run) |
+| F7 | Code window |
+| Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
+| Ctrl+Z | Undo |
+| Ctrl+D | Duplicate selected control |
+| Del | Delete selected control |
+| Arrows / Shift+arrows | Nudge 1 / 10 pixels |
+
+## Help → About
+
+Shows the version, the author, and the licence.
