@@ -111,6 +111,12 @@ runs the panel in its own window, exactly as it will run for real.
 Unlike VB, the designer stays fully usable while the panel runs: you can keep
 editing and press Restart.
 
+**Closing the designer while a panel runs** asks whether to stop it too:
+**Yes** stops it, **No** leaves it running on its own (handy for a monitoring
+console you want to keep up), **Cancel** keeps the designer open. A panel left
+running is fully independent. Its output goes to a log file in your temp
+folder (`panelworks-run-<form>.log`), not to the designer.
+
 ## Files: New, Open, Save
 
 - **New** (Ctrl+N) starts an empty form.

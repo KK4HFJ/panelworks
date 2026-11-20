@@ -1539,21 +1539,45 @@ class Designer:
             return
         if (self.dirty or not self.path) and not self.save():
             return
+        # The panel writes stdout+stderr to a log file, not a pipe: a pipe would tie the
+        # panel to this designer, and a panel left running after the designer closes
+        # would crash on its next print. We follow the file instead.
+        import tempfile
+        stem = os.path.splitext(os.path.basename(self.path))[0]
+        log = os.path.join(tempfile.gettempdir(), f"panelworks-run-{stem}.log")
         try:
+            out = open(log, "w", encoding="utf-8")
             proc = subprocess.Popen([sys.executable, "-m", "panelworks", self.path, "--mcp", "none"],
-                                    stderr=subprocess.PIPE, text=True)
+                                    stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                    env={**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONIOENCODING": "utf-8"})
+            out.close()                       # the panel has its own handle now
         except OSError as e:
             messagebox.showerror("Run", str(e), parent=self.root)
             return
         self._proc = proc
-        proc._err = []                         # stderr, drained as it comes so the pipe never fills
-        def drain():
-            for line in proc.stderr:
-                proc._err.append(line)
-                del proc._err[:-200]
-                if line.strip() and not line.startswith((" ", "Traceback")):
-                    proc._last_err = line.strip()
-        threading.Thread(target=drain, daemon=True).start()
+        proc._log = log
+        proc._err = []                         # recent output, for the error box and status bar
+        def follow():
+            with open(log, encoding="utf-8", errors="replace") as fh:
+                while True:
+                    line = fh.readline()
+                    if not line:
+                        if proc.poll() is not None or getattr(proc, "_detached", False):
+                            rest = fh.read()
+                            if not rest:
+                                return
+                            line = rest
+                        else:
+                            time.sleep(0.1)
+                            continue
+                    for ln in line.splitlines(keepends=True):
+                        proc._err.append(ln)
+                        del proc._err[:-200]
+                        if ln.strip() and not ln.startswith((" ", "Traceback")) and (
+                                "Error" in ln or "Exception" in ln or ln.startswith("[")):
+                            proc._last_err = ln.strip()
+        proc._follower = threading.Thread(target=follow, daemon=True)
+        proc._follower.start()
         self.btn_start.configure(text="\u25B6 Restart")
         self.btn_end.configure(state="normal")
         self.say(f"Running {os.path.basename(self.path)}. Close its window or press End to stop it.")
@@ -1579,7 +1603,9 @@ class Designer:
         if getattr(proc, "_ended", False):
             self.say("Stopped.")
             return
-        time.sleep(0.1)                        # let the drain thread catch the last lines
+        f = getattr(proc, "_follower", None)
+        if f:
+            f.join(timeout=1)                  # let it catch the last lines
         err = "".join(getattr(proc, "_err", [])).strip()
         if proc.returncode:
             messagebox.showerror("Run", err[-1500:] or f"Exited with code {proc.returncode}",
@@ -1636,8 +1662,26 @@ class Designer:
         return self.save() if r else True
 
     def quit(self):
-        if self._ok_to_discard():
-            self.root.destroy()
+        if self._running():
+            name = os.path.basename(self.path or "The panel")
+            ans = messagebox.askyesnocancel(
+                "Panel still running",
+                f"{name} is still running.\n\nStop it too?\n\n"
+                "Yes: stop it\nNo: leave it running on its own\nCancel: keep the designer open",
+                parent=self.root)
+            if ans is None:
+                return
+        else:
+            ans = None
+        if not self._ok_to_discard():
+            return
+        if ans:
+            self.end_run()
+        elif self._running():
+            self._proc._detached = True         # it carries on alone; stop following its log
+        for aid in self.root.tk.call("after", "info"):   # pending timers (file watch, run watch)
+            self.root.tk.call("after", "cancel", aid)    # destroy() frees their commands
+        self.root.destroy()
 
     def run(self):
         self.root.mainloop()
