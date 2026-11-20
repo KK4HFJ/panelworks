@@ -120,6 +120,10 @@ The designer works the way classic RAD tools did, and needs no AI:
 - **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, **F5 run**.
   Timers and MQTT controls sit in the tray under the form, as they did in VB.
 
+Set a Label's **AutoSize** to True and it resizes to fit its caption and font,
+including captions your code or an MQTT subscription sets later. While it's on,
+Width and Height follow the text.
+
 Files are saved with only the properties you changed, so they stay readable and
 diff well in git. Forms written by hand or by Claude open without losing anything
 (form-level `mqtt`/`webhooks`, every subscribe/publish/webhook).
@@ -171,7 +175,7 @@ a traceback and logs the error in the event log; the app keeps running.
 
 | Type | Key properties | Methods | Events |
 |---|---|---|---|
-| Label | Caption, Alignment | | Click, DblClick |
+| Label | Caption, Alignment, AutoSize | | Click, DblClick |
 | CommandButton | Caption | Click (press it) | Click, GotFocus, LostFocus |
 | TextBox | Text, Locked, PasswordChar, SelText | Clear | Change, KeyPress, GotFocus, LostFocus |
 | CheckBox | Caption, Value (0/1) | | Click |

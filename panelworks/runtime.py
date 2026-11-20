@@ -228,7 +228,38 @@ class Label(ColourMixin, Control):
         return w
 
     def get_Caption(self): return self.widget.cget("text")
-    def set_Caption(self, v): self.widget.configure(text=str(v))
+    def set_Caption(self, v):
+        self.widget.configure(text=str(v))
+        self._fit()
+
+    # AutoSize, as in VB: the label grows/shrinks to fit its caption and font.
+    # While it's on, Width and Height follow the text and can't be set by hand.
+    def get_AutoSize(self): return getattr(self, "_autosize", False)
+    def set_AutoSize(self, v):
+        object.__setattr__(self, "_autosize", bool(v))
+        self._fit()
+
+    def _fit(self):
+        if not getattr(self, "_autosize", False):
+            return
+        self.widget.update_idletasks()
+        self._geom["width"] = self.widget.winfo_reqwidth()
+        self._geom["height"] = self.widget.winfo_reqheight()
+        self._place()
+
+    def _apply_font(self):
+        super()._apply_font()
+        self._fit()
+
+    def set_Width(self, v):
+        if getattr(self, "_autosize", False):
+            return self._fit()
+        Control.set_Width(self, v)
+
+    def set_Height(self, v):
+        if getattr(self, "_autosize", False):
+            return self._fit()
+        Control.set_Height(self, v)
 
     def get_Alignment(self):
         return {"w": "Left", "center": "Center", "e": "Right"}[str(self.widget.cget("anchor"))]
