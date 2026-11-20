@@ -160,6 +160,49 @@ class Designer:
             self.new_form(path)
         self.root.after(1500, self._watch_file)
 
+    # ------------------------------------------------------------------ about
+    AUTHOR = "Steve Spence (KK4HFJ)"
+    WEBSITE = "https://kk4hfj.com"
+
+    def about(self):
+        """VB-style About box."""
+        import webbrowser
+        from .util import ASSETS
+        top = tk.Toplevel(self.root)
+        top.title("About PanelWorks")
+        top.resizable(False, False)
+        top.transient(self.root)
+        body = tk.Frame(top, padx=18, pady=16)
+        body.pack()
+        try:
+            img = tk.PhotoImage(master=top, file=os.path.join(ASSETS, "panelworks.png")).subsample(4, 4)
+            tk.Label(body, image=img).grid(row=0, column=0, rowspan=6, sticky="n", padx=(0, 16))
+            top._img = img                            # keep a reference
+        except tk.TclError:
+            pass
+        tk.Label(body, text="PanelWorks", font=("Helvetica", 16, "bold")).grid(row=0, column=1, sticky="w")
+        tk.Label(body, text=f"Version {__version__}").grid(row=1, column=1, sticky="w")
+        tk.Label(body, text=f"by {self.AUTHOR}", font=("Helvetica", 11, "bold")).grid(
+            row=2, column=1, sticky="w", pady=(8, 0))
+        link = tk.Label(body, text="kk4hfj.com", fg="#1f5fbf", cursor="hand2", font=("Helvetica", 10, "underline"))
+        link.grid(row=3, column=1, sticky="w")
+        link.bind("<Button-1>", lambda e: webbrowser.open(self.WEBSITE))
+        tk.Label(body, text="Draw forms, write Object_Event code in Python,\n"
+                            "drive them over MCP, MQTT and webhooks.",
+                 justify="left", fg="gray30").grid(row=4, column=1, sticky="w", pady=(10, 0))
+        tk.Label(body, text="MIT License. Free to use, modify and share.", fg="gray40",
+                 font=("Helvetica", 8)).grid(row=5, column=1, sticky="w", pady=(6, 0))
+        ok = tk.Button(top, text="OK", width=10, command=top.destroy)
+        ok.pack(pady=(0, 12))
+        top.bind("<Return>", lambda e: top.destroy())
+        top.bind("<Escape>", lambda e: top.destroy())
+        top.update_idletasks()
+        x = self.root.winfo_rootx() + (self.root.winfo_width() - top.winfo_width()) // 2
+        y = self.root.winfo_rooty() + (self.root.winfo_height() - top.winfo_height()) // 3
+        top.geometry(f"+{max(0, x)}+{max(0, y)}")
+        ok.focus_set()
+        return top
+
     # ------------------------------------------------------------------ layout
     def _build_menu(self):
         m = tk.Menu(self.root)
@@ -188,9 +231,7 @@ class Designer:
         v.add_command(label="Code in external editor", command=self.code_external)
         m.add_cascade(label="View", menu=v)
         h = tk.Menu(m, tearoff=0)
-        h.add_command(label="About", command=lambda: messagebox.showinfo(
-            "PanelWorks Designer", f"PanelWorks {__version__}\nDraw forms, write Object_Event code in Python,\n"
-                                   "drive them over MCP, MQTT and webhooks.", parent=self.root))
+        h.add_command(label="About PanelWorks", command=self.about)
         m.add_cascade(label="Help", menu=h)
         self.root.config(menu=m)
 
