@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panelworks"
+version = "0.1.0"
+description = "Draw a desktop form in JSON, write event procedures in Python, and drive every object live over MCP (agents), MQTT (devices) and webhooks (n8n)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Steve Spence (KK4HFJ)" }]
+keywords = ["gui", "tkinter", "mcp", "mqtt", "n8n", "webhooks", "rad", "forms", "esp32", "home-automation"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: User Interfaces",
+  "Topic :: Home Automation",
+]
+dependencies = ["mcp>=1.10"]
+
+[project.urls]
+Homepage = "https://kk4hfj.com"
+"OfficeNex" = "https://officenex.cloud"
+
+[project.optional-dependencies]
+mqtt = ["paho-mqtt>=2.0"]
+
+[project.scripts]
+panelworks = "panelworks.cli:main"
+
+[tool.setuptools]
+packages = ["panelworks"]

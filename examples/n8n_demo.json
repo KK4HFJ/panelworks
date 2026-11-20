@@ -1,0 +1,106 @@
+{
+  "name": "N8nDemo",
+  "caption": "PanelWorks + n8n",
+  "width": 420,
+  "height": 330,
+  "code": "n8n_demo.py",
+  "webhooks": {
+    "baseUrl": "${N8N_WEBHOOK_BASE:-https://n8n.example.com/webhook/}",
+    "timeout": 15,
+    "poll": {
+      "url": "panelworks-demo",
+      "interval": 10
+    }
+  },
+  "objects": {
+    "lblTitle": {
+      "type": "Label",
+      "Caption": "Event procedures that live in n8n",
+      "FontBold": true,
+      "Left": 15,
+      "Top": 12,
+      "Width": 300,
+      "Height": 22
+    },
+    "shpLamp": {
+      "type": "Shape",
+      "Shape": "Oval",
+      "FillColor": "gray",
+      "Left": 370,
+      "Top": 10,
+      "Width": 30,
+      "Height": 30
+    },
+    "lblName": {
+      "type": "Label",
+      "Caption": "Your name",
+      "Left": 15,
+      "Top": 48,
+      "Width": 80,
+      "Height": 24
+    },
+    "txtName": {
+      "type": "TextBox",
+      "Text": "",
+      "Left": 100,
+      "Top": 48,
+      "Width": 160,
+      "Height": 24
+    },
+    "cmdAsk": {
+      "type": "CommandButton",
+      "Caption": "Ask n8n",
+      "Left": 270,
+      "Top": 46,
+      "Width": 130,
+      "Height": 28,
+      "webhook": {
+        "Click": {
+          "url": "panelworks-demo",
+          "send": [
+            "txtName.Text"
+          ]
+        }
+      }
+    },
+    "lblReply": {
+      "type": "Label",
+      "Caption": "(n8n's reply appears here)",
+      "Left": 15,
+      "Top": 84,
+      "Width": 390,
+      "Height": 22
+    },
+    "chkAlert": {
+      "type": "CheckBox",
+      "Caption": "Alert (n8n sets the lamp)",
+      "Left": 15,
+      "Top": 112,
+      "Width": 250,
+      "Height": 24,
+      "webhook": {
+        "Click": {
+          "url": "panelworks-demo",
+          "send": [
+            "chkAlert.Value"
+          ]
+        }
+      }
+    },
+    "lblServer": {
+      "type": "Label",
+      "Caption": "n8n clock: (polling every 10 s)",
+      "Left": 15,
+      "Top": 142,
+      "Width": 390,
+      "Height": 22
+    },
+    "lstLog": {
+      "type": "ListBox",
+      "Left": 15,
+      "Top": 172,
+      "Width": 390,
+      "Height": 140
+    }
+  }
+}

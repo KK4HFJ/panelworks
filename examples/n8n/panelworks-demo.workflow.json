@@ -1,0 +1,89 @@
+{
+  "name": "PanelWorks \u2014 demo event procedures",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PanelWorks demo\nA PanelWorks form POSTs here on events (and on its poll timer).\nThe Code node is the **event procedure**: it returns\n`{set, call, msgbox}` and the panel applies it.\n\nPair with **examples/n8n_demo.json** in the PanelWorks repo.\nNo side effects: safe to leave published.",
+        "color": 4,
+        "width": 608,
+        "height": 224
+      },
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "panelworks-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "From PanelWorks",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// PanelWorks posts: {form, object, event, args, values, time}\n// Reply with {set: {\"Obj.Prop\": value}, call: [[obj, method, ...args]], msgbox}\nconst b = $input.first().json.body || {};\nconst t = $now.toFormat('HH:mm:ss');\nconst v = b.values || {};\nlet out;\n\nif (b.event === 'Poll') {\n  out = { set: { 'lblServer.Caption': 'n8n clock: ' + t } };\n} else if (b.object === 'cmdAsk' && b.event === 'Click') {\n  const name = (v['txtName.Text'] || '').trim() || 'stranger';\n  out = {\n    set: {\n      'lblReply.Caption': 'Hello ' + name + ', from n8n at ' + t,\n      'shpLamp.FillColor': 'dodger blue'\n    },\n    call: [['lstLog', 'AddItem', t + '  n8n handled cmdAsk_Click for ' + name, 0]]\n  };\n} else if (b.object === 'chkAlert' && b.event === 'Click') {\n  const on = Number(v['chkAlert.Value']) === 1;\n  out = {\n    set: { 'shpLamp.FillColor': on ? 'red' : 'gray' },\n    call: [['lstLog', 'AddItem', t + '  alert ' + (on ? 'armed' : 'cleared') + ' by n8n', 0]]\n  };\n} else {\n  out = { call: [['lstLog', 'AddItem', t + '  n8n saw ' + b.object + '_' + b.event, 0]] };\n}\nreturn [{ json: out }];"
+      },
+      "name": "Event procedure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Reply to panel",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "From PanelWorks": {
+      "main": [
+        [
+          {
+            "node": "Event procedure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event procedure": {
+      "main": [
+        [
+          {
+            "node": "Reply to panel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

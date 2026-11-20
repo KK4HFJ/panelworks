@@ -1,0 +1,26 @@
+{
+  "name": "PumpPanel",
+  "caption": "Cistern Pump Panel",
+  "width": 420,
+  "height": 300,
+  "code": "pumppanel.py",
+  "objects": {
+    "lblTitle":   {"type": "Label", "Caption": "Cistern level", "Left": 15, "Top": 12, "Width": 150, "Height": 22, "FontBold": true},
+    "barLevel":   {"type": "ProgressBar", "Max": 100, "Value": 40, "Left": 15, "Top": 38, "Width": 250, "Height": 22},
+    "lblLevel":   {"type": "Label", "Caption": "40 %", "Left": 275, "Top": 38, "Width": 60, "Height": 22},
+    "shpPump":    {"type": "Shape", "Shape": "Oval", "FillColor": "gray", "Left": 355, "Top": 30, "Width": 36, "Height": 36},
+
+    "lblSet":     {"type": "Label", "Caption": "Fill to %", "Left": 15, "Top": 78, "Width": 70, "Height": 24},
+    "txtSetpoint":{"type": "TextBox", "Text": "85", "Left": 90, "Top": 78, "Width": 50, "Height": 24},
+    "chkAuto":    {"type": "CheckBox", "Caption": "Auto (start below 30 %)", "Left": 160, "Top": 78, "Width": 200, "Height": 24},
+
+    "optSolar":   {"type": "OptionButton", "Group": "source", "Caption": "Solar", "Value": true, "Left": 15, "Top": 110, "Width": 80, "Height": 24},
+    "optGrid":    {"type": "OptionButton", "Group": "source", "Caption": "Generator", "Left": 100, "Top": 110, "Width": 100, "Height": 24},
+
+    "cmdStart":   {"type": "CommandButton", "Caption": "Start", "Left": 15, "Top": 145, "Width": 90, "Height": 30},
+    "cmdStop":    {"type": "CommandButton", "Caption": "Stop", "Enabled": false, "Left": 115, "Top": 145, "Width": 90, "Height": 30},
+
+    "lstLog":     {"type": "ListBox", "Left": 15, "Top": 185, "Width": 390, "Height": 100},
+    "tmrSim":     {"type": "Timer", "Interval": 500, "Enabled": true}
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "CisternMQTT",
+  "caption": "Cistern (MQTT)",
+  "width": 440,
+  "height": 330,
+  "code": "cistern_mqtt.py",
+  "mqtt": {
+    "broker": "localhost",
+    "port": 1883,
+    "prefix": "panelworks/cistern",
+    "mirror": true
+  },
+  "objects": {
+    "lblTitle":  {"type": "Label", "Caption": "Cistern level", "FontBold": true,
+                  "Left": 15, "Top": 12, "Width": 150, "Height": 22},
+    "shpNode":   {"type": "Shape", "Shape": "Rectangle", "FillColor": "gray",
+                  "Left": 395, "Top": 14, "Width": 16, "Height": 16,
+                  "subscribe": {"FillColor": {"topic": "homestead/cistern/status",
+                                         "map": {"online": "lime green", "offline": "red"}}}},
+    "lblNode":   {"type": "Label", "Caption": "node ?", "Alignment": "Right",
+                  "Left": 290, "Top": 12, "Width": 100, "Height": 22,
+                  "subscribe": {"Caption": {"topic": "homestead/cistern/status", "format": "node {}"}}},
+
+    "barLevel":  {"type": "ProgressBar", "Max": 100,
+                  "Left": 15, "Top": 38, "Width": 260, "Height": 22,
+                  "subscribe": {"Value": {"topic": "homestead/cistern/level", "json": "level"}}},
+    "lblLevel":  {"type": "Label", "Caption": "-- %",
+                  "Left": 285, "Top": 38, "Width": 60, "Height": 22,
+                  "subscribe": {"Caption": {"topic": "homestead/cistern/level", "json": "level",
+                                       "format": "{:.0f} %"}}},
+    "lblTemp":   {"type": "Label", "Caption": "Water -- C",
+                  "Left": 15, "Top": 64, "Width": 160, "Height": 20,
+                  "subscribe": {"Caption": {"topic": "homestead/cistern/level", "json": "temp",
+                                       "format": "Water {:.1f} C"}}},
+
+    "shpPump":   {"type": "Shape", "Shape": "Oval", "FillColor": "gray",
+                  "Left": 375, "Top": 40, "Width": 36, "Height": 36,
+                  "subscribe": {"FillColor": {"topic": "homestead/pump/state",
+                                         "map": {"ON": "lime green", "OFF": "gray", "*": "orange"}}}},
+    "lblPump":   {"type": "Label", "Caption": "Pump ?", "Alignment": "Center",
+                  "Left": 345, "Top": 80, "Width": 90, "Height": 20,
+                  "subscribe": {"Caption": {"topic": "homestead/pump/state",
+                                       "map": {"ON": "running", "OFF": "stopped"}}}},
+
+    "lblSet":    {"type": "Label", "Caption": "Fill to %",
+                  "Left": 15, "Top": 98, "Width": 70, "Height": 24},
+    "txtSetpoint": {"type": "TextBox", "Text": "85",
+                  "Left": 90, "Top": 98, "Width": 50, "Height": 24,
+                  "subscribe": {"Text": {"topic": "homestead/cistern/setpoint", "twoWay": true}}},
+    "chkAuto":   {"type": "CheckBox", "Caption": "Auto (node decides)",
+                  "Left": 160, "Top": 98, "Width": 180, "Height": 24,
+                  "subscribe": {"Value": {"topic": "homestead/pump/auto", "twoWay": true}}},
+
+    "cmdStart":  {"type": "CommandButton", "Caption": "Start",
+                  "Left": 15, "Top": 132, "Width": 90, "Height": 30,
+                  "publish": {"Click": {"topic": "homestead/pump/cmd", "payload": "ON"}}},
+    "cmdStop":   {"type": "CommandButton", "Caption": "Stop",
+                  "Left": 115, "Top": 132, "Width": 90, "Height": 30,
+                  "publish": {"Click": {"topic": "homestead/pump/cmd", "payload": "OFF"}}},
+
+    "lstLog":    {"type": "ListBox", "Left": 15, "Top": 172, "Width": 410, "Height": 145},
+    "mqttMon":   {"type": "MQTT", "Broker": "localhost", "Port": 1883,
+                  "Subscriptions": ["homestead/pump/#", "homestead/cistern/setpoint",
+                                    "homestead/cistern/status"]}
+  }
+}
