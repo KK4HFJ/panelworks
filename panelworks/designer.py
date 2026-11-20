@@ -15,7 +15,7 @@ resize.
   Move:      drag; arrow keys nudge 1 px, Shift+arrow 10 px
   Resize:    drag the black grip at the bottom-right of the selection
   Code:      double-click a control, or an event on the Events tab
-  Keys:      Del delete, Ctrl+D duplicate, Ctrl+Z undo, Ctrl+S save, F5 run
+  Keys:      Del delete, Ctrl+D duplicate, Ctrl+Z undo, Ctrl+S save, F5 (or the green Start button) run
 
 Works alongside Claude: if the open file changes on disk (Claude's save_form,
 another editor), the designer reloads it, asking first if you have unsaved work.
@@ -42,23 +42,25 @@ GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
                 "ListBox", "ComboBox", "Shape", "ProgressBar"]
-NONVISUAL_ORDER = ["Timer", "MQTT"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "Timer": "Timer", "MQTT": "MQTT"}
+          "ProgressBar": "Progress", "Timer": "Timer", "MQTT": "MQTT",
+          "Serial": "Serial"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
               "WebhookResponse": "data", "WebhookError": "message", "Error": "message",
-              "MqttError": "message"}
+              "MqttError": "message", "DataArrival": "line"}
 EVENT_HELP = {"Click": "is clicked", "DblClick": "is double-clicked", "Change": "text changes",
               "KeyPress": "gets a key press", "GotFocus": "gets the focus", "LostFocus": "loses the focus",
               "Timer": "interval elapses", "Load": "opens", "Unload": "closes",
               "MessageArrived": "receives an MQTT message", "Connected": "connects",
               "Disconnected": "loses the broker", "Error": "has a connection error",
               "WebhookResponse": "gets a webhook reply", "WebhookError": "webhook call fails",
-              "MqttError": "MQTT link has an error"}
+              "MqttError": "MQTT link has an error",
+              "DataArrival": "receives a line"}
 
 
 def rename_in_code(text, old, new, events):
@@ -232,7 +234,8 @@ class Designer:
         f.add_command(label="Save", accelerator="Ctrl+S", command=self.save)
         f.add_command(label="Save As...", command=self.save_as)
         f.add_separator()
-        f.add_command(label="Run", accelerator="F5", command=self.run_form)
+        f.add_command(label="Start", accelerator="F5", command=self.run_form)
+        f.add_command(label="End", command=lambda: self.end_run())
         f.add_separator()
         f.add_command(label="Exit", command=self.quit)
         m.add_cascade(label="File", menu=f)
@@ -253,7 +256,36 @@ class Designer:
         m.add_cascade(label="Help", menu=h)
         self.root.config(menu=m)
 
+    def _build_toolbar(self):
+        """VB's standard toolbar: New Open Save | Start End | Code."""
+        bar = tk.Frame(self.root, bd=1, relief="raised", padx=3, pady=2)
+        bar.pack(side="top", fill="x")
+
+        def btn(text, cmd, tip, **kw):
+            b = tk.Button(bar, text=text, command=cmd, relief="flat", padx=6, pady=1,
+                          overrelief="raised", **kw)
+            b.pack(side="left", padx=1)
+            b.bind("<Enter>", lambda e: self.say(tip))
+            return b
+
+        def sep():
+            tk.Frame(bar, width=2, bd=1, relief="sunken").pack(side="left", fill="y", padx=5, pady=2)
+
+        btn("New", lambda: self.new_form() if self._ok_to_discard() else None, "New form (Ctrl+N)")
+        btn("Open", self.open_dialog, "Open a form (Ctrl+O)")
+        btn("Save", self.save, "Save form and code (Ctrl+S)")
+        sep()
+        self.btn_start = btn("\u25B6 Start", self.run_form, "Save and run the panel (F5)",
+                             fg="#0a7d16", activeforeground="#0a7d16",
+                             font=("Helvetica", 10, "bold"))
+        self.btn_end = btn("\u25A0 End", self.end_run, "Stop the running panel",
+                           fg="#b00020", activeforeground="#b00020", disabledforeground="gray60",
+                           font=("Helvetica", 10, "bold"), state="disabled")
+        sep()
+        btn("Code", lambda: self.code_window(), "Open the Code window (F7)")
+
     def _build_layout(self):
+        self._build_toolbar()
         # toolbox
         tb = tk.Frame(self.root, padx=4, pady=4)
         tb.pack(side="left", fill="y")
@@ -670,7 +702,8 @@ class Designer:
         for p in sorted(snap_):
             if p in GEOMETRY or p in HIDDEN_PROPS:
                 continue
-            rows.append((p, snap_[p], not hasattr(type(o), "set_" + p)))
+            rows.append((p, snap_[p], not hasattr(type(o), "set_" + p)
+                         or p in getattr(type(o), "RUNTIME_ONLY", ())))
         return rows
 
     # -------------------------------------------------------- property editor
@@ -701,7 +734,19 @@ class Designer:
             self.ed_apply.configure(state="disabled")
             self._editor_widget = None
             return
-        if isinstance(value, bool) or prop in ENUMS:
+        cls = CONTROL_TYPES.get(self.host.objects[self.selected].TYPE) if self.selected in self.host.objects else None
+        offered = cls.choices(prop) if cls is not None and hasattr(cls, "choices") else None
+        if offered:            # suggestions (e.g. the serial ports present), typing still allowed
+            w = ttk.Combobox(self.ed_holder, values=offered)
+            w.set(str(value))
+            w.bind("<<ComboboxSelected>>", lambda e: self._apply_editor())
+            w.bind("<Return>", lambda e: self._apply_editor())
+            w.pack(fill="x")
+            if prop == "Port":
+                tk.Label(self.ed_holder, text="Ports found now. 'auto' = first USB serial device;\n"
+                         "'auto:Arduino' = first whose name contains Arduino.",
+                         fg="gray40", font=("Helvetica", 8), justify="left").pack(anchor="w")
+        elif isinstance(value, bool) or prop in ENUMS:
             opts = ["True", "False"] if isinstance(value, bool) else ENUMS[prop]
             w = ttk.Combobox(self.ed_holder, values=opts, state="readonly")
             w.set(str(value))
@@ -1259,6 +1304,8 @@ class Designer:
         return True
 
     def run_form(self):
+        if self._running():
+            self.end_run()                     # Start while running = restart with the latest
         cw = self.code_window(create=False)
         if cw and cw.modified and not cw.save():
             return
@@ -1270,17 +1317,50 @@ class Designer:
         except OSError as e:
             messagebox.showerror("Run", str(e), parent=self.root)
             return
-        self.say(f"Running {os.path.basename(self.path)} ...")
+        self._proc = proc
+        self.btn_start.configure(text="\u25B6 Restart")
+        self.btn_end.configure(state="normal")
+        self.say(f"Running {os.path.basename(self.path)}. Close its window or press End to stop it.")
+        self.root.after(500, lambda: self._watch_run(proc))
 
-        def check():
-            if proc.poll() is None:
-                self.say(f"Running {os.path.basename(self.path)}. Close its window to stop it.")
-            else:
-                err = (proc.stderr.read() or "").strip()
-                if proc.returncode:
-                    messagebox.showerror("Run", err[-1500:] or f"Exited with code {proc.returncode}",
-                                         parent=self.root)
-        self.root.after(1500, check)
+    def _running(self):
+        p = getattr(self, "_proc", None)
+        return p is not None and p.poll() is None
+
+    def _watch_run(self, proc):
+        if proc is not getattr(self, "_proc", None):
+            return                              # an older run; a newer one is being watched
+        if proc.poll() is None:
+            self.root.after(500, lambda: self._watch_run(proc))
+            return
+        self._proc = None
+        self.btn_start.configure(text="\u25B6 Start")
+        self.btn_end.configure(state="disabled")
+        if getattr(proc, "_ended", False):
+            self.say("Stopped.")
+            return
+        err = (proc.stderr.read() or "").strip()
+        if proc.returncode:
+            messagebox.showerror("Run", err[-1500:] or f"Exited with code {proc.returncode}",
+                                 parent=self.root)
+        else:
+            self.say("Panel closed.")
+
+    def end_run(self):
+        """VB's End button: stop the running panel."""
+        proc = getattr(self, "_proc", None)
+        if proc is None or proc.poll() is not None:
+            return
+        proc._ended = True
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        self._proc = None
+        self.btn_start.configure(text="\u25B6 Start")
+        self.btn_end.configure(state="disabled")
+        self.say("Stopped.")
 
     # -------------------------------------------- file changed on disk
     def _disk_mtime(self):

@@ -1,0 +1,20 @@
+{
+  "name": "ArduinoBench",
+  "caption": "Arduino Bench (USB serial)",
+  "width": 380,
+  "height": 250,
+  "code": "arduino_bench.py",
+  "objects": {
+    "shpLink":  {"type": "Shape", "FillColor": "red", "Left": 15, "Top": 18, "Width": 14, "Height": 14},
+    "lblLink":  {"type": "Label", "Caption": "looking for the Arduino...", "Left": 35, "Top": 14, "Width": 330, "Height": 22},
+    "lblT":     {"type": "Label", "Caption": "Temperature", "Left": 15, "Top": 50, "Width": 110, "Height": 22},
+    "lblTemp":  {"type": "Label", "Caption": "--", "FontSize": 20, "FontBold": true, "Left": 130, "Top": 44, "Width": 120, "Height": 34},
+    "lblL":     {"type": "Label", "Caption": "Light", "Left": 15, "Top": 95, "Width": 110, "Height": 22},
+    "pbLight":  {"type": "ProgressBar", "Max": 1023, "Left": 130, "Top": 95, "Width": 230, "Height": 22},
+    "cmdOn":    {"type": "CommandButton", "Caption": "LED On", "Left": 15, "Top": 140, "Width": 100, "Height": 32},
+    "cmdOff":   {"type": "CommandButton", "Caption": "LED Off", "Left": 125, "Top": 140, "Width": 100, "Height": 32},
+    "lblLast":  {"type": "Label", "Caption": "", "ForeColor": "#555555", "Left": 15, "Top": 190, "Width": 350, "Height": 22},
+    "Serial1":  {"type": "Serial", "Port": "auto", "Settings": "115200,n,8,1",
+                 "Fill": ["temp -> lblTemp.Caption", "light -> pbLight.Value"]}
+  }
+}

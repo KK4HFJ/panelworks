@@ -37,6 +37,7 @@ class VBObject:
     TYPE = "Object"
     EVENTS: tuple = ()
     PERSIST_ORDER: tuple = ()   # props to write first when saving (e.g. List before ListIndex)
+    RUNTIME_ONLY: tuple = ()    # settable while running, but not at design time or in the file
 
     def __init__(self, form, name, spec):
         object.__setattr__(self, "_form", form)
@@ -108,7 +109,8 @@ class VBObject:
 
     def persist(self):
         """Settable properties, in an order that can be replayed to rebuild."""
-        names = [p for p in self.property_names() if hasattr(type(self), "set_" + p)]
+        names = [p for p in self.property_names() if hasattr(type(self), "set_" + p)
+                 and p not in self.RUNTIME_ONLY]
         names.sort(key=lambda p: (p not in self.PERSIST_ORDER, p))
         return {p: self.get(p) for p in names}
 
@@ -880,4 +882,9 @@ def load_form(path):
 try:                       # optional: MQTT control + JSON bind/publish/mirror
     from . import mqtt as _mqtt  # noqa: F401,E402
 except ImportError:        # paho-mqtt not installed
+    pass
+
+try:                       # optional: Serial control (pyserial)
+    from . import serialport as _serialport  # noqa: F401,E402
+except ImportError:
     pass

@@ -11,14 +11,14 @@ requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Steve Spence (KK4HFJ)" }]
-keywords = ["gui", "tkinter", "mcp", "mqtt", "n8n", "webhooks", "rad", "forms", "esp32", "home-automation"]
+keywords = ["gui", "tkinter", "mcp", "mqtt", "n8n", "webhooks", "rad", "forms", "esp32", "home-automation", "serial", "arduino"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: User Interfaces",
   "Topic :: Home Automation",
 ]
-dependencies = ["mcp>=1.10"]
+dependencies = ["mcp>=1.10", "pyserial>=3.5"]
 
 [project.urls]
 Homepage = "https://kk4hfj.com"

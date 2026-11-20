@@ -57,6 +57,8 @@ class CodeWindow:
         bar.pack(fill="x")
         # buttons first, so they keep their space when the window is narrow
         tk.Button(bar, text="External...", command=self.open_external).pack(side="right")
+        tk.Button(bar, text="\u25B6 Start", command=self.d.run_form, fg="#0a7d16",
+                  activeforeground="#0a7d16", font=("Helvetica", 9, "bold")).pack(side="right", padx=4)
         tk.Button(bar, text="Check", command=lambda: self.check(report_ok=True)).pack(side="right", padx=4)
         tk.Button(bar, text="Save", command=self.save).pack(side="right")
         tk.Label(bar, text="Object").pack(side="left")

@@ -51,6 +51,8 @@ the source take effect without reinstalling). Leave off `[mqtt]` to skip paho-mq
 
 Works with mcp 2.x (tested 2.3.0) and falls back to the 1.x `FastMCP` API.
 MQTT needs paho-mqtt 2.x (tested 2.2.0); without it, forms still run, minus MQTT.
+Serial uses pyserial (installed automatically). On Linux, add yourself to the
+`dialout` group (`sudo usermod -aG dialout $USER`, then log in again) to open ports.
 
 ## Run
 
@@ -122,8 +124,11 @@ The designer works the way classic RAD tools did, and needs no AI:
   to open the built-in **Code window**. See below.
 - **Connections:** MQTT `subscribe` / `publish` and n8n `webhook` entries for the
   selected control, or `mqtt` / `webhooks` for the form, edited as JSON.
-- **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, **F5 run**.
-  Timers and MQTT controls sit in the tray under the form, as they did in VB.
+- **Run:** the green **▶ Start** button on the toolbar (or F5) saves and runs the
+  panel; the red **■ End** button stops it. Start while it's running restarts it
+  with your latest changes. The Code window has a Start button too.
+- **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, F5 run.
+  Timers, MQTT and Serial controls sit in the tray under the form, as they did in VB.
 
 ### The Code window
 
@@ -215,6 +220,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | ProgressBar | Value, Max | | |
 | Timer | Interval (ms), Enabled | | Timer |
 | MQTT | Broker, Port, ClientID, Username, Password, Subscriptions, AutoConnect, Connected | Connect, Disconnect, Publish, Subscribe, Unsubscribe | Connected, Disconnected, MessageArrived |
+| Serial | Port, Settings, Terminator, Fill, Output, Input, Line, PortOpen, AutoOpen, AutoReconnect, DTR, RTS | Open, Close, Write, SendLine, ClearInput, ListPorts | DataArrival(line), Connected, Disconnected, Error |
 | Form | Caption, Width, Height, BackColor | MsgBox, Unload | Load, Unload |
 
 All visible controls also have Left, Top, Width, Height, Visible, Enabled,
@@ -334,6 +340,48 @@ python tests/fake_esp32.py                       # simulated cistern node
 panelworks examples/cistern_mqtt.json
 mosquitto_sub -t 'panelworks/cistern/#' -v          # watch the form mirror itself
 ```
+
+## Serial (Arduino, GPS, radios): the MSComm control, fixed
+
+For anything plugged into the PC: an Arduino on USB, a GPS, a radio's CAT port,
+a TNC. Devices on the network use MQTT instead.
+
+```json
+"Serial1": {"type": "Serial", "Port": "auto", "Settings": "115200,n,8,1",
+            "Fill": ["temp -> lblTemp.Caption", "light -> pbLight.Value"]}
+```
+
+```python
+def Serial1_DataArrival(f, line):      # once per complete line
+    f.lblLast.Caption = line
+
+def cmdOn_Click(f):
+    f.Serial1.Output = "LED ON"        # sends the text plus the line ending
+```
+
+What it does better than MSComm:
+
+- **Lines, not chunks.** `DataArrival` fires once per complete line, however the
+  bytes arrived. `Serial.println`'s CR+LF is handled. Set **Terminator** to `CR`,
+  `CRLF`, or `None` (raw chunks) if your device differs.
+- **No COM-number guessing.** The designer's Port drop-down lists the ports
+  present, with their USB names. `auto` picks the first USB serial device;
+  `auto:Arduino` (or `auto:CH340`, `auto:CP210`) the first whose name matches.
+  A COM number that changes after a replug no longer breaks the panel.
+- **Unplug and replug:** **AutoReconnect** (on by default) reopens it, firing
+  `Disconnected` and then `Connected`.
+- **No code for readings.** **Fill** copies fields of JSON lines
+  (`{"temp":21.5}`, paths like `env.hum`) or `key=value` lines into properties.
+- **Network serial** too: `socket://192.168.1.50:23` (ser2net, ESP-Link),
+  `rfc2217://host:port`.
+- **Errors you can read:** a missing port or bad Settings raises `Error` once
+  with the reason, and `LastError` keeps it.
+- **Bridge to MQTT/n8n** with the usual JSON. `"publish": {"DataArrival": "bench/line"}`
+  sends every line to the broker; `"subscribe": {"Output": "bench/cmd"}` sends
+  broker messages to the device. `"webhook": {"DataArrival": ...}` hands lines to n8n.
+
+Try it: flash `examples/arduino_bench/arduino_bench.ino`, then
+`panelworks examples/arduino_bench.json`.
 
 ## n8n (and any HTTP webhook)
 

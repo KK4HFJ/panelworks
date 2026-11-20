@@ -361,7 +361,8 @@ class Bus:
         # "publish": {"Click": {"topic": ..., "payload": ...}}
         for cfg in self._as_list((obj._publish or {}).get(event)):
             cfg = self._norm(cfg)
-            payload = cfg.get("payload", "{Value}" if "Value" in obj.property_names() else event)
+            payload = cfg.get("payload", getattr(obj, "DEFAULT_PAYLOAD", None)
+                              or ("{Value}" if "Value" in obj.property_names() else event))
             try:
                 payload = payload.format_map(_Props(obj)) if isinstance(payload, str) else payload
             except (KeyError, ValueError, AttributeError) as e:
