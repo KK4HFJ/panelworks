@@ -76,7 +76,8 @@ def make_impl(form):
             if not b:
                 return {"enabled": False}
             return {"enabled": True, "broker": f"{b.link.broker}:{b.link.port}",
-                    "connected": b.link.connected, "mirror": b.mirror, "prefix": b.prefix,
+                    "connected": b.link.connected, "last_error": b.link.last_error,
+                    "tls": b.link.tls, "mirror": b.mirror, "prefix": b.prefix,
                     "bindings": {t: [f"{n}.{p}" for n, p, _ in e] for t, e in b.binds.items()},
                     "publishers": {n: o._publish for n, o in form.objects.items() if o._publish}}
         return gui(do)

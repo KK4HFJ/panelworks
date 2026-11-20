@@ -7,6 +7,12 @@ draw new controls while the app runs), by devices over **MQTT** (subscribe
 properties to topics, publish on events, mirror the whole form) and by
 automations over **webhooks** (an n8n workflow can be an event procedure).
 
+![Claude drives a PanelWorks form over MCP](docs/demo.gif)
+
+*Recorded session: an MCP client (as Claude would) adds an E-STOP button to a
+running panel, starts the pump, waits for the E-STOP click, then stops it.
+Script: `tests/record_demo.py`.*
+
 The programming model is the classic RAD one: a form, named controls, properties,
 methods and events (`cmdStart_Click`), as popularised by Visual Basic and Delphi.
 PanelWorks is an independent project and is not affiliated with Microsoft, nor
@@ -17,6 +23,7 @@ examples/pumppanel.json    <- a form: objects + properties
 examples/pumppanel.py      <- its event procedures
 examples/cistern_mqtt.*    <- a no-code panel driven entirely by MQTT subscriptions
 examples/n8n_demo.*        <- a panel whose event procedures live in n8n
+examples/hvac_console.*    <- read-only HVAC console for real ESP32 devices over MQTT/TLS
 examples/n8n/              <- the matching n8n workflow, ready to import
 tests/fake_esp32.py        <- simulated cistern node to test it against
 panelworks/runtime.py      <- controls, Form, event dispatch, thread bridge
@@ -200,6 +207,23 @@ accepted as an older alias for `subscribe`):
 | `publishTopic` | Publish two-way changes here instead of `topic` (e.g. a `/set` topic) |
 | `retain` | Retain two-way publishes (default true) |
 
+**Connection options** in the `mqtt` block:
+
+| Key | Default | Notes |
+|---|---|---|
+| `broker` | `localhost` | Host name. `${VAR}` / `${VAR:-default}` allowed, like every value below |
+| `port` | 1883, or 8883 with `tls` | |
+| `tls` | `false` | Encrypt the connection. Uses the operating system's trusted CAs (fine for Let's Encrypt) |
+| `caFile` | | Path to a CA certificate, for private or self-signed brokers |
+| `username` / `password` | | Keep the password out of the file: `"password": "${PW_MQTT_PASS}"` |
+| `prefix` | `panelworks/<form name>` | Where mirror and status topics go |
+| `status` | `true` | Publish `<prefix>/status` online/offline with a Last Will. Set `false` for read-only accounts |
+
+If the broker refuses the login or can't be reached, the reason is printed once,
+`Form_MqttError(f, message)` fires, and `mqtt_status` shows it as `last_error`.
+The MQTT control has the same `TLS`, `CAFile`, `Username` and `Password`
+properties, a `LastError` property, and an `Error` event.
+
 `publish` takes one entry or a list per event. `payload` can template the
 object's properties, e.g. `"{Text}"` or `"{Value}"`. If no payload is given, it defaults to `"{Value}"`
 or the event name. Optional `retain` and `qos`.
@@ -293,11 +317,44 @@ panelworks examples/n8n_demo.json
 For Claude Desktop, put the variable in the server's `"env"` block:
 `"env": {"N8N_WEBHOOK_BASE": "https://your-n8n/webhook/"}`.
 
+## Example: HVAC console (real devices, MQTT over TLS)
+
+![HVAC console](examples/hvac_console.png)
+
+`examples/hvac_console.json` watches two ESP32s, a thermostat display (`cyd1`) and
+a relay board (`relay1`), through a TLS broker. Every value on screen is a
+`subscribe` entry: room temperature, humidity, setpoint, mode, relay lamps, device
+online lamps, the thermostat-to-relay BLE link, outdoor temperature and forecast
+advice. The code module only keeps a change log.
+
+It is **read-only by design**. The relays drive HVAC contactors and the thermostat
+already commands them, so the console publishes nothing to `home/...`. Give it a
+broker account that can only read:
+
+```
+# Mosquitto ACL
+user panelworks
+topic read home/#
+topic readwrite panelworks/#
+```
+
+Connection details come from environment variables, so nothing secret is in the file:
+
+```
+$env:PW_MQTT_HOST="mqtt.example.com"     # your broker (TLS, port 8883 unless PW_MQTT_PORT is set)
+$env:PW_MQTT_USER="panelworks"
+$env:PW_MQTT_PASS="..."
+panelworks examples/hvac_console.json --mcp none
+```
+
+Missing JSON fields (for example partial telemetry while a device boots) are
+skipped and the last value is kept.
+
 ## One window per form
 
 The first `panelworks` process to open a form takes an OS file lock (temp folder,
 keyed by the form's full path) and owns the window. A second `--mcp stdio` launch
-of the same form, which Claude Desktop sometimes does, opens no window and relays its
+of the same form, which Claude Desktop typically does at startup, opens no window and relays its
 MCP calls to the first over a localhost port, so every client drives the same
 live form. A second launch in other modes prints "already open" and exits. The
 OS releases the lock if the owner dies, even when it's killed from Task Manager.

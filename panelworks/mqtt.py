@@ -20,6 +20,7 @@ import uuid
 import paho.mqtt.client as paho
 
 from .runtime import VBObject, register_control
+from .util import expand
 
 
 def to_payload(v):
@@ -48,36 +49,61 @@ def json_path(value, path):
 
 
 class MqttLink:
-    def __init__(self, form, broker="localhost", port=1883, client_id=None,
+    def __init__(self, form, broker="localhost", port=None, client_id=None,
                  username=None, password=None, keepalive=30,
-                 on_message=None, on_connect=None, on_disconnect=None, will=None):
+                 on_message=None, on_connect=None, on_disconnect=None, will=None,
+                 tls=False, ca_file=None, tls_insecure=False, on_error=None):
         self.form = form
-        self.broker, self.port = broker, int(port)
+        self.on_error = on_error
+        self.last_error = None
+        self.tls = bool(tls)
+        self.broker = expand(broker)
+        self.port = int(expand(port) or (8883 if self.tls else 1883))
         self.subs = {}                     # topic filter -> qos
         self.connected = False
         self.on_message, self.on_connect, self.on_disconnect = on_message, on_connect, on_disconnect
         self.client = paho.Client(paho.CallbackAPIVersion.VERSION2,
                                   client_id=client_id or f"panelworks-{uuid.uuid4().hex[:8]}")
+        username, password = expand(username), expand(password)
         if username:
-            self.client.username_pw_set(username, password)
+            self.client.username_pw_set(username, password or None)
+        if self.tls:
+            # ca_file=None -> the operating system's trusted roots (fine for Let's Encrypt)
+            self.client.tls_set(ca_certs=expand(ca_file) or None)
+            if tls_insecure:                 # self-signed test brokers only
+                self.client.tls_insecure_set(True)
         if will:
             self.client.will_set(*will)    # (topic, payload, qos, retain)
         self.client.reconnect_delay_set(1, 30)
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
         self.client.on_message = self._on_message
+        self.client.on_connect_fail = self._on_connect_fail
         self.keepalive = keepalive
         self._started = False
 
     # ---- paho callbacks (network thread: never touch widgets here) ------------
+    def _error(self, message):
+        """Report a connection problem once (it repeats on every retry otherwise)."""
+        if message != self.last_error:
+            self.last_error = message
+            print(f"[mqtt] {self.broker}:{self.port}: {message}")
+            if self.on_error:
+                self.form.post(self.on_error, message)
+
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code.is_failure:
+            self._error(f"broker refused the connection: {reason_code}")
             return
         self.connected = True
+        self.last_error = None
         for topic, qos in self.subs.items():
             client.subscribe(topic, qos)
         if self.on_connect:
             self.form.post(self.on_connect)
+
+    def _on_connect_fail(self, client, userdata):
+        self._error("could not connect (wrong host or port, TLS certificate problem, or broker down)")
 
     def _on_disconnect(self, client, userdata, flags, reason_code, properties):
         was = self.connected
@@ -125,21 +151,25 @@ class MqttLink:
 class MQTTControl(VBObject):
     """Invisible MQTT client. Subscribe in Form_Load, react in Name_MessageArrived."""
     TYPE = "MQTT"
-    EVENTS = ("Connected", "Disconnected", "MessageArrived")
-    PERSIST_ORDER = ("Broker", "Port", "ClientID", "Username", "Password", "Subscriptions")
+    EVENTS = ("Connected", "Disconnected", "MessageArrived", "Error")
+    PERSIST_ORDER = ("Broker", "Port", "TLS", "CAFile", "ClientID", "Username", "Password",
+                     "Subscriptions")
 
     def __init__(self, form, name, spec):
         super().__init__(form, name, spec)
-        for k, v in dict(_broker="localhost", _port=1883, _client_id="", _user="",
-                         _pass="", _auto=True, _subs=[], _link=None).items():
+        for k, v in dict(_broker="localhost", _port=0, _client_id="", _user="",
+                         _pass="", _auto=True, _subs=[], _link=None,
+                         _tls=False, _ca="").items():
             object.__setattr__(self, k, v)
 
     def _new_link(self):
-        link = MqttLink(self._form, self._broker, self._port, self._client_id or None,
+        link = MqttLink(self._form, self._broker, self._port or None, self._client_id or None,
                         self._user or None, self._pass or None,
+                        tls=self._tls, ca_file=self._ca or None,
                         on_message=lambda t, p, r: self.fire("MessageArrived", t, p, r),
                         on_connect=lambda: self.fire("Connected"),
-                        on_disconnect=lambda: self.fire("Disconnected"))
+                        on_disconnect=lambda: self.fire("Disconnected"),
+                        on_error=lambda msg: self.fire("Error", msg))
         for t in self._subs:
             link.subscribe(t)
         return link
@@ -155,7 +185,12 @@ class MQTTControl(VBObject):
     def get_Broker(self): return self._broker
     def set_Broker(self, v): object.__setattr__(self, "_broker", str(v))
     def get_Port(self): return self._port
-    def set_Port(self, v): object.__setattr__(self, "_port", int(v))
+    def set_Port(self, v):   # a number, 0 for the default, or "${VAR:-8883}"
+        object.__setattr__(self, "_port", v if isinstance(v, str) and "${" in v else int(v))
+    def get_TLS(self): return self._tls
+    def set_TLS(self, v): object.__setattr__(self, "_tls", bool(v))
+    def get_CAFile(self): return self._ca
+    def set_CAFile(self, v): object.__setattr__(self, "_ca", str(v))
     def get_ClientID(self): return self._client_id
     def set_ClientID(self, v): object.__setattr__(self, "_client_id", str(v))
     def get_Username(self): return self._user
@@ -165,6 +200,7 @@ class MQTTControl(VBObject):
     def get_AutoConnect(self): return self._auto
     def set_AutoConnect(self, v): object.__setattr__(self, "_auto", bool(v))
     def get_Connected(self): return bool(self._link and self._link.connected)
+    def get_LastError(self): return (self._link.last_error if self._link else None) or ""
 
     def get_Subscriptions(self): return list(self._subs)
     def set_Subscriptions(self, topics):
@@ -221,14 +257,18 @@ class Bus:
         self.prefix = cfg.get("prefix", f"panelworks/{form.spec_name}").rstrip("/")
         self.mirror = bool(cfg.get("mirror", False))
         self.mirror_ms = int(cfg.get("mirrorInterval", 250))
+        self.status = bool(cfg.get("status", True))   # <prefix>/status online/offline + LWT
         self.binds = {}          # topic -> [(obj_name, prop, cfg)]
         self._source = None      # topic an incoming write came from (echo guard)
         self._last = {}          # mirror: (obj, prop) -> payload last published
         self._after = None       # pending mirror timer, cancelled on stop
-        self.link = MqttLink(form, cfg.get("broker", "localhost"), cfg.get("port", 1883),
+        self.link = MqttLink(form, cfg.get("broker", "localhost"), cfg.get("port"),
                              cfg.get("clientId"), cfg.get("username"), cfg.get("password"),
                              on_message=self._message, on_connect=self._connected,
-                             will=(f"{self.prefix}/status", "offline", 0, True))
+                             will=(f"{self.prefix}/status", "offline", 0, True) if self.status else None,
+                             tls=cfg.get("tls", False), ca_file=cfg.get("caFile"),
+                             tls_insecure=cfg.get("tlsInsecure", False),
+                             on_error=lambda msg: self.form.fire("Form", "MqttError", msg))
 
     def start(self):
         if self.mirror:
@@ -241,12 +281,13 @@ class Bus:
         if self._after:
             self.form.root.after_cancel(self._after)
             self._after = None
-        if self.link.connected:
+        if self.link.connected and self.status:
             self.link.publish(f"{self.prefix}/status", "offline", retain=True)
         self.link.stop()
 
     def _connected(self):
-        self.link.publish(f"{self.prefix}/status", "online", retain=True)
+        if self.status:
+            self.link.publish(f"{self.prefix}/status", "online", retain=True)
         self._last.clear()       # republish everything after a reconnect
 
     # ---- bindings ------------------------------------------------------------
@@ -277,7 +318,11 @@ class Bus:
         for sub, entries in self.binds.items():
             if paho.topic_matches_sub(sub, topic):
                 for name, prop, cfg in entries:
-                    self._apply(name, prop, self._convert(payload, cfg), source=topic)
+                    try:
+                        value = self._convert(payload, cfg)
+                    except (KeyError, IndexError, TypeError, ValueError):
+                        continue    # field missing or not convertible: keep the last value
+                    self._apply(name, prop, value, source=topic)
 
     @staticmethod
     def _convert(payload, cfg):

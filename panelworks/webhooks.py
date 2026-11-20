@@ -29,24 +29,14 @@ a failure fires Object_WebhookError(f, message). Both also show in get_events.
 """
 
 import json
-import os
 import queue
-import re
 import threading
 import time
 import urllib.error
 import urllib.request
 
 from . import __version__
-
-_ENV = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
-
-
-def _expand(value):
-    """Replace ${VAR} or ${VAR:-default} with the environment variable, so
-    secrets and per-site URLs stay out of the JSON you commit."""
-    return _ENV.sub(lambda m: os.environ.get(m.group(1), m.group(2) or ""), str(value))
-
+from .util import expand as _expand
 
 def _as_list(x):
     return [] if x is None else x if isinstance(x, list) else [x]
