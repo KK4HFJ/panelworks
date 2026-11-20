@@ -42,8 +42,9 @@ cycle: draw, set properties, write code, run.
 6. **Draw a button** to the right of the text box. Name it `cmdGreet`,
    Caption `Greet`.
 
-7. **Save.** Press **Ctrl+S** (or the **Save** button). Make a folder for your
-   panels, for example `C:\dev\mypanels`, and save as `Hello.json`.
+7. **Save.** Press **Ctrl+S** (or the **Save** button). The dialog starts in your
+   **panels folder**, `Documents\PanelWorks` unless you've changed it in
+   **File → Preferences**. Save as `Hello.json`.
 
 To move a control, drag it. To resize, drag its black grip. The arrow keys nudge the
 selected control by 1 pixel, or 10 with Shift held. **Ctrl+Z** undoes.

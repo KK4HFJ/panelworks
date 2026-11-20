@@ -9,6 +9,8 @@
 | F5 | Start: save and run (also the green ▶ button) |
 | F7 | Code window |
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save (form and code) |
+| Ctrl+W | Close the form |
+| Ctrl+, | Preferences |
 | Ctrl+Z | Undo (form and code together after a rename) |
 | Ctrl+D | Duplicate the selected control |
 | Del | Delete the selected control |
@@ -61,7 +63,8 @@ python -m panelworks ...                  if the command isn't on the PATH
 | `docs/manual/` | This manual |
 | `panelworks/` | The program itself |
 | `tests/` | Automated tests and simulators (`fake_esp32.py`) |
-| `%APPDATA%\PanelWorks\` (Windows), `~/.config/panelworks/` | Your settings: the Open Recent list |
+| `%APPDATA%\PanelWorks\` (Windows), `~/.config/panelworks/` | Your settings: Preferences and the Open Recent list |
+| `Documents\PanelWorks\` | Your panels folder (changeable in Preferences) |
 
 ## Event procedure signatures
 

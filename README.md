@@ -136,6 +136,11 @@ The designer works the way classic RAD tools did, and needs no AI:
   panel; the red **■ End** button stops it. Start while it's running restarts it
   with your latest changes. The Code window has a Start button too.
 - **File → Open Recent:** your last 10 forms, newest first.
+- **File → Examples:** opens a *copy* of a bundled example (with its code and Arduino
+  sketch) in your panels folder, so the originals stay clean for `git pull`.
+- **File → Panels:** the forms in your panels folder (`Documents\PanelWorks` by default).
+- **File → Preferences** (Ctrl+,): panels folder, grid and snap, Code window font size,
+  external editor, reopen the last form at startup. **File → Close** (Ctrl+W).
 - **Keys:** Del, Ctrl+D duplicate, Ctrl+Z undo (50 steps), Ctrl+S save, F5 run.
   Timers, MQTT and Serial controls sit in the tray under the form, as they did in VB.
 

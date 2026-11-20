@@ -16,9 +16,8 @@ anything else you can switch from a pin.
 
 ![The finished LED panel](img/led-panel.png)
 
-The finished files are in the examples folder (`examples/led_panel.json`,
-`led_panel.py`, `led_panel/led_panel.ino`) if you'd rather run it first and
-read along.
+The finished panel is also in the designer under **File → Examples → LED Control**
+(it opens a copy with the sketch beside it) if you'd rather run it first and read along.
 
 ### Step 1: Load the sketch onto the Arduino
 

@@ -34,8 +34,140 @@ def set_window_icon(window):
         pass
 
 
-# ---- per-user settings: File > Open Recent -------------------------------------
-RECENT_MAX = 10
+# ---- per-user settings: Preferences, File > Open Recent -------------------------
+RECENT_MAX = 10          # default; Preferences can change it
+
+DEFAULTS = {
+    "panels_dir": "",          # "" = Documents/PanelWorks
+    "grid": 10,                # designer dot spacing (px)
+    "snap": 5,                 # move/resize snap (px)
+    "code_font_size": 11 if os.name == "nt" else 10,
+    "editor": "",              # outside editor program for External... ("" = VS Code / Notepad)
+    "editor_default": False,   # double-click opens code in the outside editor
+    "reopen_last": False,      # designer reopens the last form at startup
+    "recent_max": RECENT_MAX,
+}
+
+
+def default_panels_dir():
+    docs = os.path.join(os.path.expanduser("~"), "Documents")
+    return os.path.join(docs if os.path.isdir(docs) else os.path.expanduser("~"), "PanelWorks")
+
+
+def _settings_file():
+    return os.path.join(config_dir(), "settings.json")
+
+
+def load_settings():
+    """Settings with defaults filled in. A missing or broken file just means defaults."""
+    import json
+    out = dict(DEFAULTS)
+    try:
+        with open(_settings_file(), encoding="utf-8") as f:
+            saved = json.load(f)
+        if isinstance(saved, dict):
+            out.update({k: v for k, v in saved.items() if k in DEFAULTS})
+    except (OSError, ValueError):
+        pass
+    if not out["panels_dir"]:
+        out["panels_dir"] = default_panels_dir()
+    return out
+
+
+def save_settings(values):
+    import json
+    cur = load_settings()
+    cur.update({k: v for k, v in values.items() if k in DEFAULTS})
+    if cur["panels_dir"] == default_panels_dir():
+        cur["panels_dir"] = ""             # keep following Documents if it moves
+    os.makedirs(config_dir(), exist_ok=True)
+    tmp = _settings_file() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(cur, f, indent=1, ensure_ascii=False)
+    os.replace(tmp, _settings_file())
+
+
+def panels_dir(create=True):
+    d = load_settings()["panels_dir"]
+    if create:
+        try:
+            os.makedirs(d, exist_ok=True)
+        except OSError:
+            pass
+    return d
+
+
+def _recent_max():
+    try:
+        return max(1, int(load_settings()["recent_max"]))
+    except (TypeError, ValueError):
+        return RECENT_MAX
+
+
+def examples_dir():
+    """The bundled examples (in the cloned repo, beside the panelworks package)."""
+    d = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples")
+    return d if os.path.isdir(d) else None
+
+
+EXAMPLE_ORDER = ["led_panel", "pumppanel", "arduino_bench", "cistern_mqtt", "n8n_demo", "hvac_console"]
+
+
+def list_examples():
+    """[(stem, caption, path)] of the bundled example forms, simplest first."""
+    import json
+    d = examples_dir()
+    if not d:
+        return []
+    out = []
+    for name in sorted(os.listdir(d), key=lambda n: (EXAMPLE_ORDER.index(n[:-5]) if n[:-5] in EXAMPLE_ORDER else 99, n)):
+        if name.endswith(".json"):
+            p = os.path.join(d, name)
+            try:
+                with open(p, encoding="utf-8-sig") as f:
+                    cap = json.load(f).get("caption") or name[:-5]
+            except (OSError, ValueError):
+                continue
+            out.append((name[:-5], cap, p))
+    return out
+
+
+def copy_example(src, dest_dir, replace=False):
+    """Copy an example form, its code file and its companion folder (e.g. the
+    Arduino sketch in led_panel/) into dest_dir. Returns the new form path.
+    Never overwrites unless replace=True."""
+    import json
+    import shutil
+    stem = os.path.splitext(os.path.basename(src))[0]
+    sdir = os.path.dirname(src)
+    os.makedirs(dest_dir, exist_ok=True)
+    dest = os.path.join(dest_dir, stem + ".json")
+    if os.path.exists(dest) and not replace:
+        return dest
+    with open(src, encoding="utf-8-sig") as f:
+        spec = json.load(f)
+    files = [stem + ".json"]
+    if spec.get("code") and not os.path.isabs(spec["code"]):
+        files.append(spec["code"])
+    for rel in files:
+        if os.path.exists(os.path.join(sdir, rel)):
+            shutil.copy2(os.path.join(sdir, rel), os.path.join(dest_dir, rel))
+    companion = os.path.join(sdir, stem)
+    if os.path.isdir(companion):
+        shutil.copytree(companion, os.path.join(dest_dir, stem), dirs_exist_ok=True)
+    return dest
+
+
+def list_panels(limit=40):
+    """Forms in the panels folder (and one level of subfolders), by name."""
+    d = panels_dir(create=False)
+    out = []
+    if os.path.isdir(d):
+        for root, dirs, files in os.walk(d):
+            if os.path.relpath(root, d).count(os.sep) >= 1:
+                dirs[:] = []
+            out += [os.path.join(root, f) for f in files if f.endswith(".json") and not f.startswith(".")]
+    return sorted(out, key=lambda p: os.path.relpath(p, d).lower())[:limit]
 
 
 def config_dir():
@@ -60,7 +192,7 @@ def recent_list():
     try:
         with open(_recent_file(), encoding="utf-8") as f:
             items = json.load(f)
-        return [p for p in items if isinstance(p, str)][:RECENT_MAX]
+        return [p for p in items if isinstance(p, str)][:_recent_max()]
     except (OSError, ValueError):
         return []
 
@@ -72,7 +204,7 @@ def _recent_save(items):
         os.makedirs(config_dir(), exist_ok=True)
         tmp = _recent_file() + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(items[:RECENT_MAX], f, indent=1, ensure_ascii=False)
+            json.dump(items[:_recent_max()], f, indent=1, ensure_ascii=False)
         os.replace(tmp, _recent_file())
     except OSError:
         pass                                   # a settings file must never break the designer

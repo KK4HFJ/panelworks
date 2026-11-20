@@ -83,7 +83,8 @@ def rename_in_code(text, old, new, events):
     return text, procs, refs
 
 
-def snap(v, step=SNAP):
+def snap(v, step=None):
+    step = step or SNAP
     return int(round(v / step) * step)
 
 
@@ -110,7 +111,8 @@ def show(value):
 
 def open_in_editor(path, line=1, force_external=False):
     """Open a code file at a line in an outside editor, without ever executing it."""
-    editor = os.environ.get("PANELWORKS_EDITOR")
+    from .util import load_settings
+    editor = os.environ.get("PANELWORKS_EDITOR") or load_settings()["editor"]
     try:
         if editor:
             subprocess.Popen([editor, path])
@@ -171,13 +173,20 @@ class Designer:
         self._editor_widget = None
         self._codewin = None
 
+        from .util import load_settings
+        self.settings = load_settings()
+        self._apply_settings()
+
         self._build_menu()
         self._build_layout()
         self._bind_keys()
         self.root.protocol("WM_DELETE_WINDOW", self.quit)
 
+        last = self._last_form() if not path and self.settings["reopen_last"] else None
         if path and os.path.exists(path):
             self.open_form(path)
+        elif last:
+            self.open_form(last)
         else:
             self.new_form(path)
         self.root.after(1500, self._watch_file)
@@ -233,6 +242,11 @@ class Designer:
         f.add_command(label="Open...", accelerator="Ctrl+O", command=self.open_dialog)
         self.recent_menu = tk.Menu(f, tearoff=0, postcommand=self._fill_recent)
         f.add_cascade(label="Open Recent", menu=self.recent_menu)
+        self.panels_menu = tk.Menu(f, tearoff=0, postcommand=self._fill_panels)
+        f.add_cascade(label="Panels", menu=self.panels_menu)
+        self.examples_menu = tk.Menu(f, tearoff=0, postcommand=self._fill_examples)
+        f.add_cascade(label="Examples", menu=self.examples_menu)
+        f.add_command(label="Close", accelerator="Ctrl+W", command=self.close_form)
         f.add_command(label="Reload from disk", command=lambda: self.open_form(self.path) if self.path and self._ok_to_discard() else None)
         f.add_separator()
         f.add_command(label="Save", accelerator="Ctrl+S", command=self.save)
@@ -240,6 +254,8 @@ class Designer:
         f.add_separator()
         f.add_command(label="Start", accelerator="F5", command=self.run_form)
         f.add_command(label="End", command=lambda: self.end_run())
+        f.add_separator()
+        f.add_command(label="Preferences...", accelerator="Ctrl+,", command=self.preferences)
         f.add_separator()
         f.add_command(label="Exit", command=self.quit)
         m.add_cascade(label="File", menu=f)
@@ -400,6 +416,8 @@ class Designer:
         r.bind("<Control-s>", lambda e: self.save())
         r.bind("<Control-o>", lambda e: self.open_dialog())
         r.bind("<Control-n>", lambda e: self.new_form() if self._ok_to_discard() else None)
+        r.bind("<Control-w>", lambda e: self.close_form())
+        r.bind("<Control-comma>", lambda e: self.preferences())
         r.bind("<F5>", lambda e: self.run_form())
         r.bind("<F7>", lambda e: self.show_code())
         for seq, fn in (("<Delete>", self.delete_selected), ("<Control-z>", self.undo),
@@ -426,10 +444,174 @@ class Designer:
     def open_dialog(self):
         if not self._ok_to_discard():
             return
-        p = filedialog.askopenfilename(parent=self.root, title="Open form",
+        p = filedialog.askopenfilename(parent=self.root, title="Open form", initialdir=self._start_dir(),
                                        filetypes=[("PanelWorks form", "*.json"), ("All files", "*.*")])
         if p:
             self.open_form(p)
+
+    # ------------------------------------------------- settings, panels, examples
+    def _apply_settings(self):
+        global GRID, SNAP
+        st = self.settings
+        GRID = max(2, int(st["grid"]))
+        SNAP = max(1, int(st["snap"]))
+        from . import codeeditor
+        codeeditor.FONT = (codeeditor.FONT[0], int(st["code_font_size"]))
+
+    def _start_dir(self):
+        from .util import panels_dir
+        return os.path.dirname(self.path) if self.path else panels_dir()
+
+    def _last_form(self):
+        from .util import recent_list
+        items = [p for p in recent_list() if os.path.exists(p)]
+        return items[0] if items else None
+
+    def close_form(self):
+        """File > Close: back to an empty designer, without quitting."""
+        if self._ok_to_discard():
+            self.new_form()
+
+    def _fill_panels(self):
+        from .util import list_panels, panels_dir
+        m = self.panels_menu
+        m.delete(0, "end")
+        d = panels_dir()
+        items = list_panels()
+        for p in items:
+            m.add_command(label=os.path.relpath(p, d), command=lambda p=p: self.open_recent(p))
+        if not items:
+            m.add_command(label="(no panels yet: Save As puts them here)", state="disabled")
+        m.add_separator()
+        m.add_command(label=f"Open panels folder  ({d})", command=lambda: self._show_folder(d))
+
+    def _show_folder(self, d):
+        try:
+            if os.name == "nt":
+                os.startfile(d)                      # a folder: opens Explorer, runs nothing
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", d])
+            else:
+                subprocess.Popen(["xdg-open", d])
+        except OSError as e:
+            messagebox.showerror("Panels folder", str(e), parent=self.root)
+
+    def _fill_examples(self):
+        from .util import list_examples
+        m = self.examples_menu
+        m.delete(0, "end")
+        items = list_examples()
+        for stem, cap, p in items:
+            m.add_command(label=f"{cap}   ({stem})", command=lambda p=p: self.open_example(p))
+        if not items:
+            m.add_command(label="(examples folder not found)", state="disabled")
+
+    def open_example(self, src):
+        """Open a copy of an example in the panels folder, so the original stays clean."""
+        from .util import copy_example, panels_dir
+        if not self._ok_to_discard():
+            return
+        d = panels_dir()
+        stem = os.path.splitext(os.path.basename(src))[0]
+        dest = os.path.join(d, stem + ".json")
+        replace = False
+        if os.path.exists(dest):
+            ans = messagebox.askyesnocancel(
+                "Examples", f"You already have a copy of this example:\n{dest}\n\n"
+                "Yes: open your copy\nNo: replace it with a fresh copy", parent=self.root)
+            if ans is None:
+                return
+            replace = not ans
+        try:
+            dest = copy_example(src, d, replace=replace)
+        except OSError as e:
+            messagebox.showerror("Examples", f"Could not copy the example:\n{e}", parent=self.root)
+            return
+        self.open_form(dest)
+        self.say(f"Opened a copy of the {stem} example in {d}. Change it freely; the original is untouched.")
+
+    def preferences(self):
+        """File > Preferences (Ctrl+,)."""
+        from .util import load_settings, save_settings, default_panels_dir
+        st = load_settings()
+        top = tk.Toplevel(self.root)
+        top.title("Preferences")
+        top.transient(self.root)
+        top.resizable(False, False)
+        frm = tk.Frame(top, padx=12, pady=10)
+        frm.pack(fill="both")
+        v = {"panels_dir": tk.StringVar(top, st["panels_dir"]), "grid": tk.StringVar(top, st["grid"]),
+             "snap": tk.StringVar(top, st["snap"]), "code_font_size": tk.StringVar(top, st["code_font_size"]),
+             "editor": tk.StringVar(top, st["editor"]), "recent_max": tk.StringVar(top, st["recent_max"]),
+             "editor_default": tk.BooleanVar(top, st["editor_default"]),
+             "reopen_last": tk.BooleanVar(top, st["reopen_last"])}
+        row = 0
+
+        def field(label, key, width=8, browse=None, note=""):
+            nonlocal row
+            tk.Label(frm, text=label, anchor="w").grid(row=row, column=0, sticky="w", pady=3)
+            e = tk.Entry(frm, textvariable=v[key], width=width)
+            e.grid(row=row, column=1, sticky="w", pady=3)
+            if browse:
+                tk.Button(frm, text="Browse...", command=browse).grid(row=row, column=2, padx=4)
+            if note:
+                tk.Label(frm, text=note, fg="gray40", font=("Helvetica", 8)).grid(row=row, column=2, sticky="w", padx=4)
+            row += 1
+
+        def pick_dir():
+            d = filedialog.askdirectory(parent=top, initialdir=v["panels_dir"].get() or default_panels_dir())
+            if d:
+                v["panels_dir"].set(os.path.abspath(d))
+
+        def pick_editor():
+            p = filedialog.askopenfilename(parent=top, title="Editor program")
+            if p:
+                v["editor"].set(os.path.abspath(p))
+
+        field("Panels folder", "panels_dir", 44, pick_dir)
+        field("Grid spacing (px)", "grid", note="dots on the form")
+        field("Snap (px)", "snap", note="moves and resizes")
+        field("Code window font size", "code_font_size")
+        field("Recent forms to list", "recent_max")
+        field("External editor", "editor", 44, pick_editor)
+        tk.Label(frm, text="Empty: VS Code if installed, otherwise Notepad.", fg="gray40",
+                 font=("Helvetica", 8)).grid(row=row, column=1, sticky="w"); row += 1
+        tk.Checkbutton(frm, text="Double-click opens code in the external editor (not the Code window)",
+                       variable=v["editor_default"]).grid(row=row, column=0, columnspan=3, sticky="w"); row += 1
+        tk.Checkbutton(frm, text="Reopen the last form when the designer starts",
+                       variable=v["reopen_last"]).grid(row=row, column=0, columnspan=3, sticky="w"); row += 1
+
+        def ok():
+            try:
+                vals = {k: (var.get() if isinstance(var, tk.BooleanVar) else var.get().strip()) for k, var in v.items()}
+                for k in ("grid", "snap", "code_font_size", "recent_max"):
+                    vals[k] = int(vals[k])
+                    if not 1 <= vals[k] <= 100:
+                        raise ValueError(f"{k} must be 1-100")
+            except ValueError as e:
+                messagebox.showerror("Preferences", f"Not a valid number: {e}", parent=top)
+                return
+            save_settings(vals)
+            self.settings = load_settings()
+            self._apply_settings()
+            self._draw_grid()
+            cw = self.code_window(create=False)
+            if cw:
+                from . import codeeditor
+                cw.text.configure(font=codeeditor.FONT)
+                cw.text.tag_configure("defname", font=codeeditor.FONT + ("bold",))
+            top.destroy()
+            self.say("Preferences saved.")
+
+        bar = tk.Frame(top, padx=12, pady=8)
+        bar.pack(fill="x")
+        tk.Button(bar, text="Cancel", width=9, command=top.destroy).pack(side="right")
+        tk.Button(bar, text="OK", width=9, command=ok).pack(side="right", padx=6)
+        top.bind("<Return>", lambda e: ok())
+        top.bind("<Escape>", lambda e: top.destroy())
+        self._prefs = top                     # tests reach the dialog here
+        self._prefs_vars, self._prefs_ok = v, ok
+        return top
 
     # ------------------------------------------------------------ Open Recent
     def _fill_recent(self):
@@ -1071,7 +1253,8 @@ class Designer:
         code window normally, in an outside editor if PANELWORKS_EDITOR is set, or just
         written to the file when launch_editor is False (scripts and tests)."""
         cw = self.code_window(create=False)
-        if launch_editor and not os.environ.get("PANELWORKS_EDITOR") or cw:
+        prefer_outside = bool(os.environ.get("PANELWORKS_EDITOR")) or self.settings["editor_default"]
+        if launch_editor and not prefer_outside or cw:
             cw = cw or self.code_window()
             if not cw:
                 return None
@@ -1318,6 +1501,7 @@ class Designer:
 
     def save_as(self):
         p = filedialog.asksaveasfilename(parent=self.root, title="Save form as", defaultextension=".json",
+                                         initialdir=self._start_dir(),
                                          initialfile=f"{self.form['name']}.json",
                                          filetypes=[("PanelWorks form", "*.json")])
         if not p:

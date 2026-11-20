@@ -115,6 +115,13 @@ editing and press Restart.
 
 - **New** (Ctrl+N) starts an empty form.
 - **Open** (Ctrl+O) opens a `.json` form.
+- **File → Panels** lists the forms in your **panels folder** (and its
+  subfolders), with **Open panels folder** to show it in Explorer.
+- **File → Examples** lists the bundled example panels. Choosing one opens a
+  **copy** in your panels folder, with its code and any Arduino sketch that goes
+  with it, so you can change it freely while the original stays clean for
+  `git pull`. If you already have a copy, you're asked whether to open yours or
+  replace it with a fresh one.
 - **File → Open Recent** lists the last 10 forms you opened or saved, newest
   first, with their folders. A form that has been moved or deleted is greyed out
   and marked *(missing)*. **Clear Recently Opened** empties the list. The list is
@@ -122,6 +129,8 @@ editing and press Restart.
   (`~/.config/panelworks/` on macOS and Linux).
 - **Save** (Ctrl+S) saves the form, **and the code if the Code window has unsaved
   changes**. The title bar shows `*` while there are unsaved changes.
+- **Close** (Ctrl+W) closes the form (asking to save first if needed) and leaves
+  an empty designer, without quitting.
 - **Save As...** saves under a new name or folder. The link to the code file
   is adjusted so it's still found.
 - **File → Reload from disk** throws away your changes and reloads the file.
@@ -139,6 +148,27 @@ same for the `.py` file.
 So you can rough out a panel by talking to Claude, then polish it by hand, or the
 other way round.
 
+## Preferences
+
+![Preferences](img/preferences.png)
+
+**File → Preferences** (Ctrl+,):
+
+| Setting | Default | Does |
+|---|---|---|
+| Panels folder | `Documents\PanelWorks` | Where Save As, Open, File → Panels and File → Examples copies go |
+| Grid spacing | 10 px | The dots on the form |
+| Snap | 5 px | Moves and resizes jump in these steps |
+| Code window font size | 11 (Windows) | Applies at once, including an open Code window |
+| Recent forms to list | 10 | Length of File → Open Recent |
+| External editor | (empty) | Program for **External...**; empty means VS Code if installed, else Notepad |
+| Double-click opens code in the external editor | off | Use your own editor instead of the Code window |
+| Reopen the last form at startup | off | The designer opens where you left off |
+
+Settings are kept in `%APPDATA%\PanelWorks\settings.json` (`~/.config/panelworks/`
+on macOS and Linux), so they survive updates. The `PANELWORKS_EDITOR` environment
+variable, if set, still overrides the editor setting.
+
 ## Keyboard shortcuts
 
 | Key | Does |
@@ -146,6 +176,8 @@ other way round.
 | F5 | Start (save and run) |
 | F7 | Code window |
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
+| Ctrl+W | Close the form |
+| Ctrl+, | Preferences |
 | Ctrl+Z | Undo |
 | Ctrl+D | Duplicate selected control |
 | Del | Delete selected control |

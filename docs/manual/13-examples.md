@@ -1,8 +1,10 @@
 # 13. Example panels
 
-The `examples` folder has complete panels to run, read, and copy from. Open
-any of them in the designer (`python -m panelworks.designer examples\pumppanel.json`) to
-see how it's built, or run it directly.
+The `examples` folder has complete panels to run, read, and copy from. The
+easiest way in is the designer's **File → Examples** menu: it opens a copy in
+your panels folder (with its code and any Arduino sketch), so you can change it
+freely and the original stays clean for `git pull`. Or run one directly from
+the command line, as shown under each example.
 
 ## Pump panel: plain code, no connections
 

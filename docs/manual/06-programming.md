@@ -316,7 +316,7 @@ Reading a traceback: the **last line** says what went wrong; the line
 above it that names your `.py` file says where.
 
 ```
-  File "C:\dev\mypanels\Hello.py", line 9, in cmdGreet_Click
+  File "C:\Users\you\Documents\PanelWorks\Hello.py", line 9, in cmdGreet_Click
     f.lblHelo.Caption = "Hello"
 AttributeError: Form has no object or member 'lblHelo'
 ```
@@ -326,7 +326,7 @@ AttributeError: Form has no object or member 'lblHelo'
 the Start button:
 
 ```
-C:\dev\panelworks\.venv\Scripts\python -m panelworks C:\dev\mypanels\Hello.json --mcp none
+C:\dev\panelworks\.venv\Scripts\python -m panelworks C:\Users\you\Documents\PanelWorks\Hello.json --mcp none
 ```
 
 ## The thread rule (for the curious)
