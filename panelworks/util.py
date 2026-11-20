@@ -227,3 +227,18 @@ def recent_remove(path):
 
 def recent_clear():
     _recent_save([])
+
+
+def frozen():
+    """True inside a program built with File > Make EXE (PyInstaller)."""
+    import sys
+    return bool(getattr(sys, "frozen", False))
+
+
+def data_dir(form_path=None):
+    """Where a panel keeps files it writes (databases, CSV exports): beside the form
+    normally, beside the .exe in a built program (never in its temporary unpack folder)."""
+    import sys
+    if frozen():
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.abspath(form_path)) if form_path else os.getcwd()

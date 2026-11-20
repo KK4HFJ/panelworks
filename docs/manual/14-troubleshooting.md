@@ -35,6 +35,16 @@
 | A panel connects when started from one PowerShell window but not from the designer, a shortcut or Claude | Variables set with `$env:NAME=...` (or `set`) only last for that window. Store them for good with `setx NAME value` (or Start → *Edit environment variables for your account*), then close and reopen the designer. The MQTT error names the host it tried; `mqtt.example.com` means the variable wasn't seen. |
 | `${VAR}` values are empty when started by Claude | Claude Desktop doesn't see variables set in a Command Prompt. Put them in the server's `"env"` block. |
 
+## Make EXE
+
+| Problem | Cure |
+|---|---|
+| "Windows protected your PC" when running the program | Unsigned program, SmartScreen. Click **More info**, then **Run anyway**. Sign it to stop the warning for other people (chapter 4, *Make EXE*). |
+| The program is blocked with no way to run it | Smart App Control blocks unsigned programs. On your own PC you can turn it off (Windows Security → App & browser control → Smart App Control), but it can't be turned back on without reinstalling Windows. The real fix is signing. |
+| `ModuleNotFoundError` when the program starts | Your code imports a module only inside a function or by name. Add a plain `import thatmodule` at the top of the code file and build again. Test builds with the console window ticked show such errors. |
+| Its database is empty every time | The program is somewhere it can't write (Program Files). Move it to Documents or the desktop. |
+| Build fails at "Installing PyInstaller" | No internet, or pip blocked. Install it by hand: `.venv\Scripts\python -m pip install pyinstaller`. |
+
 ## MQTT
 
 | Problem | Cure |

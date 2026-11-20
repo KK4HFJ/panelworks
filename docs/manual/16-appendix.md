@@ -47,6 +47,7 @@ panelworks FORM.json --host 0.0.0.0       MCP HTTP reachable from the network (c
 panelworks --design [FORM.json]           open the designer
 panelworks-designer [FORM.json]           same
 panelworks --version
+python -m panelworks.make_exe FORM.json [--name N] [--console]   package as a program
 python -m panelworks ...                  if the command isn't on the PATH
 ```
 

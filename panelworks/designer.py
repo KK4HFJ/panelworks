@@ -268,6 +268,8 @@ class Designer:
         f.add_command(label="Start", accelerator="F5", command=self.run_form)
         f.add_command(label="End", command=lambda: self.end_run())
         f.add_separator()
+        f.add_command(label="Make EXE...", command=lambda: self.make_exe())
+        f.add_separator()
         f.add_command(label="Preferences...", accelerator="Ctrl+,", command=self.preferences)
         f.add_separator()
         f.add_command(label="Exit", command=self.quit)
@@ -643,6 +645,87 @@ class Designer:
         for aid in self.root.tk.call("after", "info"):
             self.root.tk.call("after", "cancel", aid)
         self.root.destroy()
+
+    # ------------------------------------------------------------ Make EXE
+    def make_exe(self, start=False):
+        """File > Make EXE: package this panel (and the forms beside it) as one program."""
+        from . import make_exe as mx
+        if (self.dirty or not self.path) and not self.save():
+            return None
+        cw = self.code_window(create=False)
+        if cw and cw.modified and not cw.save():
+            return None
+        files, folders, code = mx.program_files(self.path)
+        top = tk.Toplevel(self.root)
+        top.title("Make EXE")
+        top.transient(self.root)
+        top.geometry("620x420")
+        frm = tk.Frame(top, padx=10, pady=8)
+        frm.pack(fill="x")
+        name = tk.StringVar(top, os.path.splitext(os.path.basename(self.path))[0])
+        console = tk.BooleanVar(top, False)
+        tk.Label(frm, text="Program name:").grid(row=0, column=0, sticky="w")
+        tk.Entry(frm, textvariable=name, width=30).grid(row=0, column=1, sticky="w", padx=4)
+        ext = ".exe" if os.name == "nt" else ""
+        tk.Label(frm, text=ext).grid(row=0, column=2, sticky="w")
+        tk.Checkbutton(frm, text="Keep a console window (shows print() output; for testing)",
+                       variable=console).grid(row=1, column=0, columnspan=3, sticky="w", pady=2)
+        out = os.path.join(os.path.dirname(self.path), "dist")
+        tk.Label(frm, justify="left", fg="gray30", font=("Helvetica", 8), text=(
+            f"Includes: {', '.join(os.path.basename(f) for f in files)}"
+            + (f" + folder(s) {', '.join(os.path.basename(d) for d in folders)}" if folders else "")
+            + f"\nGoes to: {out}\nFiles the program writes (databases, CSV) go beside it."
+            + "\nIt isn't code-signed: on other PCs Windows may warn before running it (see the manual).")
+                 ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(4, 0))
+        logbox = tk.Text(top, height=12, font=("Courier", 9), wrap="word", padx=6, pady=4)
+        logbox.pack(fill="both", expand=True, padx=10, pady=6)
+        bar = tk.Frame(top, padx=10, pady=6)
+        bar.pack(fill="x")
+        close = tk.Button(bar, text="Close", width=10, command=top.destroy)
+        close.pack(side="right")
+        build_btn = tk.Button(bar, text="Build", width=10)
+        build_btn.pack(side="right", padx=6)
+        open_btn = tk.Button(bar, text="Open folder", width=12, command=lambda: self._show_folder(out))
+        lines, res = [], {}
+
+        def put(t):
+            logbox.insert("end", t + "\n")
+            logbox.see("end")
+
+        def go():
+            if not name.get().strip() or any(c in name.get() for c in '\\/:*?"<>|'):
+                return messagebox.showerror("Make EXE", "Give the program a plain name.", parent=top)
+            build_btn.configure(state="disabled")
+            close.configure(state="disabled")
+            put("Building ... (a minute or two the first time)")
+            prog, keep_console = name.get().strip(), console.get()     # Tk values: read on this thread
+            def work():
+                try:
+                    res["exe"] = mx.build(self.path, prog, keep_console, out, log=lines.append)
+                except Exception as e:
+                    res["error"] = str(e)
+            t = threading.Thread(target=work, daemon=True)
+            t.start()
+            def poll():
+                while lines:
+                    put(lines.pop(0))
+                if t.is_alive():
+                    return top.after(300, poll)
+                close.configure(state="normal")
+                build_btn.configure(state="normal")
+                if res.get("exe"):
+                    put("\nFinished. Copy the program to any PC like this one and double-click it.")
+                    open_btn.pack(side="right")
+                    self.say(f"Built {res['exe']}")
+                else:
+                    put("\n" + res.get("error", "Build failed."))
+            poll()
+
+        build_btn.configure(command=go)
+        self._exe_dialog = {"top": top, "go": go, "res": res, "name": name}      # tests reach in here
+        if start:
+            go()
+        return top
 
     # ------------------------------------------------------------ menus
     def menu_names(self):

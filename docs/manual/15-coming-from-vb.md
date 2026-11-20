@@ -50,6 +50,7 @@ chapter translates the rest.
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
 | Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
 | Menu Editor, `mnuFile_Click` | The same: Tools → Menu Editor (Ctrl+E) |
+| File → Make Project.exe | File → Make EXE (one file, no runtime to install) |
 | PictureBox, Image, Line, MDI forms | Not yet built |
 
 ## Differences worth knowing

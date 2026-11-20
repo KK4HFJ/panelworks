@@ -135,6 +135,8 @@ The designer works the way classic RAD tools did, and needs no AI:
 - **Run:** the green **▶ Start** button on the toolbar (or F5) saves and runs the
   panel; the red **■ End** button stops it. Start while it's running restarts it
   with your latest changes. The Code window has a Start button too.
+- **File → Make EXE:** package a panel (all its forms and code) as one program that
+  runs without Python. Windows will warn about it unless it's code-signed (see the manual).
 - **Several forms:** `f.Show("Settings", modal=True)` opens `Settings.json` as a dialog;
   `f.Owner`, `f.Forms["Name"]`, `f.Hide()`.
 - **Menus:** Tools → Menu Editor (Ctrl+E) builds the panel's menu bar, VB-style;
@@ -557,7 +559,6 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Not yet built
 
-- Make EXE (in progress)
 - PictureBox/Canvas drawing
 
 ## License

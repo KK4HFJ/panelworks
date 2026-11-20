@@ -98,8 +98,8 @@ class Data(VBObject):
         name = self._db or f"{getattr(self._form, 'spec_name', 'panel')}.db"
         if os.path.isabs(name):
             return name
-        base = os.path.dirname(os.path.abspath(self._form.path)) if getattr(self._form, "path", None) else os.getcwd()
-        return os.path.join(base, name)
+        from .util import data_dir
+        return os.path.join(data_dir(getattr(self._form, "path", None)), name)
 
     def get_Table(self): return self._table
     def set_Table(self, v):

@@ -200,6 +200,45 @@ console you want to keep up), **Cancel** keeps the designer open. A panel left
 running is fully independent. Its output goes to a log file in your temp
 folder (`panelworks-run-<form>.log`), not to the designer.
 
+## Make EXE: a program to hand to someone
+
+**File → Make EXE...** packages the panel as one program that runs without
+Python or PanelWorks installed, like VB's *Make Project.exe*.
+
+1. Save the panel. Everything in its folder that belongs to it goes in: every
+   form (`.json`) and code file (`.py`), so `f.Show("Settings")` still works, and
+   folders named after a form (such as an Arduino sketch). The modules your code
+   imports are found and included.
+2. Give the program a name and click **Build**. The first build installs
+   PyInstaller (the packaging tool) and takes a minute or two.
+3. The program is in a `dist` folder beside your form: `dist\MyPanel.exe`, about
+   15 MB. **Open folder** shows it.
+
+Copy it to another PC and double-click it. Files the program writes (a Data
+control's database, CSV exports) go **beside the program**, so keep it in a
+folder the user can write to (Documents, the desktop), not Program Files.
+
+Things to know:
+
+- **It runs on the kind of computer it was built on.** Build on Windows for
+  Windows; on a Raspberry Pi for a Raspberry Pi.
+- **Tick "Keep a console window"** for test builds: `print()` output and errors
+  show there. Leave it unticked for the real thing.
+- **Windows will warn about it on other PCs** (chapter 14): it isn't code-signed.
+  "Windows protected your PC" → **More info** → **Run anyway** gets past
+  SmartScreen. On PCs with Smart App Control turned on, an unsigned program is
+  blocked outright, and the only fix is signing it.
+- **Signing**, if you'll distribute it: Microsoft's **Azure Artifact Signing**
+  (formerly Trusted Signing) is the cheapest route, about $10 a month, with
+  identity checks; individual developers in the USA and Canada qualify. A
+  traditional OV certificate from a certificate authority runs about $150–300 a
+  year. Either way, SmartScreen trust builds up as more people run the program.
+- Claude can't connect to a built program (it has no MCP server). Panels you run
+  with PanelWorks itself keep everything.
+
+The same thing from a Command Prompt:
+`python -m panelworks.make_exe MyPanel.json --name MyPanel`.
+
 ## Files: New, Open, Save
 
 - **New** (Ctrl+N) starts an empty form.
