@@ -18,34 +18,40 @@ for fn in ("truck_scale.json", "truck_scale.py"):
 boxes = []
 messagebox.showinfo = lambda title, msg, **k: boxes.append(msg)
 f = load_form(os.path.join(work, "truck_scale.json")); f.root.geometry("+0+0")
-def pump(secs):
+def pump(secs, until=None):
+    """Run the panel for secs, or until until() is true (waits on what matters, not the clock,
+    so a busy CI machine doesn't fail the test)."""
     t = time.time()
     while time.time() - t < secs:
         f.root.update(); time.sleep(0.03)
+        if until and until():
+            return True
+    return bool(until and until())
 pump(2)
 check("connects to the scale", f.lblLink.Caption.startswith("Scale connected"), f.lblLink.Caption)
 scale.put(61240); pump(0.6)
 check("in motion: amber, buttons off", f.lblState.Caption == "in motion: wait" and not f.cmdIn.Enabled, f.lblState.Caption)
-pump(7)
+pump(25, lambda: f.lblState.Caption == "stable" and f.lblWeight.Caption == "61,240")
 check("settles: stable, weight shown", f.lblState.Caption == "stable" and f.lblWeight.Caption == "61,240", f.lblWeight.Caption)
 f.txtPlate.Text = "tn 4kx-221"; f.txtCust.Text = "Dale Hollow Salvage"; f.cboMat.Text = "Aluminum"
 f.cmdIn.Click(); pump(0.3)
 check("weigh in puts the truck on the yard list", f.lstYard.ListCount == 1 and "TN 4KX-221" in f.lstYard.List[0], f.lstYard.List)
-scale.put(0); pump(5)
+scale.put(0); pump(15, lambda: f.lblWeight.Caption in ("0", "0 lb") and not f.cmdIn.Enabled)
 check("empty platform: can't weigh", not f.cmdIn.Enabled)
-scale.put(27880); pump(7)
-f.lstYard.ListIndex = 0; pump(0.3)
+scale.put(27880); pump(25, lambda: f.lblState.Caption == "stable" and f.lblWeight.Caption == "27,880")
+f.lstYard.ListIndex = 0; pump(3, lambda: f.cmdOut.Enabled)
 check("Weigh OUT enabled once a yard truck is picked and stable", f.cmdOut.Enabled)
 f.cmdOut.Click(); pump(0.5)
 check("ticket logged with net = gross - tare", f.grdTickets.RowCount == 1 and f.grdTickets.Cell(0, "net") == str(61240 - 27880),
       f.grdTickets.Rows)
 check("ticket shown to the operator", boxes and "Net" in boxes[-1] and "33,360" in boxes[-1], boxes[-1:] )
 check("truck leaves the yard list", f.lstYard.ListCount == 0)
-scale.put(130000); pump(5)
+scale.put(130000); pump(20, lambda: f.lblState.Caption == "OVERLOAD")
 check("overload is flagged red", f.lblState.Caption == "OVERLOAD" and f.shpState.FillColor == "red")
 scale.put(0); pump(4)
 # the yard survives a restart
-scale.put(45000); pump(7); f.txtPlate.Text = "KY 88"; f.cmdIn.Click(); pump(0.3)
+scale.put(45000); pump(25, lambda: f.lblState.Caption == "stable" and f.lblWeight.Caption == "45,000")
+f.txtPlate.Text = "KY 88"; pump(3, lambda: f.cmdIn.Enabled); f.cmdIn.Click(); pump(0.3)
 if "--shot" in sys.argv:
     scale.put(52000); pump(1.2)
     subprocess.run(["import", "-window", "root", "-crop", f"{f.root.winfo_width()}x{f.root.winfo_height()}+0+0",
