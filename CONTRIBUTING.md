@@ -42,6 +42,17 @@ Small and focused is best. Describe what changed and how you tested it; the
 pull request template has a checklist. By contributing you agree that your
 contribution is licensed under the project's MIT licence.
 
+## Releases (maintainer)
+
+1. Set the version in `pyproject.toml` and `panelworks/__init__.py`, and turn the
+   changelog's `## Unreleased` into `## X.Y.Z (date)`.
+2. `python tools/build_manual.py`, `python tools/run_tests.py`, push to main.
+3. Create the GitHub release `vX.Y.Z` at that commit with the changelog section as
+   notes and the PDF attached (the maintainer's n8n release form does this).
+4. Publishing the release starts `.github/workflows/publish.yml`, which bundles the
+   examples (`tools/prepare_dist.py`), builds, and uploads to PyPI by trusted
+   publishing. It refuses to publish if the tag and `pyproject.toml` disagree.
+
 ## Conduct
 
 Be decent: see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

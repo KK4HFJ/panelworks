@@ -1,9 +1,12 @@
 """
 "Is there a newer PanelWorks on GitHub?" - and updating in one click.
 
-PanelWorks is installed as a git clone, so the check compares the clone's commit
-with the latest commit on GitHub's main branch, and updating is `git pull`
-(plus `pip install -e` when the dependencies changed). Nothing here runs unless
+Two kinds of install:
+- a git clone: the check compares the clone's commit with the latest commit on
+  GitHub's main branch, and updating is `git pull` (plus `pip install -e` when the
+  dependencies changed);
+- `pip install panelworks` from PyPI: the check compares version numbers with the
+  newest release on PyPI, and updating is `pip install -U panelworks`. Nothing here runs unless
 the designer asks; the startup check is at most once a day and never blocks.
 """
 import json
@@ -17,6 +20,7 @@ import urllib.request
 REPO = "KK4HFJ/panelworks"
 BRANCH = "main"
 API = f"https://api.github.com/repos/{REPO}"
+PYPI = "https://pypi.org/pypi/panelworks/json"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHECK_EVERY = 24 * 3600
 
@@ -57,13 +61,62 @@ def _get(url, accept="application/vnd.github+json", timeout=8):
         return r.read().decode()
 
 
+def is_clone():
+    return os.path.isdir(os.path.join(ROOT, ".git"))
+
+
+def _vtuple(v):
+    """'0.4.1' -> (0, 4, 1); pre-releases ('0.5.0rc1') sort before the release."""
+    import re as _re
+    parts = []
+    for p in v.split("."):
+        m = _re.match(r"(\d+)(.*)", p)
+        parts.append((int(m.group(1)), 0 if m.group(2) else 1) if m else (0, 0))
+    return tuple(parts)
+
+
+def check_pypi():
+    """The same dict as check(), for a pip install: versions instead of commits."""
+    from . import __version__
+    out = {"status": "unknown", "behind": 0, "commits": [], "local": __version__,
+           "remote": None, "remote_version": None, "error": None, "pip": True}
+    try:
+        data = json.loads(_get(PYPI, accept="application/json"))
+    except urllib.error.HTTPError as e:
+        out["error"] = f"PyPI answered HTTP {e.code}."
+        return out
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        out["error"] = f"Couldn't reach PyPI ({getattr(e, 'reason', e)})."
+        return out
+    latest = data["info"]["version"]
+    out["remote"] = out["remote_version"] = latest
+    have = _vtuple(__version__)
+    newer = []
+    for v, files in data.get("releases", {}).items():
+        if files and not any(f.get("yanked") for f in files) and _vtuple(v) > have \
+                and _vtuple(v) <= _vtuple(latest):
+            newer.append((v, (files[0].get("upload_time") or "")[:10], f"PanelWorks {v}"))
+    newer.sort(key=lambda t: _vtuple(t[0]), reverse=True)
+    out["commits"] = newer
+    out["behind"] = len(newer)
+    if _vtuple(latest) > have:
+        out["status"] = "behind"
+    elif _vtuple(latest) == have:
+        out["status"] = "current"
+    else:
+        out["status"] = "ahead"
+    return out
+
+
 def check():
     """-> dict(status, behind, commits=[(sha, date, message)], local, remote, error)
     status: 'current' | 'behind' | 'ahead' | 'diverged' | 'unknown'"""
+    if not is_clone():
+        return check_pypi()
     out = {"status": "unknown", "behind": 0, "commits": [], "local": local_commit(),
            "remote": None, "error": None}
     if not out["local"]:
-        out["error"] = "This copy isn't a git clone, so it can't be checked or updated automatically."
+        out["error"] = "Couldn't read this copy's git commit."
         return out
     try:
         out["remote"] = _get(f"{API}/commits/{BRANCH}", accept="application/vnd.github.sha").strip()
@@ -119,9 +172,38 @@ def mark_checked(result):
 
 
 # ---- updating ----------------------------------------------------------------------
+def update_pip(log=print):
+    """pip install -U panelworks into the Python that is running the designer."""
+    cmd = [sys.executable, "-m", "pip", "install", "-U", "panelworks"]
+    log(" ".join(["python"] + cmd[1:]))
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=600,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except (OSError, subprocess.SubprocessError) as e:
+        log(f"pip didn't run: {e}")
+        return False, False
+    log("\n".join((p.stdout + p.stderr).strip().splitlines()[-6:]))
+    if p.returncode != 0:
+        log("\npip didn't finish. Close all running panels (and Claude Desktop from its tray "
+            "icon), then run:\n  python -m pip install -U panelworks")
+        return False, False
+    return True, True
+
+
+def manual_update_hint():
+    """What to type to update by hand, for this kind of install."""
+    if not is_clone():
+        return "To update by hand, in a Command Prompt:\n  python -m pip install -U panelworks"
+    return ("To update by hand, in a Command Prompt:\n  cd " + ROOT +
+            "\n  git pull\n  .venv\\Scripts\\python -m pip install -e \".[mqtt]\"")
+
+
 def update(log=print):
-    """git pull --ff-only, then pip install -e if the dependencies changed.
-    Returns (ok, needs_restart). Never discards local changes: git refuses instead."""
+    """git pull --ff-only, then pip install -e if the dependencies changed (a clone),
+    or pip install -U (a PyPI install). Returns (ok, needs_restart). Never discards
+    local changes: git refuses instead."""
+    if not is_clone():
+        return update_pip(log)
     before = local_commit()
     try:
         r = _git("pull", "--ff-only", "origin", BRANCH, timeout=180)

@@ -106,9 +106,13 @@ def _recent_max():
 
 
 def examples_dir():
-    """The bundled examples (in the cloned repo, beside the panelworks package)."""
-    d = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples")
-    return d if os.path.isdir(d) else None
+    """The bundled examples: in a git clone they sit beside the panelworks package;
+    a pip install from PyPI carries a copy inside it (panelworks/_examples)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for d in (os.path.join(os.path.dirname(here), "examples"), os.path.join(here, "_examples")):
+        if os.path.isdir(d):
+            return d
+    return None
 
 
 EXAMPLE_ORDER = ["led_panel", "pumppanel", "arduino_bench", "truck_scale", "cistern_mqtt", "n8n_demo", "hvac_console"]

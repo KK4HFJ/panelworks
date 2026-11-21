@@ -22,6 +22,10 @@ dependencies = ["mcp>=1.10", "pyserial>=3.5"]
 
 [project.urls]
 Homepage = "https://kk4hfj.com"
+Repository = "https://github.com/KK4HFJ/panelworks"
+Documentation = "https://github.com/KK4HFJ/panelworks/blob/main/docs/manual/README.md"
+Changelog = "https://github.com/KK4HFJ/panelworks/blob/main/CHANGELOG.md"
+Issues = "https://github.com/KK4HFJ/panelworks/issues"
 "OfficeNex" = "https://officenex.cloud"
 
 [project.optional-dependencies]
@@ -36,8 +40,8 @@ panelworks = "panelworks.cli:main"
 panelworks-designer = "panelworks.designer:main"
 panelworks-make-exe = "panelworks.make_exe:main"
 
-[tool.setuptools]
-packages = ["panelworks"]
+[tool.setuptools.packages.find]
+include = ["panelworks*"]                  # panelworks/_examples/* too (staged for PyPI builds)
 
 [tool.setuptools.package-data]
-panelworks = ["assets/*.ico", "assets/*.png"]
+panelworks = ["assets/*.ico", "assets/*.png", "_examples/**/*"]

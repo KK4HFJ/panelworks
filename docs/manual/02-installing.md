@@ -3,6 +3,27 @@
 PanelWorks needs **Python 3.10 or newer** with Tkinter, and **Git** to download
 it and keep it up to date. Allow about ten minutes.
 
+## The quick way: from PyPI
+
+If you already have Python 3.10 or newer with Tkinter (step 1 below), you can skip Git
+and install PanelWorks straight from PyPI, the Python package index:
+
+```
+mkdir C:\dev
+cd C:\dev
+python -m venv pw
+pw\Scripts\python -m pip install "panelworks[all]"
+pw\Scripts\python -m panelworks.designer
+```
+
+That gives you the designer, every control, and the examples under **File → Examples**.
+Updates come through the designer's **⬆ Update** button, or by hand with
+`pw\Scripts\python -m pip install -U panelworks`.
+
+Use the step-by-step Git install below instead if you want the source code, this
+manual and the example screenshots on your PC, or want to try changes before they
+are released.
+
 ## Windows, step by step
 
 ### Step 1: Install Python
@@ -167,6 +188,10 @@ PanelWorks runs well on a Raspberry Pi 4 or 5 with a desktop, which makes a
 cheap dedicated control-panel screen.
 
 ## Updating
+
+If you installed from PyPI, the designer compares your version with the newest on
+PyPI and **Update now** runs `pip install -U panelworks`. The rest of this section is
+about a Git install.
 
 The designer checks GitHub for a newer PanelWorks once a day, in the
 background. When there is one, an orange **⬆ Update** button appears on the

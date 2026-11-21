@@ -67,7 +67,21 @@ panelworks/cli.py          <- the `panelworks` command
 ## Install
 
 Python 3.10+ with Tkinter (included in the python.org Windows/macOS installers;
-on Debian/Ubuntu `sudo apt install python3-tk`). From the project folder:
+on Debian/Ubuntu `sudo apt install python3-tk`).
+
+**From PyPI** (the quick way; File > Examples, the designer and updates all work):
+
+```
+python -m venv pw
+pw\Scripts\python -m pip install "panelworks[all]"      # Windows
+pw/bin/python -m pip install "panelworks[all]"          # macOS / Linux
+pw\Scripts\python -m panelworks.designer
+```
+
+Updates: the designer offers them, or `python -m pip install -U panelworks`.
+
+**From GitHub** (to read or change the source, and for the manual and example screenshots).
+From the project folder:
 
 ```
 python -m venv .venv

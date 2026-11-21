@@ -599,7 +599,9 @@ class Designer:
         n = info.get("behind", 0)
         self.btn_update.configure(text=f"\u2B06 Update ({n} new)" if n else "\u2B06 Update")
         self.btn_update.pack(side="right", padx=4)
-        self.say(f"A newer PanelWorks is on GitHub ({n} change{'s' if n != 1 else ''}). "
+        where = "on PyPI" if info.get("pip") else "on GitHub"
+        what = "release" if info.get("pip") else "change"
+        self.say(f"A newer PanelWorks is {where} ({n} {what}{'s' if n != 1 else ''}). "
                  "Click Update on the toolbar, or Help > Check for Updates.")
 
     def updates_dialog(self, info=None):
@@ -633,8 +635,7 @@ class Designer:
             short = (r.get("local") or "?")[:7]
             if r["error"]:
                 msg.configure(text=r["error"])
-                put("To update by hand, in a Command Prompt:\n  cd " + updates.ROOT +
-                    "\n  git pull\n  .venv\\Scripts\\python -m pip install -e \".[mqtt]\"")
+                put(updates.manual_update_hint())
             elif r["status"] == "current":
                 msg.configure(text=f"PanelWorks is up to date: version {__version__} ({short}).")
                 self.btn_update.pack_forget()
@@ -645,11 +646,14 @@ class Designer:
                 msg.configure(text=f"{n} update{'s' if n != 1 else ''} available"
                                    + (f": version {newer}" if newer and newer != __version__ else "")
                                    + f". You have {have}.")
-                put("What's new (newest first):\n")
+                put("New releases (newest first):\n" if r.get("pip") else "What's new (newest first):\n")
                 for sha, date, text in r["commits"][:25]:
                     put(f"  {date}  {text}")
                 upd.configure(state="normal")
                 self._show_update(r)
+            elif r.get("pip"):
+                msg.configure(text=f"You have version {__version__}, newer than the latest on PyPI "
+                                   f"({r.get('remote_version')}).")
             else:
                 msg.configure(text=f"Your copy ({short}) has changes that aren't on GitHub; "
                                    "update it with git yourself.")

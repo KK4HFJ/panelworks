@@ -14,3 +14,5 @@ Thumbs.db
 .DS_Store
 # databases the examples create when run
 examples/*.db
+# staged by tools/prepare_dist.py for the PyPI build
+panelworks/_examples/

@@ -2,6 +2,13 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**Distribution**
+- On PyPI: `pip install "panelworks[all]"`. The package carries the examples (File > Examples works),
+  and for a PyPI install the designer's update check compares versions with PyPI and updates with
+  `pip install -U panelworks`. Releases publish to PyPI automatically (GitHub Actions, trusted publishing).
+
 ## 0.4.1 (2026-11-21)
 
 **Designer**
