@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.4.0 (2026-11-21)
 
 **New controls**
 - **Slider**: drag to set a value (Min, Max, SmallChange, TickFrequency, Orientation); Scroll while dragging,
