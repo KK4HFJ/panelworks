@@ -169,6 +169,40 @@ whole panel works in the phone view, taps on the dial included.
 python -m panelworks examples\gauges.json --mcp none
 ```
 
+## Power meter: Modbus TCP
+
+![Power meter](../../examples/power_meter.png)
+
+`examples/power_meter.json` + `power_meter.py`, simulator `examples/power_meter/meter_sim.py`
+
+An energy meter over Modbus TCP. The Poll list reads volts and amps (scaled), power
+as a word-swapped float, energy as a 32-bit counter, the meter's name as text, a
+temperature from an input register and a relay coil. Fill puts volts and amps on two
+**Gauges** and power on a **Chart**, with no code. The **Slider** writes the load
+setpoint register, and the CheckBox switches the relay coil. Chapter 17 explains it all.
+
+```
+python examples\power_meter\meter_sim.py
+python -m panelworks examples\power_meter.json --mcp none
+```
+
+## Rack status: SNMP
+
+![Rack status](../../examples/rack_status.png)
+
+`examples/rack_status.json` + `rack_status.py`, pretend devices in `examples/rack_status/`
+
+A UPS, a PDU and a switch over SNMP. Gauges show battery runtime and load; lamps show
+mains or battery and three switch ports, named from the switch itself with a Walk; four
+CheckBoxes switch PDU outlets with Set; a list logs traps. Needs `pip install snmpsim`
+for the pretend devices:
+
+```
+python examples\rack_status\agent_sim.py
+python -m panelworks examples\rack_status.json --mcp none
+python examples\rack_status\agent_sim.py --trap
+```
+
 ## Copying an example
 
 Copy both files (`.json` and `.py`) to your own folder and open the copy in the

@@ -45,6 +45,8 @@ chapter translates the rest.
 | Data control + DBGrid | **Data** (SQLite, logs rows with no code) + **Grid** |
 | MSChart | **Chart** (live trend lines) |
 | MSComm | **Serial**: whole lines, ports by name, auto-reconnect (chapter 9) |
+| Slider (Common Controls), HScroll/VScroll | **Slider** |
+| Third-party gauge and Modbus/SNMP OCXs | **Gauge**, **Modbus** and **SNMP**, built in (chapter 17) |
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |

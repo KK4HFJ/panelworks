@@ -5,19 +5,14 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Controls
 
-- ★ **Slider / Knob**: drag to set a value (setpoints, speeds). The most obvious missing panel control.
-- ★ **Gauge**: a ready-made dial (Min, Max, Value, red zone), built from the PictureBox gauge in `examples/gauges.*`.
 - **LED / 7-segment readout**: big digital numbers (scale weight, voltage) without font tricks.
 - **TabStrip**: several pages on one form for busy panels.
 - **Line**: VB's simple drawn line.
 
 ## Hardware and protocols
 
-- ★ **Modbus RTU/TCP**: Read/Write registers and coils, poll lists feeding properties with no code
-  (like Serial's Fill), word order and scaling options. Opens up VFDs, PLCs, charge controllers, Victron.
-- **SNMP** (v1/v2c/v3, via `pysnmp`): Get/Walk/Set, a poll list mapping OIDs to properties, a `Trap` event.
-  Rack and closet status panels (UPS runtime, PDU amps, port status, temperatures), outlet cycling from a button.
-  Shares most of its design with Modbus.
+- **Modbus**: test with pymodbus 4 when it ships (the extra pins pymodbus<4 until then).
+- **SNMP**: load MIB files so any vendor's OID names work, not just the built-in ones.
 - **InfluxDB logging**: a Data control mode writing to InfluxDB for Grafana, alongside SQLite.
 - **BLE**: read and write characteristics directly (ESP32, sensors) without MQTT in between.
 - **Alarm manager**: limits on any value, acknowledge, alarm history, optional Telegram / n8n notification.
@@ -48,4 +43,8 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 - Solar / battery monitor (Victron over MQTT or Modbus).
 - Modbus VFD control panel.
 - Weather station.
-- Rack status panel over SNMP.
+
+## Done
+
+- 0.4 (unreleased): Slider, Gauge (also a knob), Modbus TCP/RTU, SNMP with traps; power_meter and rack_status examples.
+- 0.3.0: PictureBox.

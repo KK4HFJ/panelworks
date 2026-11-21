@@ -6,8 +6,9 @@ real Tkinter desktop window. Every object is live-addressable, by agents over
 draw new controls while the app runs), by devices over **MQTT** (subscribe
 properties to topics, publish on events, mirror the whole form) and by
 automations over **webhooks** (an n8n workflow can be an event procedure).
-Hardware comes in over **Serial** (USB auto-detect, auto-reconnect), readings go
-into live **Charts** and a **Data** control that logs to SQLite and fills a **Grid**,
+Hardware comes in over **Serial** (USB auto-detect, auto-reconnect), **Modbus** (PLCs, drives,
+meters) and **SNMP** (UPSes, PDUs, switches, with traps), readings go
+onto **Gauges** and live **Charts** and into a **Data** control that logs to SQLite and fills a **Grid**,
 a **PictureBox** shows pictures and draws gauges and diagrams from code,
 and any running panel can be opened on a **phone** in the browser.
 
@@ -34,6 +35,8 @@ examples/n8n_demo.*        <- a panel whose event procedures live in n8n
 examples/led_panel.*       <- Start/Stop an Arduino's LED over USB serial
 examples/truck_scale.*     <- weighbridge: serial scale, chart, tickets in SQLite, menu (+ simulator)
 examples/gauges.*          <- PictureBox: a dial and a tank drawn in code, click to set the alarm
+examples/power_meter.*     <- Modbus TCP energy meter: gauges, chart, slider writes a setpoint (+ simulator)
+examples/rack_status.*     <- SNMP UPS, PDU and switch: runtime, outlets, port lamps, traps (+ simulator)
 examples/hvac_console.*    <- read-only HVAC console for real ESP32 devices over MQTT/TLS
 examples/n8n/              <- the matching n8n workflow, ready to import
 tests/fake_esp32.py        <- simulated cistern node to test it against
@@ -44,6 +47,11 @@ panelworks/webhooks.py     <- HTTP webhooks (n8n): events out, replies drive the
 panelworks/serialport.py   <- Serial control (the MSComm replacement)
 panelworks/chart.py        <- Chart control: live strip chart, several series
 panelworks/picture.py      <- PictureBox: pictures, and drawing from code (gauges, diagrams)
+panelworks/slider.py       <- Slider control
+panelworks/gauge.py        <- Gauge control (a dial; Interactive makes it a knob)
+panelworks/polling.py      <- shared poll/Fill/reconnect plumbing for Modbus and SNMP
+panelworks/modbus.py       <- Modbus TCP/RTU control
+panelworks/snmp.py         <- SNMP control (Get/Walk/Set, traps)
 panelworks/data.py         <- Data control (SQLite logging) and Grid
 panelworks/menus.py        <- panel menu bars and the Menu Editor's model
 panelworks/webview.py      <- phone view: a running panel as a web page
@@ -67,6 +75,8 @@ python -m venv .venv
 
 That installs a `panelworks` command into the venv (`-e` = editable, so changes to
 the source take effect without reinstalling). Leave off `[mqtt]` to skip paho-mqtt.
+Optional extras: `[modbus]` (pymodbus), `[snmp]` (pysnmp), `[pictures]` (Pillow, for JPEG),
+or `[all]`, e.g. `pip install -e ".[all]"`.
 
 Works with mcp 2.x (tested 2.3.0) and falls back to the 1.x `FastMCP` API.
 MQTT needs paho-mqtt 2.x (tested 2.2.0); without it, forms still run, minus MQTT.
@@ -265,12 +275,16 @@ a traceback and logs the error in the event log; the app keeps running.
 | Frame | Caption; contents move, hide and disable with it; its OptionButtons form their own group | | Click |
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
+| Slider | Min, Max, Value, SmallChange, LargeChange, TickFrequency, Orientation | | Change, Scroll |
+| Gauge | Min, Max, Value, Units, Title, Decimals, Zones, Interactive | | Change, Scroll, Click |
 | PictureBox | Picture, AutoSize, Stretch, ScaleLeft/Top/Width/Height, ForeColor, FillColor, DrawWidth, CurrentX/Y | Cls, Line, LineTo, Circle, PSet, Polygon, Print, PaintPicture, Scale | Click, DblClick, MouseDown, MouseUp, MouseMove (all with x, y) |
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
 | Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
 | Timer | Interval (ms), Enabled | | Timer |
 | MQTT | Broker, Port, ClientID, Username, Password, Subscriptions, AutoConnect, Connected | Connect, Disconnect, Publish, Subscribe, Unsubscribe | Connected, Disconnected, MessageArrived |
+| Modbus | Mode, Host, Port, SerialPort, Settings, UnitID, ByteOrder, Poll, PollInterval, Fill, Values | Read, Write, PollNow, Open, Close | DataArrival(values), Connected, Disconnected, Error |
+| SNMP | Host, Port, Version, Community, WriteCommunity, User/AuthKey/PrivKey, Poll, PollInterval, Fill, TrapPort | Get, Walk, Set, PollNow, Open, Close | DataArrival(values), Trap(source, values), Connected, Disconnected, Error |
 | Serial | Port, Settings, Terminator, Fill, Output, Input, Line, PortOpen, AutoOpen, AutoReconnect, DTR, RTS | Open, Close, Write, SendLine, ClearInput, ListPorts | DataArrival(line), Connected, Disconnected, Error |
 | Form | Caption, Width, Height, BackColor | MsgBox, Unload | Load, Unload |
 
@@ -564,6 +578,39 @@ n8n's SQLite node can read it. A Grid can also be filled by hand: `Columns`, `Ad
 `examples/truck_scale.*` uses all three: the platform weight on a fixed-scale Chart, trucks
 on the yard and finished tickets in two Data tables, and the tickets in a Grid. Its
 `truck_scale/scale_sim.py` simulates the scale, so you can try it without one.
+
+## Sliders and gauges
+
+A **Slider** sets a value by dragging (Scroll while it moves, Change when it's let go). A **Gauge**
+is a ready-made dial with coloured **Zones** (`80 90 gold`, `90 100 red`); set `Interactive` and its
+needle can be dragged, so it doubles as a knob. Both work in the phone view.
+
+## Modbus and SNMP
+
+Two tray controls for equipment that doesn't speak MQTT. Both poll in the background, reconnect by
+themselves, and fill properties with no code:
+
+```
+mb1 (Modbus TCP)  Poll:  volts = hr 0 *0.1            Fill:  volts -> gauVolts.Value
+                         power = hr 2 f32 cdab               power -> chtPower.Value
+                         relay = co 0
+snmp1 (SNMP)      Poll:  runtime = upsEstimatedMinutesRemaining      Fill:  runtime -> gauRuntime.Value
+                         port3   = ifOperStatus.3
+```
+
+```python
+f.mb1.Write("hr 10", 75)                     # a setpoint; Write("co 0", True) for a relay
+f.snmp1.Set("1.3.6.1.4.1.318.1.1.4.4.2.1.3.4", 3, "i")     # reboot PDU outlet 4
+def snmp1_Trap(f, source, values): ...       # with TrapPort set
+```
+
+**Modbus** (`pip install pymodbus`): TCP or RTU, `hr`/`ir`/`co`/`di` addresses or 4xxxx references,
+u16 to f64 and text, all four byte orders, Read/Write. **SNMP** (`pip install pysnmp`): v1, v2c and
+v3, numeric OIDs or common names (sys, if, ups), Get/Walk/Set, traps. Communities and keys can come
+from environment variables (`${UPS_COMMUNITY}`). The power_meter and rack_status examples come with
+simulators, so they run without hardware. Chapter 17 of the manual covers both.
+
+![Power meter over Modbus](examples/power_meter.png)
 
 ## Pictures and drawing: PictureBox
 

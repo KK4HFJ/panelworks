@@ -209,5 +209,14 @@ installed outside it, apart from Python and Git themselves.
 | `paho-mqtt` | MQTT (chapter 8); the `[mqtt]` part of the install command |
 | `pyserial` | The Serial control (chapter 9) |
 
+Optional extras, installed only if you want them. Put the name in the brackets of the
+install command, e.g. `pip install -e ".[mqtt,modbus]"`, or `".[all]"` for everything:
+
+| Extra | Library | Used for |
+|---|---|---|
+| `modbus` | `pymodbus` | The Modbus control (chapter 17) |
+| `snmp` | `pysnmp` | The SNMP control (chapter 17) |
+| `pictures` | `pillow` | JPEG pictures and smooth scaling in a PictureBox |
+
 Tkinter (the windowing toolkit) comes with Python. PanelWorks has no other
 dependencies.

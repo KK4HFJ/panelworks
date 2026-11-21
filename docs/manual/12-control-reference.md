@@ -421,6 +421,95 @@ A horizontal bar showing a value from 0 to Max. Good for tank levels and progres
 | Refresh | Redraw now, inside a long-running procedure. |
 | SetFocus | Move the keyboard focus to this control. |
 
+## Slider
+
+Drag to set a value, like VB's Slider: a setpoint, a speed, a dimmer. Value is a whole number unless SmallChange is a fraction.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| BackColor | read/write | Background colour: a name (`light yellow`) or `#rrggbb`. |
+| Enabled | read/write | False greys it out and ignores the mouse and keyboard. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Text colour: a name or `#rrggbb`. |
+| Height | read/write | Height in pixels. |
+| LargeChange | read/write | How far a click in the trough moves it (0 = SmallChange). |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Max | read/write | The value at the right (or bottom). |
+| Min | read/write | The value at the left (or top). |
+| Orientation | read/write | Horizontal or Vertical. |
+| ShowValue | read/write | Show the value above the handle. |
+| SmallChange | read/write | The step: 1 for whole numbers, 0.5 for halves. Arrow keys move by this much. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| TickFrequency | read/write | Numbers along the scale every this many units (0 = none). |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Value | read/write | The current value, Min to Max. Setting it fires Change. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Change(f)` | Value changed: the user let go of the handle, used the arrow keys, or code set Value. |
+| `Name_Scroll(f)` | The handle is being dragged (fires continuously). Good for a live readout. |
+
+## Gauge
+
+A ready-made dial: set Value and the needle moves. Coloured Zones mark warning and alarm ranges. With Interactive on, the needle can be dragged, so it's also a knob.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| BackColor | read/write | Background colour. |
+| Decimals | read/write | Decimal places for the value (-1 = automatic). |
+| Enabled | read/write | False greys it out and ignores the mouse and keyboard. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Colour of the numbers, ticks and text. |
+| Height | read/write | Height in pixels. |
+| Interactive | read/write | True: drag the needle to set Value (a knob). Also works by tapping in the phone view. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| MajorTicks | read/write | How many numbered divisions round the scale (default 5). |
+| Max | read/write | The value at the end of the scale (bottom right). |
+| Min | read/write | The value at the start of the scale (bottom left). |
+| NeedleColor | read/write | Colour of the needle. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Title | read/write | Shown under the value. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Units | read/write | Shown after the value, e.g. `psi` or `°C`. |
+| Value | read/write | The reading. Values outside Min..Max pin the needle at the end but are kept. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+| Zones | read/write | Coloured ranges, one per line: `from to colour`, e.g. `80 90 gold` and `90 100 red`. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Change(f)` | Interactive only: the user let go after turning it. |
+| `Name_Scroll(f)` | Interactive only: the needle is being dragged. |
+| `Name_Click(f)` | The gauge is clicked. |
+
 ## PictureBox
 
 A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) with Picture, and draw lines, circles, arcs, shapes and text on it from code: gauges, dials, tank and pipe diagrams, anything the stock controls don't cover. Drawings are run-time output, never saved in the form; Cls clears them.
@@ -678,6 +767,107 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | `Name_Connected(f)` | The port opened. |
 | `Name_Disconnected(f)` | The port closed or the device was unplugged. |
 | `Name_Error(f, message)` | A problem opening or reading. Argument: `message`. |
+
+## Modbus
+
+A Modbus TCP or RTU master: poll registers and coils into named values, write them from code. For PLCs, VFDs, energy meters, charge controllers. Needs `pip install pymodbus`.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AutoOpen | read/write | True: start polling when the form opens. False: call Open yourself. |
+| ByteOrder | read/write | How 32/64-bit values are stored: ABCD (standard), CDAB (word swap, common on meters), BADC or DCBA. A Poll line can override it. |
+| Connected | run time | True while the device answers. Set False/True to close/open. |
+| Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `volts -> gauVolts.Value`. |
+| Host | read/write | TCP: the device's IP address or name. `${METER_HOST}` reads an environment variable. |
+| LastError | read-only | The last problem, or empty. Read-only. |
+| Mode | read/write | TCP (Ethernet) or RTU (serial, RS-485). |
+| Poll | read/write | What to read, one per line: `name = what [*scale] [/divisor] [+offset]`. Each poll fires DataArrival with a dict of these names. |
+| PollInterval | read/write | Milliseconds between polls (0 = only when you call PollNow). |
+| Port | read/write | TCP port, usually 502. |
+| SerialPort | read/write | RTU: the serial port (COM3, /dev/ttyUSB0, or `auto`). |
+| Settings | read/write | RTU: baud,parity,data,stop, e.g. `9600,n,8,1` or `19200,e,8,1`. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Target | read-only | The address in use, with ${VARIABLES} filled in. Read-only. |
+| Timeout | read/write | Seconds to wait for an answer. |
+| UnitID | read/write | The device's unit (slave) id, usually 1. |
+| Values | read-only | The last polled values, as a dict. Read-only. |
+| ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Close | Stop polling and disconnect. |
+| Get | `Get(name)`: the last polled value of a Poll name. |
+| Open | Start polling (and reconnecting) in the background. |
+| PollNow | Read the Poll list now instead of waiting for the next interval. |
+| Read | `Read(what)`: one value now, e.g. `Read("hr 100 f32")` or `Read("40101 *0.1")`. |
+| Write | `Write(what, value)`: a coil (`"co 3"`, True) or holding register(s) (`"hr 10 f32"`, 21.5). Scaling in what is undone: `Write("hr 10 *0.1", 23.5)` sends 235. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_DataArrival(f, values)` | A poll finished; values is a dict of the Poll names, scaled. |
+| `Name_Connected(f)` | The device answered (after starting or reconnecting). |
+| `Name_Disconnected(f)` | The device stopped answering. It keeps retrying. |
+| `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
+
+## SNMP
+
+An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set in code, and receive traps. Needs `pip install pysnmp`.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AuthKey | read/write | SNMPv3 authentication passphrase (empty = no authentication). |
+| AuthProtocol | read/write | SNMPv3: MD5, SHA, SHA224, SHA256, SHA384 or SHA512. |
+| AutoOpen | read/write | True: start polling when the form opens. False: call Open yourself. |
+| Community | read/write | Read community (v1/v2c), usually `public`. Use `${VARIABLE}` to keep it out of the file. |
+| Connected | run time | True while the device answers. Set False/True to close/open. |
+| Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `volts -> gauVolts.Value`. |
+| Host | read/write | The device's IP address or name. `${UPS_HOST}` reads an environment variable. |
+| LastError | read-only | The last problem, or empty. Read-only. |
+| Poll | read/write | What to read, one per line: `name = what [*scale] [/divisor] [+offset]`. Each poll fires DataArrival with a dict of these names. |
+| PollInterval | read/write | Milliseconds between polls (0 = only when you call PollNow). |
+| Port | read/write | UDP port, usually 161. |
+| PrivKey | read/write | SNMPv3 privacy (encryption) passphrase (empty = none). |
+| PrivProtocol | read/write | SNMPv3: DES, 3DES, AES, AES192 or AES256. |
+| Retries | read/write | How many times to resend before giving up. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Target | read-only | The address in use, with ${VARIABLES} filled in. Read-only. |
+| Timeout | read/write | Seconds to wait for an answer. |
+| TrapCommunity | read/write | Community traps must use (v1/v2c). |
+| TrapPort | read/write | UDP port to listen for traps on (0 = don't). 162 is standard but needs admin rights; 1162 doesn't. |
+| User | read/write | SNMPv3 user name. |
+| Values | read-only | The last polled values, as a dict. Read-only. |
+| ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
+| Version | read/write | 1, 2c (default) or 3. |
+| WriteCommunity | read/write | Community for Set (v1/v2c), often `private`. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Close | Stop polling and disconnect. |
+| Get | `Get(what)`: one value now: a Poll name, an OID or a known name like `sysDescr`, with optional `*scale`. |
+| Open | Start polling (and reconnecting) in the background. |
+| PollNow | Read the Poll list now instead of waiting for the next interval. |
+| Set | `Set(what, value, type)`: write one OID. type is snmpset's letter: i, u, g, c, t, s, a, o (default i for numbers, s for text). |
+| Walk | `Walk(what)`: everything under a subtree, as a dict, e.g. `Walk("ifDescr")`. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_DataArrival(f, values)` | A poll finished; values is a dict of the Poll names, scaled. |
+| `Name_Connected(f)` | The device answered (after starting or reconnecting). |
+| `Name_Disconnected(f)` | The device stopped answering. It keeps retrying. |
+| `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
+| `Name_Trap(f, source, values)` | A trap arrived: source is the sender's IP, values a dict of its contents with readable names where known. |
 
 ## Data
 

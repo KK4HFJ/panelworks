@@ -173,6 +173,35 @@ to an MQTT topic, or point a Serial **Fill** line at it.
 
 ![Charts](img/chart.png)
 
+## Sliders and gauges
+
+A **Slider** sets a value by dragging; a **Gauge** shows one on a dial.
+
+```python
+def sldSpeed_Scroll(f):                       # while it's being dragged
+    f.lblSpeed.Caption = f"{f.sldSpeed.Value} %"
+
+def sldSpeed_Change(f):                       # when it's let go (or code sets Value)
+    f.mqtt1.Publish("pump/speed", f.sldSpeed.Value)
+
+def tmrPoll_Timer(f):
+    f.gauPressure.Value = read_pressure()      # the needle moves
+```
+
+Slider: **Min**, **Max**, **Value**, **SmallChange** (the step: 1 for whole numbers,
+0.5 for halves), **TickFrequency** (numbers along the scale) and **Orientation**
+(Horizontal or Vertical). Setting Value from code fires Change, as in VB, so if
+Change writes to a device, use a flag when you're only showing the device's own value.
+The power meter example (chapter 17) shows how.
+
+Gauge: **Min**, **Max**, **Value**, **Units**, **Title**, and **Zones**, one per line
+as `from to colour` (`80 90 gold`, `90 100 red`). Like a Chart, a Gauge needs no code
+when its Value is subscribed to an MQTT topic or filled from Serial, Modbus or SNMP.
+Set **Interactive** to True and the needle can be dragged, which makes it a knob:
+Scroll fires while it turns and Change when it's let go.
+
+![Sliders and a gauge](img/slider-gauge.png)
+
 ## Pictures and drawing (PictureBox)
 
 A **PictureBox** shows a picture and is a surface you draw on from code, as in VB.

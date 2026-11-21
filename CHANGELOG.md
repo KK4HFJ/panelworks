@@ -2,6 +2,31 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**New controls**
+- **Slider**: drag to set a value (Min, Max, SmallChange, TickFrequency, Orientation); Scroll while dragging,
+  Change on release or when code sets Value. Shown as a slider in the phone view.
+- **Gauge**: a ready-made dial with Units, Title and coloured Zones (`90 100 red`). `Interactive` makes the
+  needle draggable, so it's also a knob. Drawn in the phone view, where a tap turns it.
+- **Modbus** (`pip install pymodbus`): TCP or RTU master. Poll lines like `volts = hr 0 *0.1` or `40101`,
+  u16/i16/u32/i32/f32/u64/i64/f64/str, byte orders ABCD/CDAB/BADC/DCBA, Fill, Read/Write (Write undoes scaling).
+  Neighbouring registers are read in one request; one bad address doesn't stop the rest.
+- **SNMP** (`pip install pysnmp`): v1/v2c/v3, numeric OIDs or common names (`sysUpTime`, `ifOperStatus.3`,
+  `upsEstimatedMinutesRemaining`), Fill, Get/Walk/Set, and a `Trap(source, values)` event.
+- Both poll in the background, reconnect by themselves, fire `DataArrival(values)`, and publish their values as
+  JSON to MQTT. Host, communities and keys accept `${ENVIRONMENT}` variables.
+- New examples with simulators: `power_meter` (Modbus) and `rack_status` (SNMP, needs `pip install snmpsim`).
+- Install extras: `[modbus]`, `[snmp]`, `[pictures]` (Pillow), `[all]`.
+
+**Fixes**
+- A panel could freeze if Python's garbage collector ran on a background thread (MQTT, Serial, the phone view)
+  and freed a Tk font, variable or image: the two threads waited on each other. Those deletions now always
+  happen on the GUI thread.
+
+**Docs**
+- Manual chapter 17, Modbus and SNMP; Sliders and gauges in chapter 6; examples, reference and VB table updated.
+
 ## 0.3.0 (2026-11-21)
 
 **New control**
