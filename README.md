@@ -662,7 +662,7 @@ can wait for "user pressed Start" without freezing the window.
 
 ## Contributing, security, conduct
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) (report
+What's planned: [ROADMAP.md](ROADMAP.md). See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) (report
 vulnerabilities privately), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md),
 [ACCESSIBILITY.md](ACCESSIBILITY.md) and the [CHANGELOG](CHANGELOG.md).
 
