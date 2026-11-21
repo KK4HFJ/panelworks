@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.6.0 (2026-11-21)
 
 **New control**
 - **SegmentDisplay**: a seven-segment readout in LED, LCD or LCD Reverse style, drawn as shapes (no
