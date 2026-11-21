@@ -137,7 +137,8 @@ make it real.
 `examples/truck_scale.json` + `truck_scale.py`, simulator `examples/truck_scale/scale_sim.py`
 
 The most complete example (also shown on a phone in chapter 16). A scale indicator's continuous output arrives over
-**Serial**; the panel shows the weight big, a lamp for stable / in motion /
+**Serial**; the panel shows the weight on an LED **SegmentDisplay** (`-OL-` on
+overload), a lamp for stable / in motion /
 overload, and a **Chart** of the platform. A loaded truck **weighs in** (gross);
 after unloading it **weighs out** (tare); the ticket (plate, customer, material,
 gross, tare, net) goes into a **Data** table and shows in a **Grid**. Weighing is

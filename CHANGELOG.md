@@ -4,6 +4,12 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+**New control**
+- **SegmentDisplay**: a seven-segment readout in LED, LCD or LCD Reverse style, drawn as shapes (no
+  font needed). Numbers or short text (`Err`, `-OL-`), Digits, Decimals, LeadingZeros, Alignment, Slant.
+  A value that doesn't fit shows dashes, never a wrong number. Works in the phone view. The truck scale
+  example's weight is now an LED display that shows `-OL-` on overload.
+
 **Control arrays**, as in VB
 - Elements are named `Lamp(0)`, `Lamp(1)`... and share one procedure, `Lamp_Click(f, index)`, with the
   index before the event's own arguments. In code `f.Lamp` is the array: `f.Lamp(3)`, `for lamp in f.Lamp`,

@@ -182,6 +182,22 @@ DOC = {
         "Scroll!": "Interactive only: the needle is being dragged.",
         "Click!": "The gauge is clicked.",
     },
+    "SegmentDisplay": {
+        "_": "A seven-segment readout, like a scale head, meter or clock: LED (lit segments on black), LCD (black segments on a grey panel) or LCD Reverse. Drawn as shapes, so it needs no special font and looks the same on the phone.",
+        "Value": "What to show: a number (numeric text such as `\"61240\"` from a device counts), or short text like `Err`, `OL`, `-OL-`. Letters a seven-segment display can't form are blank.",
+        "Text": "What the display shows now, position by position (spaces for blanks). Read-only.",
+        "Digits": "How many digit positions (1 to 32). The decimal point doesn't take one. A value that doesn't fit shows dashes, never a wrong number.",
+        "Decimals": "Places after the point for numbers; -1 = as many as fit.",
+        "LeadingZeros": "True: pad numbers with zeros (`000042`).",
+        "Alignment": "Right (the usual for numbers), Left or Center.",
+        "Style": "LED, LCD or LCD Reverse. Choosing one sets OnColor, OffColor and BackColor; change those afterwards for your own colours.",
+        "OnColor": "Colour of the lit segments.",
+        "OffColor": "Colour of the unlit segments (the faint 'ghosts'). Empty = a dark shade of OnColor.",
+        "ShowOff": "True: draw the unlit segments faintly, as real displays show them.",
+        "Slant": "Lean of the digits in degrees, 0 to 15 (default 6).",
+        "BackColor": "Background colour of the panel.",
+        "Click!": "The display was clicked (or tapped on the phone).",
+    },
     "AlarmPanel": {
         "_": "The alarm list of an Alarms control: priority colour, time, name, message and value. Unacknowledged alarms flash; click one to acknowledge it, or the header to acknowledge them all. Also on the phone view, where a tap acknowledges.",
         "Source": "The Alarms control to show. Empty = the form's only (or first) one.",
@@ -428,7 +444,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
+         "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
          "Modbus", "SNMP", "Data", "Alarms", "AlarmPanel"]
 
 missing = []

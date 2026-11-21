@@ -43,14 +43,14 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid", "AlarmPanel"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "AlarmPanel"]
 NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Alarms"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
           "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel"}
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
-         "Orientation": ["Horizontal", "Vertical"]}
+         "Orientation": ["Horizontal", "Vertical"], "Style": ["LED", "LCD", "LCD Reverse"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",

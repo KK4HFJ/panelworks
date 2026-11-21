@@ -525,6 +525,51 @@ A ready-made dial: set Value and the needle moves. Coloured Zones mark warning a
 | `Name_Scroll(f)` | Interactive only: the needle is being dragged. |
 | `Name_Click(f)` | The gauge is clicked. |
 
+## SegmentDisplay
+
+A seven-segment readout, like a scale head, meter or clock: LED (lit segments on black), LCD (black segments on a grey panel) or LCD Reverse. Drawn as shapes, so it needs no special font and looks the same on the phone.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Alignment | read/write | Right (the usual for numbers), Left or Center. |
+| BackColor | read/write | Background colour of the panel. |
+| Decimals | read/write | Places after the point for numbers; -1 = as many as fit. |
+| Digits | read/write | How many digit positions (1 to 32). The decimal point doesn't take one. A value that doesn't fit shows dashes, never a wrong number. |
+| Enabled | read/write | False greys it out and ignores the mouse and keyboard. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| LeadingZeros | read/write | True: pad numbers with zeros (`000042`). |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| OffColor | read/write | Colour of the unlit segments (the faint 'ghosts'). Empty = a dark shade of OnColor. |
+| OnColor | read/write | Colour of the lit segments. |
+| ShowOff | read/write | True: draw the unlit segments faintly, as real displays show them. |
+| Slant | read/write | Lean of the digits in degrees, 0 to 15 (default 6). |
+| Style | read/write | LED, LCD or LCD Reverse. Choosing one sets OnColor, OffColor and BackColor; change those afterwards for your own colours. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Text | read-only | What the display shows now, position by position (spaces for blanks). Read-only. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Value | read/write | What to show: a number (numeric text such as `"61240"` from a device counts), or short text like `Err`, `OL`, `-OL-`. Letters a seven-segment display can't form are blank. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f)` | The display was clicked (or tapped on the phone). |
+
 ## PictureBox
 
 A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) with Picture, and draw lines, circles, arcs, shapes and text on it from code: gauges, dials, tank and pipe diagrams, anything the stock controls don't cover. Drawings are run-time output, never saved in the form; Cls clears them.

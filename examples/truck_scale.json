@@ -43,12 +43,11 @@
     }
   ],
   "objects": {
-    "lblWeight": {
-      "type": "Label",
-      "Caption": "------",
-      "FontSize": 40,
-      "FontBold": true,
-      "Alignment": "Right",
+    "segWeight": {
+      "type": "SegmentDisplay",
+      "Digits": 6,
+      "Value": "------",
+      "OnColor": "#ff3b1f",
       "Left": 15,
       "Top": 10,
       "Width": 300,

@@ -202,6 +202,30 @@ Scroll fires while it turns and Change when it's let go.
 
 ![Sliders and a gauge](img/slider-gauge.png)
 
+## Digital readouts (SegmentDisplay)
+
+A **SegmentDisplay** shows a number the way a scale head, a meter or a clock does,
+in seven-segment digits. Pick its **Style**:
+
+- **LED**: lit red segments on black (change **OnColor** for green, amber or blue);
+- **LCD**: black segments on a grey panel, the unlit ones faintly visible;
+- **LCD Reverse**: light segments on a dark panel, like a backlit display.
+
+![LED, LCD and LCD Reverse](img/segment-display.png)
+
+```python
+f.segWeight.Value = 61240          # a number...
+f.segVolts.Value = "51.27"         # ...or numeric text from a device (Decimals 1 shows 51.3)
+f.segWeight.Value = "-OL-"         # ...or short text: Err, OL, HELLO
+```
+
+**Digits** is how many positions it has; the decimal point rides on a digit and
+doesn't take one. A value that doesn't fit shows dashes in every position, so it can
+never show a wrong number. **Decimals** fixes the places (-1 shows as many as fit),
+**LeadingZeros** pads with zeros, and **Alignment** is Right, Left or Center. Like a
+Gauge, it needs no code when MQTT, Serial, Modbus or SNMP fills its Value. The truck
+scale example (chapter 13) uses one for the weight.
+
 ## Pictures and drawing (PictureBox)
 
 A **PictureBox** shows a picture and is a surface you draw on from code, as in VB.

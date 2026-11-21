@@ -57,7 +57,7 @@ def ser1_DataArrival(f, line):
         return                                  # not a weight line: ignore it
     status, _, value, unit = m.groups()
     weight, stable = int(value), status.upper() == "ST"
-    f.lblWeight.Caption = f"{weight:,}"
+    f.segWeight.Value = "-OL-" if status.upper() == "OL" else weight     # a scale head's overload sign
     f.lblUnit.Caption = unit.lower()
     f.chtWeight.Value = weight
     if status.upper() == "OL":

@@ -5,7 +5,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Controls
 
-- **LED / 7-segment readout**: big digital numbers (scale weight, voltage) without font tricks.
 - **TabStrip**: several pages on one form for busy panels.
 - **Line**: VB's simple drawn line.
 
@@ -41,7 +40,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
-- Unreleased: control arrays (`Lamp(0)`..., `Lamp_Click(f, index)`, copy/paste, Load/Unload).
+- Unreleased: SegmentDisplay (LED / LCD seven-segment readouts); control arrays (`Lamp(0)`..., `Lamp_Click(f, index)`, copy/paste, Load/Unload).
 - 0.5.0: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus); --example and --simulator; f.AppPath.
 - 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.
 - 0.4.1: scrollable toolbox.

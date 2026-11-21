@@ -304,6 +304,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | ProgressBar | Value, Max | | |
 | Slider | Min, Max, Value, SmallChange, LargeChange, TickFrequency, Orientation | | Change, Scroll |
 | Gauge | Min, Max, Value, Units, Title, Decimals, Zones, Interactive | | Change, Scroll, Click |
+| SegmentDisplay | Value, Text, Digits, Decimals, Style (LED/LCD/LCD Reverse), OnColor, OffColor, LeadingZeros, Alignment, Slant | | Click |
 | PictureBox | Picture, AutoSize, Stretch, ScaleLeft/Top/Width/Height, ForeColor, FillColor, DrawWidth, CurrentX/Y | Cls, Line, LineTo, Circle, PSet, Polygon, Print, PaintPicture, Scale | Click, DblClick, MouseDown, MouseUp, MouseMove (all with x, y) |
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
@@ -619,11 +620,15 @@ n8n's SQLite node can read it. A Grid can also be filled by hand: `Columns`, `Ad
 on the yard and finished tickets in two Data tables, and the tickets in a Grid. Its
 `truck_scale/scale_sim.py` simulates the scale, so you can try it without one.
 
-## Sliders and gauges
+## Sliders, gauges and digital readouts
 
 A **Slider** sets a value by dragging (Scroll while it moves, Change when it's let go). A **Gauge**
 is a ready-made dial with coloured **Zones** (`80 90 gold`, `90 100 red`); set `Interactive` and its
-needle can be dragged, so it doubles as a knob. Both work in the phone view.
+needle can be dragged, so it doubles as a knob. A **SegmentDisplay** is a seven-segment readout in
+**LED**, **LCD** or **LCD Reverse** style, drawn as shapes (no font needed). It shows dashes rather
+than a wrong number when a value doesn't fit. All three work in the phone view.
+
+![LED, LCD and LCD Reverse SegmentDisplays](docs/manual/img/segment-display.png)
 
 ## Modbus and SNMP
 

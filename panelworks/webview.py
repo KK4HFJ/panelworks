@@ -272,6 +272,9 @@ def snapshot(form):
         elif t == "Slider":
             d["value"] = g("Value"); d["min"] = g("Min"); d["max"] = g("Max"); d["step"] = g("SmallChange")
             d["vertical"] = g("Orientation") == "Vertical"
+        elif t == "SegmentDisplay":
+            d["svg"] = gauge_svg(form, o); d["interactive"] = False; d["text"] = g("Text")
+            d["bg"] = _hex(form, g("BackColor")) or "#000000"
         elif t == "Gauge":
             d["svg"] = gauge_svg(form, o); d["interactive"] = g("Interactive")
             d["bg"] = _hex(form, g("BackColor")) or "#ffffff"
@@ -336,6 +339,8 @@ def act(form, req):
         if o.get("Interactive"):
             o.turn_to(o.value_at(px, py))
         form.fire(name, "Click")
+    elif what == "click" and t == "SegmentDisplay":
+        o.fire("Click")
     elif what == "click" and t == "AlarmPanel":
         o.click_row(str(req.get("value") or ""))
     elif what == "click" and t == "PictureBox":
@@ -619,6 +624,7 @@ function render(it){
   case'Slider':return `<div class="sld" style="flex:1 1 100%"><input type="range" min="${it.min}" max="${it.max}" step="${it.step}" value="${it.value}"${dis}
     onpointerdown="editing='${it.name}'" oninput="editing='${it.name}';this.nextElementSibling.textContent=this.value"
     onchange="editing=null;act('${it.name}','set',this.value)"><span class="sv">${it.value}</span></div>`;
+  case'SegmentDisplay':
   case'Gauge':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${Math.max(it.w,240)}px;background:${it.bg};border-radius:8px${it.interactive&&it.enabled?';cursor:pointer':''}"
     onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
   case'PictureBox':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${it.w}px;background:${it.bg};${it.border?'border:1px solid #999;':''}"
