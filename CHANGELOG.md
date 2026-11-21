@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.4.2 (2026-11-21)
 
 **Distribution**
 - On PyPI: `pip install "panelworks[all]"`. The package carries the examples (File > Examples works),

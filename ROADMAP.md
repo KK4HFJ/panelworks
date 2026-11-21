@@ -33,7 +33,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Distribution
 
-- ★ **PyPI**: `pip install panelworks`.
 - **Signed Windows builds** so Smart App Control accepts `panelworks.exe` and built programs.
 - **Docs site** on GitHub Pages: the manual, searchable.
 
@@ -45,6 +44,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
+- 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.
 - 0.4.1: scrollable toolbox.
 - 0.4.0: Slider, Gauge (also a knob), Modbus TCP/RTU, SNMP with traps; power_meter and rack_status examples;
   GitHub Actions CI (all suites on Python 3.10 and 3.12, PDF manual built as an artifact).
