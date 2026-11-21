@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.5.0 (2026-11-21)
 
 **New controls**
 - **Alarms**: limits on any value from plain rules (`HighVolts: mb1.volts > 250 delay=5 deadband=2
@@ -21,7 +21,14 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
   copies the example to the panels folder first, like File > Examples. The docs use them throughout.
 
 **Smaller**
+- `f.AppPath`, VB's App.Path: the folder for your own files. The form's folder, or the program's folder
+  in a Make EXE build.
 - Modbus and SNMP `Port` accept `${VAR:-default}`, like Host.
+
+**Fixes**
+- Manual chapter 6's "Saving settings between runs" saved beside `__file__`, which in a Make EXE build
+  is a temporary folder, so settings were lost each time the program closed. It now uses `f.AppPath`
+  (tested with a real build, run twice).
 
 **Docs**
 - Manual chapter 18, Alarms; the solar_battery example in chapter 13; control reference updated.

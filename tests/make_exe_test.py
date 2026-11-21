@@ -14,12 +14,20 @@ json.dump({"name": "Main", "caption": "Built panel", "code": "Main.py", "width":
            "objects": {"lbl": {"type": "Label", "Caption": "hi", "Left": 10, "Top": 10, "Width": 250, "Height": 25},
                        "datLog": {"type": "Data", "LogFields": ["note = lbl.Caption"]},
                        "tmrQuit": {"type": "Timer", "Interval": 2500, "Enabled": True}}}, open(os.path.join(T, "Main.json"), "w"))
-open(os.path.join(T, "Main.py"), "w").write('''import statistics, json
+open(os.path.join(T, "Main.py"), "w").write('''import statistics, json, os
+runs = {"n": 0}
 def Form_Load(f):
     f.lbl.Caption = "mean " + str(statistics.mean([1, 2, 3, 6]))
     s = f.Show("Settings")
     f.datLog.Log()
-    open("proof.json", "w").write(json.dumps({"caption": f.lbl.Caption, "settings": s.lblS.Caption}))
+    path = os.path.join(f.AppPath, "settings.json")        # the manual's recipe (chapter 6)
+    if os.path.exists(path):
+        runs["n"] = json.load(open(path)).get("runs", 0)
+    runs["n"] += 1
+    open("proof.json", "w").write(json.dumps({"caption": f.lbl.Caption, "settings": s.lblS.Caption,
+                                               "apppath": f.AppPath, "codefile_dir": os.path.dirname(__file__)}))
+def Form_Unload(f):
+    json.dump({"runs": runs["n"]}, open(os.path.join(f.AppPath, "settings.json"), "w"))
 def tmrQuit_Timer(f):
     f.Unload()
 ''')
@@ -44,7 +52,16 @@ r = subprocess.run([exe], env=env, cwd="/", timeout=60, capture_output=True, tex
 check("the program runs without Python or PanelWorks installed", r.returncode == 0,
       "" if r.returncode == 0 else "\n" + r.stderr[-1500:])
 proof = json.load(open(os.path.join(T, "dist", "proof.json")))
-check("its second form and its code's imports work", proof == {"caption": "mean 3", "settings": "settings loaded"}, proof)
+check("its second form and its code's imports work",
+      proof["caption"] == "mean 3" and proof["settings"] == "settings loaded", proof)
+check("f.AppPath is the program's folder", os.path.samefile(proof["apppath"], os.path.join(T, "dist")), proof["apppath"])
+check("(while __file__ is the temporary unpack folder, which is why the manual uses AppPath)",
+      "_MEI" in proof["codefile_dir"] and not os.path.exists(proof["codefile_dir"]),
+      proof["codefile_dir"] + " (gone once the program closed)")
+r2 = subprocess.run([exe], env=env, cwd="/", timeout=60, capture_output=True, text=True)
+saved = json.load(open(os.path.join(T, "dist", "settings.json")))
+check("settings saved in AppPath survive to the next run", r2.returncode == 0 and saved == {"runs": 2},
+      saved if r2.returncode == 0 else r2.stderr[-800:])
 rows = sqlite3.connect(os.path.join(T, "dist", "Main.db")).execute("select note from log").fetchall()
-check("its database is written beside the program", rows == [("mean 3",)], rows)
+check("its database is written beside the program (one row per run)", rows == [("mean 3",), ("mean 3",)], rows)
 print("ALL PASS" if ok else "SOME CHECKS FAILED")

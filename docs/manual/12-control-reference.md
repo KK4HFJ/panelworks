@@ -27,6 +27,7 @@ The window itself. In code it is `f`; in JSON connections and MCP it is the obje
 
 | Property | Access | Description |
 |---|---|---|
+| AppPath | read-only | VB's App.Path: the folder to keep your own files in (settings, logs, exports). The form's folder normally; the program's folder in a Make EXE build. |
 | BackColor | read/write | Window background colour. |
 | Caption | read/write | Title bar text. |
 | Forms | read-only | The open forms, by name: `f.Forms["Settings"].txtValue.Text`. Read-only. |

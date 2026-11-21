@@ -846,6 +846,13 @@ class Form:
     def get_Main(self):
         return self.main
 
+    def get_AppPath(self):
+        """VB's App.Path: the folder for files the panel keeps (settings, logs). The form
+        file's folder normally; the program's own folder in a Make EXE build, never the
+        temporary folder it unpacks into. The Data control keeps its database here too."""
+        from .util import data_dir
+        return data_dir(self.path)
+
     def _find_form_file(self, name):
         base = os.path.dirname(os.path.abspath(self.path)) if self.path else os.getcwd()
         cands = [name] if name.lower().endswith(".json") else [name + ".json", name]

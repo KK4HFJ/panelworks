@@ -42,7 +42,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
-- Unreleased: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus).
+- 0.5.0: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus); --example and --simulator; f.AppPath.
 - 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.
 - 0.4.1: scrollable toolbox.
 - 0.4.0: Slider, Gauge (also a knob), Modbus TCP/RTU, SNMP with traps; power_meter and rack_status examples;

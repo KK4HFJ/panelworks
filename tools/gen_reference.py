@@ -411,6 +411,7 @@ FORM_DOC = {
     "Width": "Window width in pixels.",
     "Height": "Window height in pixels.",
     "BackColor": "Window background colour.",
+    "AppPath": "VB's App.Path: the folder to keep your own files in (settings, logs, exports). The form's folder normally; the program's folder in a Make EXE build.",
     "MsgBox": "`MsgBox(prompt, title=None)`: show a message and wait for OK.",
     "Show": "`Show(\"Settings\", modal=False)`: open another form (Settings.json beside this one) and return it; Form_Load has run by then. `modal=True` waits until it's closed. `Show()` with no name shows this form again after Hide.",
     "Hide": "Hide the window without unloading it.",

@@ -499,20 +499,29 @@ def cmdCancel_Click(f):
 
 ## Saving settings between runs
 
-A small JSON file next to the form is the simplest way:
+A small JSON file in the panel's folder is the simplest way. `f.AppPath` is that
+folder, like VB's `App.Path`:
 
 ```python
 import json, os
-SETTINGS = os.path.join(os.path.dirname(__file__), "settings.json")
+
+def settings_file(f):
+    return os.path.join(f.AppPath, "settings.json")
 
 def Form_Load(f):
-    if os.path.exists(SETTINGS):
-        s = json.load(open(SETTINGS))
+    if os.path.exists(settings_file(f)):
+        s = json.load(open(settings_file(f)))
         f.txtSetpoint.Text = s.get("setpoint", "85")
 
 def Form_Unload(f):
-    json.dump({"setpoint": f.txtSetpoint.Text}, open(SETTINGS, "w"))
+    json.dump({"setpoint": f.txtSetpoint.Text}, open(settings_file(f), "w"))
 ```
+
+`AppPath` is the form file's folder while you work on the panel, and the program's
+own folder once you build it with **File → Make EXE** (chapter 4). Don't use
+`os.path.dirname(__file__)` for this: in a built program that's a temporary folder
+that disappears when the program closes, taking your settings with it. The Data
+control already keeps its database in `AppPath`.
 
 ## When something goes wrong
 

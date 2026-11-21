@@ -26,6 +26,7 @@ chapter translates the rest.
 | `If MsgBox("Sure?", vbYesNo) = vbYes Then` | `if messagebox.askyesno("Title", "Sure?", parent=f.root):` |
 | `InputBox("Name?")` | `simpledialog.askstring("Title", "Name?", parent=f.root)` |
 | `Unload Me` / `End` | `f.Unload()` |
+| `App.Path` | `f.AppPath` (the form's folder; the program's folder in a Make EXE build) |
 | `frmSettings.Show vbModal` | `f.Show("Settings", modal=True)` |
 | `Form2.Text1.Text` | `f.Forms["Form2"].Text1.Text`, or `f.Owner.Text1.Text` from a dialog |
 | `On Error GoTo Handler` | `try:` … `except Exception as e:` |
