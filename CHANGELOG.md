@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.4.1 (2026-11-21)
 
 **Designer**
 - The toolbox scrolls (scrollbar and mouse wheel) when the window is too short to show every tool.
