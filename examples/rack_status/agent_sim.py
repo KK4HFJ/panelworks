@@ -2,8 +2,8 @@
 A pretend UPS + PDU + switch on SNMP, so the rack_status example runs without hardware.
 Needs snmpsim:  pip install snmpsim pysmi
 
-    python examples/rack_status/agent_sim.py            # UDP 127.0.0.1:1161
-    python examples/rack_status/agent_sim.py --trap     # also send a test trap to UDP 1162
+    python -m panelworks --simulator rack_status            # UDP 127.0.0.1:1161
+    python -m panelworks --simulator rack_status --trap     # also send a test trap to UDP 1162
 
 The data is in agent/public.snmprec (read community "public") and agent/private.snmprec
 (write community "private"). Values marked "numeric" drift; "writecache" ones can be Set.

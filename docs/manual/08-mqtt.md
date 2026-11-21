@@ -223,6 +223,6 @@ HVAC console example in chapter 13.
 ```
 mosquitto                                   # a broker on localhost:1883
 python tests/fake_esp32.py                  # a simulated cistern node
-python -m panelworks examples/cistern_mqtt.json
+python -m panelworks --example cistern_mqtt
 mosquitto_sub -t "panelworks/cistern/#" -v  # watch the panel mirror itself
 ```

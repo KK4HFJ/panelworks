@@ -140,8 +140,8 @@ One bad line doesn't stop the others: the control reports it and keeps polling t
 ### Try it without a device
 
 ```
-python examples\power_meter\meter_sim.py           (a pretend meter on 127.0.0.1:5020)
-python -m panelworks examples\power_meter.json --mcp none
+python -m panelworks --simulator power_meter           (a pretend meter on 127.0.0.1:5020)
+python -m panelworks --example power_meter --mcp none
 ```
 
 The example reads volts, amps, a word-swapped float, a 32-bit counter, a temperature
@@ -250,9 +250,9 @@ the firewall. Traps must use **TrapCommunity** (default `public`), or the v3 Use
 
 ```
 pip install snmpsim pysmi
-python examples\rack_status\agent_sim.py           (a pretend UPS, PDU and switch on UDP 1161)
-python -m panelworks examples\rack_status.json --mcp none
-python examples\rack_status\agent_sim.py --trap    (in a third window: send an "on battery" trap)
+python -m panelworks --simulator rack_status           (a pretend UPS, PDU and switch on UDP 1161)
+python -m panelworks --example rack_status --mcp none
+python -m panelworks --simulator rack_status --trap    (in a third window: send an "on battery" trap)
 ```
 
 The example shows battery runtime and load on Gauges, mains or battery, input and

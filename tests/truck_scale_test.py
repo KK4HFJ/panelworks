@@ -73,7 +73,7 @@ check("problems show only a short indicator", h.lblAlert.Caption.startswith("⚠
 h.mnuViewLog.Click(); h.root.update()
 lw = h.Forms.get("ScaleLog")
 check("View > Error log opens the log with the details", lw is not None and lw.lstLog.ListCount >= 1
-      and any("scale_sim" in x for x in lw.lstLog.List) and not any("no such column" in x for x in lw.lstLog.List),
+      and any("--simulator truck_scale" in x for x in lw.lstLog.List) and not any("no such column" in x for x in lw.lstLog.List),
       lw and lw.lstLog.List)
 check("opening the log clears the indicator", h.lblAlert.Caption == "")
 h.code.note(h, "test problem"); h.root.update()

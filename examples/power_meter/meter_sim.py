@@ -2,7 +2,7 @@
 A pretend power meter on Modbus TCP, so the power_meter example (and the tests) run
 without hardware. Run it, then open examples/power_meter.json.
 
-    python examples/power_meter/meter_sim.py            # listens on 127.0.0.1:5020
+    python -m panelworks --simulator power_meter            # listens on 127.0.0.1:5020
 
 Register map (addresses 0-based, unit id 1):
     hr 0      volts x10          u16         e.g. 2304 = 230.4 V

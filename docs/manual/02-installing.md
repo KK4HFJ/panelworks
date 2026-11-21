@@ -17,6 +17,8 @@ pw\Scripts\python -m panelworks.designer
 ```
 
 That gives you the designer, every control, and the examples under **File → Examples**.
+To run an example straight away: `pw\Scripts\python -m panelworks --example` lists
+them, and `pw\Scripts\python -m panelworks --example pumppanel --mcp none` runs one.
 Updates come through the designer's **⬆ Update** button, or by hand with
 `pw\Scripts\python -m pip install -U panelworks`.
 
@@ -92,7 +94,7 @@ without reinstalling (except when new libraries are added, see *Updating*).
 
 ```
 .venv\Scripts\python -m panelworks --version
-.venv\Scripts\python -m panelworks examples\pumppanel.json --mcp none
+.venv\Scripts\python -m panelworks --example pumppanel --mcp none
 ```
 
 > **Why `python -m panelworks` and not `panelworks.exe`?** pip also writes a

@@ -15,6 +15,11 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 - **solar_battery**: an off-grid Victron system read from a GX device over Modbus TCP (Unit-ID 100
   system registers), a generator on relay 1, and alarms. Its simulator runs a day in 10 minutes.
 
+**Command line**
+- `--example NAME` runs a bundled example from any folder (`--example` alone lists them), and
+  `--simulator NAME` starts its pretend device. They work for a PyPI install too, where `--example`
+  copies the example to the panels folder first, like File > Examples. The docs use them throughout.
+
 **Smaller**
 - Modbus and SNMP `Port` accept `${VAR:-default}`, like Host.
 

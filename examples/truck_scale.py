@@ -91,7 +91,7 @@ def ser1_Disconnected(f):
 def ser1_Error(f, message):
     f.lblLink.Caption = "Scale not connected, waiting for it..."
     if f.ser1.Port.startswith("socket://127.0.0.1") and ("10061" in message or "refused" in message.lower()):
-        message += "  -> demo: start examples\\truck_scale\\scale_sim.py; the panel connects by itself"
+        message += "  -> demo: start python -m panelworks --simulator truck_scale; the panel connects by itself"
     note(f, message)
 
 

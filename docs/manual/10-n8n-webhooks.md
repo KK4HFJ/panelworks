@@ -103,7 +103,7 @@ choose **Workflows → Import from File**, then publish it, and run the matching
 
 ```
 set N8N_WEBHOOK_BASE=https://your-n8n.example.com/webhook/
-python -m panelworks examples\n8n_demo.json
+python -m panelworks --example n8n_demo
 ```
 
 ## Polling: n8n pushes to the panel

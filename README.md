@@ -108,6 +108,17 @@ panelworks examples/pumppanel.json --mcp none    # just the desktop app
 python -m panelworks ...                         # same thing, if the command isn't on PATH
 ```
 
+The examples run by name from any folder, whether you cloned the repo or installed from PyPI:
+
+```
+python -m panelworks --example                           # list them
+python -m panelworks --example power_meter --mcp none    # run one
+python -m panelworks --simulator power_meter             # its pretend device, in another window
+```
+
+From a PyPI install, `--example` copies the example to your panels folder (Documents\PanelWorks)
+the first time and runs that copy, so it can save its files and keep your changes.
+
 ### Hook it to Claude Desktop
 
 Add a server to `claude_desktop_config.json`. Let the app find the file for you,
@@ -420,7 +431,7 @@ after a reconnect.
 ```
 mosquitto                                        # any broker on localhost:1883
 python tests/fake_esp32.py                       # simulated cistern node
-panelworks examples/cistern_mqtt.json
+panelworks --example cistern_mqtt
 mosquitto_sub -t 'panelworks/cistern/#' -v          # watch the form mirror itself
 ```
 
@@ -471,7 +482,7 @@ What it does better than MSComm:
 1. Upload `examples/led_panel/led_panel.ino` to an Uno, Nano or ESP32, then close
    the Arduino IDE's Serial Monitor. Only one program can have the port open.
 2. Run the panel:
-   `.venv\Scripts\python -m panelworks examples\led_panel.json --mcp none`
+   `.venv\Scripts\python -m panelworks --example led_panel --mcp none`
 3. The label shows **Connected on COM…**. **Start** lights the board's LED, and
    **Stop** turns it off. The lamp follows the board's *reply* (`LED ON` / `LED OFF`),
    so it shows what really happened.
@@ -549,7 +560,7 @@ and applies whatever JSON comes back (use a **Respond to Webhook** node):
 
 ```
 set N8N_WEBHOOK_BASE=https://your-n8n/webhook/     (PowerShell: $env:N8N_WEBHOOK_BASE="...")
-panelworks examples/n8n_demo.json
+panelworks --example n8n_demo
 ```
 
 For Claude Desktop, put the variable in the server's `"env"` block:
@@ -653,8 +664,8 @@ alarms for a low battery, low voltage, heavy load and the GX going quiet. Its si
 runs a whole off-grid day in 10 minutes:
 
 ```
-python examples/solar_battery/gx_sim.py
-python -m panelworks examples/solar_battery.json --mcp none
+python -m panelworks --simulator solar_battery
+python -m panelworks --example solar_battery --mcp none
 ```
 
 ![Solar and battery from a Victron GX, with alarms](examples/solar_battery.png)
@@ -690,8 +701,8 @@ labels paired with their values, frames as cards, live charts, the menu as a lis
 Turn it on with **Tools → Phone View** in the designer, or from the command line:
 
 ```
-panelworks examples/truck_scale.json --web 8080 --pin 4821            # full control
-panelworks examples/hvac_console.json --web 8080 --pin 4821 --readonly
+panelworks --example truck_scale --web 8080 --pin 4821            # full control
+panelworks --example hvac_console --web 8080 --pin 4821 --readonly
 ```
 
 Then browse to `http://<pc-address>:8080`. It's PIN-protected, with a lockout after
@@ -727,7 +738,7 @@ Connection details come from environment variables, so nothing secret is in the 
 $env:PW_MQTT_HOST="mqtt.example.com"     # your broker (TLS, port 8883 unless PW_MQTT_PORT is set)
 $env:PW_MQTT_USER="panelworks"
 $env:PW_MQTT_PASS="..."
-panelworks examples/hvac_console.json --mcp none
+panelworks --example hvac_console --mcp none
 ```
 
 Missing JSON fields (for example partial telemetry while a device boots) are

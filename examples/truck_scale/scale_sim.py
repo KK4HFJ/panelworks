@@ -1,6 +1,6 @@
 """A pretend truck-scale indicator, so examples/truck_scale.json runs with no hardware.
 
-    python examples/truck_scale/scale_sim.py          (then start the panel)
+    python -m panelworks --simulator truck_scale          (then start the panel)
 
 It streams the usual continuous output, five lines a second:
     ST,GS,+0012340lb      ST = stable, US = unstable (in motion), OL = overload

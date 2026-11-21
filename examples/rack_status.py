@@ -1,6 +1,6 @@
 # Event procedures for RackStatus: a UPS and PDU over SNMP.
 #
-# Run the pretend UPS/PDU first:   python examples/rack_status/agent_sim.py
+# Run the pretend UPS/PDU first:   python -m panelworks --simulator rack_status
 # For real gear, set UPS_HOST (and UPS_COMMUNITY / UPS_WRITE_COMMUNITY) in the
 # environment, or snmp1's properties, and adjust the Poll OIDs to your devices.
 # The PDU outlet OIDs are APC's (sPDUOutletCtl: 1 = on, 2 = off, 3 = reboot).

@@ -1,6 +1,6 @@
 # Event procedures for SolarBattery: an off-grid Victron system over Modbus TCP.
 #
-# Run the pretend GX first:   python examples/solar_battery/gx_sim.py
+# Run the pretend GX first:   python -m panelworks --simulator solar_battery
 # A simulated day takes 10 minutes, so the sun rises, the battery fills, and overnight
 # loads pull it down until the alarms ask for the generator.
 #
@@ -29,7 +29,7 @@ def gx_Disconnected(f):
 def gx_Error(f, message):
     f.lblLink.Caption = message[:60]
     if "can't connect" in message:
-        print("No GX? Start the pretend one: python examples/solar_battery/gx_sim.py")
+        print("No GX? Start the pretend one: python -m panelworks --simulator solar_battery")
 
 
 def gx_DataArrival(f, values):

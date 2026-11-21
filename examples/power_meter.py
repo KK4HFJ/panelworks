@@ -1,6 +1,6 @@
 # Event procedures for PowerMeter: a Modbus TCP energy meter.
 #
-# Run the pretend meter first:   python examples/power_meter/meter_sim.py
+# Run the pretend meter first:   python -m panelworks --simulator power_meter
 # For a real meter, set mb1's Host (or the METER_HOST environment variable), Port
 # and UnitID, and change the Poll lines to its register map.
 #
@@ -24,7 +24,7 @@ def mb1_Disconnected(f):
 def mb1_Error(f, message):
     f.lblLink.Caption = message[:60]
     if "can't connect" in message:
-        print("No meter? Start the pretend one: python examples/power_meter/meter_sim.py")
+        print("No meter? Start the pretend one: python -m panelworks --simulator power_meter")
 
 
 def mb1_DataArrival(f, values):

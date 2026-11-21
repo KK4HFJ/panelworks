@@ -4,7 +4,19 @@ The `examples` folder has complete panels to run, read, and copy from. The
 easiest way in is the designer's **File → Examples** menu: it opens a copy in
 your panels folder (with its code and any Arduino sketch), so you can change it
 freely and the original stays clean for `git pull`. Or run one directly from
-the command line, as shown under each example.
+the command line, as shown under each example. The commands work from any folder,
+whether you cloned PanelWorks or installed it from PyPI:
+
+```
+python -m panelworks --example                         (list the examples)
+python -m panelworks --example power_meter --mcp none  (run one)
+python -m panelworks --simulator power_meter           (its pretend device, in a second window)
+```
+
+With a PyPI install, `--example` copies the example to your panels folder the first
+time and runs that copy, like File → Examples. Use `python` from your PanelWorks
+environment (`.venv\Scripts\python` or `pw\Scripts\python`) if `python` alone
+finds a different one.
 
 ## Pump panel: plain code, no connections
 
@@ -23,7 +35,7 @@ programming. It shows:
 - a **ListBox** log with the newest entry on top, trimmed to 50 lines.
 
 ```
-python -m panelworks examples\pumppanel.json --mcp none
+python -m panelworks --example pumppanel --mcp none
 ```
 
 With Claude connected (chapter 11), this is the panel to try "press Start" and
@@ -43,7 +55,7 @@ is on, so the whole panel also appears on the broker.
 ```
 mosquitto
 python tests\fake_esp32.py
-python -m panelworks examples\cistern_mqtt.json
+python -m panelworks --example cistern_mqtt
 ```
 
 `tests/fake_esp32.py` pretends to be the cistern node, so no hardware is needed.
@@ -97,7 +109,7 @@ and replies, and the lamp follows the reply. The simplest serial panel, built
 step by step in chapter 9's tutorial.
 
 ```
-python -m panelworks examples\led_panel.json --mcp none
+python -m panelworks --example led_panel --mcp none
 ```
 
 ## Arduino bench: USB serial
@@ -112,7 +124,7 @@ into a label and a progress bar with no code. The LED buttons send commands.
 The link lamp turns red if you unplug the board and green when it's back.
 
 1. Open the sketch in the Arduino IDE, upload it, then **close the Serial Monitor**.
-2. `panelworks examples\arduino_bench.json --mcp none`
+2. `panelworks --example arduino_bench --mcp none`
 
 With nothing wired to A0 and A1 the readings float randomly, which is enough
 to see it working. A TMP36 on A0 and a light-dependent resistor divider on A1
@@ -140,8 +152,8 @@ Without a scale, run the simulator first. It pretends to be an indicator,
 trucks arriving by themselves, and you can type a weight to put one on:
 
 ```
-python examples\truck_scale\scale_sim.py
-python -m panelworks examples\truck_scale.json --mcp none
+python -m panelworks --simulator truck_scale
+python -m panelworks --example truck_scale --mcp none
 ```
 
 **With a real indicator:** set `ser1`'s **Port** to its COM port and **Settings** to
@@ -166,7 +178,7 @@ at the top left is a PictureBox showing a PNG. A Timer simulates the readings, a
 whole panel works in the phone view, taps on the dial included.
 
 ```
-python -m panelworks examples\gauges.json --mcp none
+python -m panelworks --example gauges --mcp none
 ```
 
 ## Power meter: Modbus TCP
@@ -182,8 +194,8 @@ temperature from an input register and a relay coil. Fill puts volts and amps on
 setpoint register, and the CheckBox switches the relay coil. Chapter 17 explains it all.
 
 ```
-python examples\power_meter\meter_sim.py
-python -m panelworks examples\power_meter.json --mcp none
+python -m panelworks --simulator power_meter
+python -m panelworks --example power_meter --mcp none
 ```
 
 ## Rack status: SNMP
@@ -198,9 +210,9 @@ CheckBoxes switch PDU outlets with Set; a list logs traps. Needs `pip install sn
 for the pretend devices:
 
 ```
-python examples\rack_status\agent_sim.py
-python -m panelworks examples\rack_status.json --mcp none
-python examples\rack_status\agent_sim.py --trap
+python -m panelworks --simulator rack_status
+python -m panelworks --example rack_status --mcp none
+python -m panelworks --simulator rack_status --trap
 ```
 
 ## Solar and battery: a Victron GX over Modbus, with alarms
@@ -222,8 +234,8 @@ The pretend GX runs a whole day in 10 minutes: the sun comes up, the battery fil
 overnight loads pull it down until the low-battery alarm asks for the generator.
 
 ```
-python examples\solar_battery\gx_sim.py
-python -m panelworks examples\solar_battery.json --mcp none
+python -m panelworks --simulator solar_battery
+python -m panelworks --example solar_battery --mcp none
 ```
 
 For a real system, turn on **Settings → Services → Modbus TCP** on the GX, then set the

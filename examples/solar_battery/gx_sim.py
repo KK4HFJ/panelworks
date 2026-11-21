@@ -4,7 +4,7 @@ example runs without hardware. It answers the com.victronenergy.system registers
 Unit-ID 100, with an off-grid system behind it: 3.2 kW of PV, a 48 V / 10 kWh battery,
 house loads with a well pump that cycles, and a generator on relay 1.
 
-    python examples/solar_battery/gx_sim.py             # listens on 127.0.0.1:5021
+    python -m panelworks --simulator solar_battery             # listens on 127.0.0.1:5021
 
 A simulated day passes in 10 minutes (it starts at 07:30), so you see the sun come up,
 the battery fill, and the evening loads pull it down. Tick "Generator" on the panel to
