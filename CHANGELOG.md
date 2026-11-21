@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.3.0 (2026-11-21)
 
 **New control**
 - **PictureBox**: show a PNG/GIF (JPEG with Pillow) with AutoSize/Stretch, and draw from code with VB's
@@ -15,6 +15,10 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 **Fixes**
 - Make EXE bundles Pillow's Tk helpers when Pillow is installed (a packaged program could fail to start).
 - `examples/truck_scale.db` is no longer in the repository; databases the examples create are ignored.
+
+**Docs**
+- Manual: PictureBox in chapters 6, 12, 13 and 15; PDF rebuilt.
+- README caught up with 0.2.0: Chart/Data/Grid and phone view sections, current designer screenshots.
 
 ## 0.2.0 (2026-11-20)
 
