@@ -15,6 +15,7 @@ Thread rule (same as VB): only the GUI thread touches controls. Other threads
 """
 
 import importlib.util
+import gc
 import inspect
 import json
 import os
@@ -28,6 +29,50 @@ from collections import deque
 from concurrent.futures import Future
 from tkinter import messagebox, ttk
 import tkinter.font as tkfont
+
+
+# --------------------------------------------------------------------------
+# Tk objects must be deleted on the GUI thread
+# --------------------------------------------------------------------------
+# Python's cycle collector runs on whichever thread happens to trigger it. If that's a
+# background thread (MQTT, Serial, Modbus, SNMP, the phone view) and it frees a Tk font,
+# variable or image, tkinter asks the GUI thread to do the deletion and waits, while the
+# GUI thread waits for the collection to finish: a deadlock. So off the GUI thread these
+# deletions are parked, and the form's event pump does them on the GUI thread.
+_GUI_THREAD = threading.main_thread()
+_parked_tk = []
+_parked_lock = threading.Lock()
+
+
+def _gui_thread_only(cls):
+    original = cls.__del__
+
+    def __del__(self):
+        if threading.current_thread() is _GUI_THREAD:
+            original(self)
+        else:
+            with _parked_lock:
+                _parked_tk.append((original, self))     # keeps it alive until the GUI thread frees it
+    cls.__del__ = __del__
+
+
+for _cls in (tkfont.Font, tk.Variable, tk.Image):
+    if "__del__" in vars(_cls):
+        _gui_thread_only(_cls)
+
+
+def free_parked_tk():
+    """Delete Tk objects other threads let go of. Runs on the GUI thread (the form's pump)."""
+    if not _parked_tk:
+        return
+    with _parked_lock:
+        items = list(_parked_tk)
+        _parked_tk.clear()
+    for original, obj in items:
+        try:
+            original(obj)
+        except Exception:
+            pass
 
 
 # --------------------------------------------------------------------------
@@ -895,7 +940,17 @@ class Form:
                     self.root.after_cancel(aid)
                 except tk.TclError:
                     pass
-        self.root.after(10, self.root.destroy)
+        self.root.after(10, self._destroy_root)
+
+    def _destroy_root(self):
+        try:
+            self.root.destroy()
+        except tk.TclError:
+            pass
+        # Free the form's Tk objects (fonts, variables) here, on the GUI thread. Left to chance,
+        # Python's cycle collector can run on a background thread (SNMP, MQTT, Modbus) and
+        # touching Tk from there can hang or crash.
+        gc.collect()
 
     # ---- objects -------------------------------------------------------------
     def _option_group(self, group):
@@ -1059,6 +1114,7 @@ class Form:
             self._queue.put((fn, args, None))
 
     def _pump(self):
+        free_parked_tk()
         while True:
             try:
                 fn, args, fut = self._queue.get_nowait()
@@ -1105,6 +1161,18 @@ except ImportError:        # paho-mqtt not installed
 
 from . import chart as _chart  # noqa: F401,E402  (Chart control)
 from . import picture as _picture  # noqa: F401,E402  (PictureBox control)
+from . import slider as _slider  # noqa: F401,E402  (Slider control)
+from . import gauge as _gauge  # noqa: F401,E402  (Gauge control)
+
+try:                       # optional: Modbus control (pymodbus)
+    from . import modbus as _modbus  # noqa: F401,E402
+except ImportError:
+    pass
+
+try:                       # optional: SNMP control (pysnmp)
+    from . import snmp as _snmp  # noqa: F401,E402
+except ImportError:
+    pass
 from . import data as _data  # noqa: F401,E402  (Data and Grid controls)
 
 try:                       # optional: Serial control (pyserial)

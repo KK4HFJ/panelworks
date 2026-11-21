@@ -118,12 +118,20 @@ def build(form, name=None, console=False, out_dir=None, log=print):
         shutil.copytree(d, os.path.join(app, os.path.basename(d)), dirs_exist_ok=True)
     launcher = os.path.join(work, f"{name}.py")
     open(launcher, "w", encoding="utf-8").write(LAUNCHER.format(main=os.path.basename(form)))
-    hidden = ["panelworks.chart", "panelworks.picture", "panelworks.data", "panelworks.menus", "panelworks.webview"]
+    hidden = ["panelworks.chart", "panelworks.picture", "panelworks.slider", "panelworks.gauge",
+              "panelworks.polling", "panelworks.data", "panelworks.menus", "panelworks.webview"]
     for opt in ("paho.mqtt.client", "serial", "serial.tools.list_ports",
                 "PIL.Image", "PIL.ImageTk", "PIL._tkinter_finder"):     # Pillow: PictureBox JPEG/scaling
         if importlib.util.find_spec(opt.split(".")[0]) is not None:
             hidden.append(opt)
     hidden += ["panelworks.mqtt", "panelworks.serialport", "panelworks.webhooks"]
+    collect = []
+    if importlib.util.find_spec("pymodbus") is not None:       # Modbus control
+        hidden += ["panelworks.modbus"]
+        collect.append("pymodbus")
+    if importlib.util.find_spec("pysnmp") is not None:         # SNMP control (loads its MIBs from files)
+        hidden += ["panelworks.snmp"]
+        collect += ["pysnmp", "pyasn1"]
     hidden += code_imports(code)
     icon = os.path.join(ASSETS, "panelworks.ico")
     cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--onefile", "--clean",
@@ -139,6 +147,8 @@ def build(form, name=None, console=False, out_dir=None, log=print):
         cmd += ["--icon", icon]
     for h in dict.fromkeys(hidden):
         cmd += ["--hidden-import", h]
+    for pkg in collect:
+        cmd += ["--collect-all", pkg]
     for x in EXCLUDE:
         cmd += ["--exclude-module", x]
     cmd.append(launcher)

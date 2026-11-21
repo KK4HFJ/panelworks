@@ -1,0 +1,31 @@
+{
+  "name": "PowerMeter",
+  "caption": "Power Meter - Modbus TCP",
+  "width": 660,
+  "height": 430,
+  "code": "power_meter.py",
+  "objects": {
+    "lblTitle":  {"type": "Label", "Caption": "Pump house meter", "FontSize": 15, "FontBold": true, "Left": 15, "Top": 10, "Width": 300, "Height": 28},
+    "shpLink":   {"type": "Shape", "FillColor": "gray", "Left": 330, "Top": 14, "Width": 18, "Height": 18},
+    "lblLink":   {"type": "Label", "Caption": "Connecting...", "Left": 354, "Top": 14, "Width": 295, "Height": 20},
+    "gauVolts":  {"type": "Gauge", "Title": "Voltage", "Units": "V", "Min": 200, "Max": 260, "Decimals": 1,
+                  "Zones": ["200 207 red", "207 216 gold", "244 253 gold", "253 260 red"],
+                  "Left": 15, "Top": 50, "Width": 200, "Height": 190},
+    "gauAmps":   {"type": "Gauge", "Title": "Current", "Units": "A", "Min": 0, "Max": 16, "Decimals": 1,
+                  "Zones": ["12 14 gold", "14 16 red"], "Left": 225, "Top": 50, "Width": 200, "Height": 190},
+    "lblName":   {"type": "Label", "Caption": "Meter --", "FontBold": true, "Left": 440, "Top": 55, "Width": 205, "Height": 22},
+    "lblEnergy": {"type": "Label", "Caption": "Energy --", "Left": 440, "Top": 82, "Width": 205, "Height": 22},
+    "lblTemp":   {"type": "Label", "Caption": "Temperature --", "Left": 440, "Top": 106, "Width": 205, "Height": 22},
+    "chkRelay":  {"type": "CheckBox", "Caption": "Relay on (coil 0)", "Left": 440, "Top": 140, "Width": 205, "Height": 24},
+    "lblLoad":   {"type": "Label", "Caption": "Load setpoint --", "Left": 440, "Top": 172, "Width": 205, "Height": 20},
+    "sldLoad":   {"type": "Slider", "Min": 0, "Max": 100, "TickFrequency": 25, "ShowValue": false,
+                  "Left": 436, "Top": 192, "Width": 210, "Height": 45},
+    "chtPower":  {"type": "Chart", "Title": "Power", "Units": "W", "Window": 120, "AutoScale": false,
+                  "YMin": 0, "YMax": 3500, "Left": 15, "Top": 250, "Width": 630, "Height": 165},
+    "mb1":       {"type": "Modbus", "Mode": "TCP", "Host": "${METER_HOST:-127.0.0.1}", "Port": 5020, "UnitID": 1,
+                  "PollInterval": 500,
+                  "Poll": ["volts = hr 0 *0.1", "amps = hr 1 /100", "power = hr 2 f32 cdab", "energy = hr 4 u32",
+                           "setpoint = hr 10", "name = hr 20 str4", "tempC = ir 0 i16 *0.1", "relay = co 0"],
+                  "Fill": ["volts -> gauVolts.Value", "amps -> gauAmps.Value", "power -> chtPower.Value"]}
+  }
+}

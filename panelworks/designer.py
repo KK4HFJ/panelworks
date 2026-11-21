@@ -43,19 +43,21 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "PictureBox", "Chart", "Grid"]
-NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Data"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial"}
-ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
+          "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP"}
+ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
+         "Orientation": ["Horizontal", "Vertical"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
               "WebhookResponse": "data", "WebhookError": "message", "Error": "message",
               "MqttError": "message", "DataArrival": "line", "Logged": "row"}
-EVENT_HELP = {"MouseDown": "is pressed (x, y in its Scale units)",
+EVENT_HELP = {"Scroll": "is being moved (dragged)",
+              "MouseDown": "is pressed (x, y in its Scale units)",
               "MouseUp": "is released", "MouseMove": "is dragged (mouse button held)",
               "Click": "is clicked", "DblClick": "is double-clicked", "Change": "text changes",
               "KeyPress": "gets a key press", "GotFocus": "gets the focus", "LostFocus": "loses the focus",

@@ -26,7 +26,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
-HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Data", "Menu"}
+HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
 
@@ -164,6 +164,45 @@ def picture_svg(form, o):
     return "".join(out)
 
 
+def gauge_svg(form, o):
+    """A Gauge's dial as SVG elements, from the same shapes the desktop draws."""
+    import math
+
+    def col(c):
+        return _hex(form, c) or "#000000"
+
+    def num(v):
+        return f"{v:.1f}".rstrip("0").rstrip(".")
+
+    out = []
+    for p in o.prims():
+        k = p["k"]
+        if k == "arc":
+            (cx, cy), r = p["c"], p["r"]
+            s0, ext = p["start"], p["extent"]
+            def pt(a):
+                return cx + r * math.cos(math.radians(a)), cy - r * math.sin(math.radians(a))
+            (ax, ay), (bx, by) = pt(s0), pt(s0 + ext)
+            out.append(f'<path d="M{num(ax)},{num(ay)} A{num(r)},{num(r)} 0 {1 if ext > 180 else 0},0 {num(bx)},{num(by)}" '
+                       f'fill="none" stroke="{col(p["color"])}" stroke-width="{num(p["w"])}"/>')
+        elif k == "line":
+            (x1, y1), (x2, y2) = p["pts"]
+            out.append(f'<line x1="{num(x1)}" y1="{num(y1)}" x2="{num(x2)}" y2="{num(y2)}" '
+                       f'stroke="{col(p["color"])}" stroke-width="{p["w"]}"/>')
+        elif k == "poly":
+            pts = " ".join(f"{num(x)},{num(y)}" for x, y in p["pts"])
+            out.append(f'<polygon points="{pts}" fill="{col(p["fill"])}" stroke="{col(p["color"])}"/>')
+        elif k == "dot":
+            (cx, cy), r = p["c"], p["r"]
+            out.append(f'<circle cx="{num(cx)}" cy="{num(cy)}" r="{num(r)}" fill="{col(p["color"])}"/>')
+        elif k == "text":
+            x, y = p["at"]
+            out.append(f'<text x="{num(x)}" y="{num(y)}" fill="{col(p["color"])}" font-size="{p["size"]}" '
+                       f'font-weight="{"bold" if p["bold"] else "normal"}" font-family="sans-serif" '
+                       f'text-anchor="middle" dominant-baseline="central">{html.escape(p["text"])}</text>')
+    return "".join(out)
+
+
 def picture_file(form, name, index):
     """(bytes, mime) of a picture a PictureBox is showing. Nothing else can be fetched."""
     o = form.obj(name)
@@ -230,6 +269,12 @@ def snapshot(form):
             d["lines"] = lines
         elif t == "Grid":
             d["columns"] = g("Columns"); d["rows"] = g("Rows")[:40]
+        elif t == "Slider":
+            d["value"] = g("Value"); d["min"] = g("Min"); d["max"] = g("Max"); d["step"] = g("SmallChange")
+            d["vertical"] = g("Orientation") == "Vertical"
+        elif t == "Gauge":
+            d["svg"] = gauge_svg(form, o); d["interactive"] = g("Interactive")
+            d["bg"] = _hex(form, g("BackColor")) or "#ffffff"
         elif t == "PictureBox":
             bg = _hex(form, g("BackColor")) or "#ffffff"
             d["bg"] = "transparent" if bg == _hex(form, form.get_BackColor()) else bg   # blends into the form
@@ -274,7 +319,14 @@ def act(form, req):
     if o.TYPE != "Menu" and (not o.get_Visible() or not o.get_Enabled()):
         raise ValueError(f"{name} is disabled")
     t = o.TYPE
-    if what == "click" and t == "PictureBox":
+    if what == "set" and t == "Slider":
+        o.set("Value", float(req.get("value", 0)))
+    elif what == "click" and t == "Gauge":
+        px, py = (float(v) for v in (req.get("value") or [0, 0])[:2])
+        if o.get("Interactive"):
+            o.turn_to(o.value_at(px, py))
+        form.fire(name, "Click")
+    elif what == "click" and t == "PictureBox":
         px, py = (float(v) for v in (req.get("value") or [0, 0])[:2])
         x, y = o.units(px, py)
         form.fire(name, "Click", x, y)
@@ -497,7 +549,7 @@ ul.list{list-style:none;margin:0;padding:0;border:1px solid #ddd;border-radius:8
 ul.list li{padding:10px;border-bottom:1px solid #eee}ul.list li.sel{background:#dbe8fb}
 .grid{overflow:auto;max-height:320px}table{border-collapse:collapse;font-size:13px;width:100%}
 th,td{border-bottom:1px solid #e3e3e3;padding:6px;text-align:left;white-space:nowrap}th{background:#f2f5f9;position:sticky;top:0}
-svg{width:100%;height:auto;display:block}.pic svg{margin:0 auto}.ctitle{font-size:13px;font-weight:600;color:#444;display:flex;justify-content:space-between}
+svg{width:100%;height:auto;display:block}.pic svg{margin:0 auto}.sld{display:flex;align-items:center;gap:10px}.sld input{flex:1;height:34px}.sv{min-width:3em;text-align:right;font-weight:600}.ctitle{font-size:13px;font-weight:600;color:#444;display:flex;justify-content:space-between}
 #menu{position:fixed;inset:0;background:#0006;display:none;z-index:9}#menu>div{position:absolute;right:8px;top:52px;
 background:#fff;border-radius:10px;min-width:220px;box-shadow:0 4px 18px #0004;overflow:hidden}
 #menu button{display:block;width:100%;text-align:left;font-size:16px;padding:13px 16px;border:0;background:#fff;border-bottom:1px solid #eee}
@@ -552,6 +604,11 @@ function render(it){
   case'ListBox':return `<ul class="list">${it.list.map((v,i)=>`<li class="${i==it.index?'sel':''}" onclick="act('${it.name}','set',${i})">${esc(v)}</li>`).join('')}</ul>`;
   case'ProgressBar':return `<div class="bar" style="flex:1 1 100%"><div style="width:${Math.max(0,Math.min(100,it.value/it.max*100))}%"></div></div>`;
   case'Chart':return chart(it);
+  case'Slider':return `<div class="sld" style="flex:1 1 100%"><input type="range" min="${it.min}" max="${it.max}" step="${it.step}" value="${it.value}"${dis}
+    onpointerdown="editing='${it.name}'" oninput="editing='${it.name}';this.nextElementSibling.textContent=this.value"
+    onchange="editing=null;act('${it.name}','set',this.value)"><span class="sv">${it.value}</span></div>`;
+  case'Gauge':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${Math.max(it.w,240)}px;background:${it.bg};border-radius:8px${it.interactive&&it.enabled?';cursor:pointer':''}"
+    onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
   case'PictureBox':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${it.w}px;background:${it.bg};${it.border?'border:1px solid #999;':''}"
     onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
   case'Grid':return `<div class="grid" style="flex:1 1 100%"><table><tr>${it.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${it.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
@@ -561,7 +618,7 @@ function rowHtml(r){const pair=r.length==2&&r[0].type=='Label'&&FIELDS.includes(
   return `<div class="row${pair?' pair':''}">${r.map(render).join('')}</div>`}
 function blocks(items){ // a label right above a control is its caption: keep them together
   const used=new Set(),out=[];
-  const CAPTIONED=['ListBox','Grid','Chart','PictureBox','TextBox','ComboBox','ProgressBar'];
+  const CAPTIONED=['ListBox','Grid','Chart','PictureBox','Gauge','Slider','TextBox','ComboBox','ProgressBar'];
   const sameRow=lb=>items.some(c=>c!==lb&&c.type!='Label'&&Math.abs((c.y+c.h/2)-(lb.y+lb.h/2))<Math.max(12,lb.h/2));
   for(const lb of items.filter(i=>i.type=='Label'&&!sameRow(i))){
     const below=items.find(c=>!used.has(c.name)&&CAPTIONED.includes(c.type)&&Math.abs(c.x-lb.x)<16&&c.y>=lb.y+lb.h-4&&c.y-(lb.y+lb.h)<14&&c.w>lb.w*0.6);

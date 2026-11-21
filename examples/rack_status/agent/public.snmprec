@@ -1,0 +1,31 @@
+1.3.6.1.2.1.1.1.0|4|PanelWorks pretend UPS + PDU (snmpsim)
+1.3.6.1.2.1.1.2.0|6|1.3.6.1.4.1.318.1.3.27
+1.3.6.1.2.1.1.3.0|67:numeric|rate=100,scale=0,initial=1234500,cumulative=1,offset=1
+1.3.6.1.2.1.1.4.0|4|steve@kk4hfj.com
+1.3.6.1.2.1.1.5.0|4|rack-ups-1
+1.3.6.1.2.1.1.6.0|4|Shop rack, top shelf
+1.3.6.1.2.1.2.1.0|2|3
+1.3.6.1.2.1.2.2.1.2.1|4|eth0 uplink
+1.3.6.1.2.1.2.2.1.2.2|4|eth1 cameras
+1.3.6.1.2.1.2.2.1.2.3|4|eth2 workshop
+1.3.6.1.2.1.2.2.1.7.1|2|1
+1.3.6.1.2.1.2.2.1.7.2|2|1
+1.3.6.1.2.1.2.2.1.7.3|2:writecache|value=1
+1.3.6.1.2.1.2.2.1.8.1|2|1
+1.3.6.1.2.1.2.2.1.8.2|2|1
+1.3.6.1.2.1.2.2.1.8.3|2|2
+1.3.6.1.2.1.2.2.1.10.1|65:numeric|rate=1,scale=0,offset=125000,cumulative=1,initial=900000000,wrap=1
+1.3.6.1.2.1.2.2.1.16.1|65:numeric|rate=1,scale=0,offset=40000,cumulative=1,initial=300000000,wrap=1
+1.3.6.1.2.1.33.1.2.1.0|2|2
+1.3.6.1.2.1.33.1.2.2.0|2|0
+1.3.6.1.2.1.33.1.2.3.0|2:numeric|function=sin,rate=0.15,scale=8,initial=50,min=0,max=120
+1.3.6.1.2.1.33.1.2.4.0|2|100
+1.3.6.1.2.1.33.1.2.5.0|2:numeric|function=sin,rate=0.1,scale=3,initial=545,min=500,max=600
+1.3.6.1.2.1.33.1.2.7.0|2:numeric|function=sin,rate=0.05,scale=3,initial=27,min=0,max=60
+1.3.6.1.2.1.33.1.3.3.1.3.1|2:numeric|function=sin,rate=0.2,scale=3,initial=230,min=200,max=260
+1.3.6.1.2.1.33.1.4.1.0|2|3
+1.3.6.1.2.1.33.1.4.4.1.5.1|2:numeric|function=sin,rate=0.12,scale=9,initial=38,min=0,max=100
+1.3.6.1.4.1.318.1.1.4.4.2.1.3.1|2:writecache|value=1
+1.3.6.1.4.1.318.1.1.4.4.2.1.3.2|2:writecache|value=1
+1.3.6.1.4.1.318.1.1.4.4.2.1.3.3|2:writecache|value=1
+1.3.6.1.4.1.318.1.1.4.4.2.1.3.4|2:writecache|value=2
