@@ -43,11 +43,11 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Chart", "Grid"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "PictureBox", "Chart", "Grid"]
 NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Data"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
-          "ProgressBar": "Progress", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
+          "ProgressBar": "Progress", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
           "Serial": "Serial"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
@@ -55,7 +55,9 @@ HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
               "WebhookResponse": "data", "WebhookError": "message", "Error": "message",
               "MqttError": "message", "DataArrival": "line", "Logged": "row"}
-EVENT_HELP = {"Click": "is clicked", "DblClick": "is double-clicked", "Change": "text changes",
+EVENT_HELP = {"MouseDown": "is pressed (x, y in its Scale units)",
+              "MouseUp": "is released", "MouseMove": "is dragged (mouse button held)",
+              "Click": "is clicked", "DblClick": "is double-clicked", "Change": "text changes",
               "KeyPress": "gets a key press", "GotFocus": "gets the focus", "LostFocus": "loses the focus",
               "Timer": "interval elapses", "Load": "opens", "Unload": "closes",
               "MessageArrived": "receives an MQTT message", "Connected": "connects",
@@ -1686,10 +1688,34 @@ class Designer:
             w.bind("<Return>", lambda e: self._apply_editor())
             if prop.endswith("Color"):
                 tk.Button(row, text="Pick...", command=lambda: self._pick_color(w)).pack(side="left", padx=2)
+            elif prop == "Picture":
+                tk.Button(row, text="Browse...", command=lambda: self._pick_picture(w)).pack(side="left", padx=2)
             w.focus_set()
             w.select_range(0, "end")
         self._editor_widget = w
         self.ed_apply.configure(state="normal")
+
+    def event_args(self, name, ev):
+        """The arguments an event handler receives after f, e.g. "x, y" for a PictureBox Click."""
+        o = self.host.objects.get(name) if hasattr(self, "host") else None
+        own = getattr(type(o), "EVENT_ARGS", None) if o is not None else None
+        if own and ev in own:
+            return own[ev]
+        return EVENT_ARGS.get(ev)
+
+    def _pick_picture(self, entry):
+        start = os.path.dirname(os.path.abspath(self.path)) if self.path else self._start_dir()
+        p = filedialog.askopenfilename(parent=self.root, title="Picture", initialdir=start,
+                                       filetypes=[("Pictures", "*.png *.gif *.jpg *.jpeg"), ("All files", "*.*")])
+        if not p:
+            return
+        if self.path:                                    # keep it relative, so the panel can move
+            rel = os.path.relpath(p, os.path.dirname(os.path.abspath(self.path)))
+            if not rel.startswith(".."):
+                p = rel.replace(os.sep, "/")
+        entry.delete(0, "end")
+        entry.insert(0, p)
+        self._apply_editor()
 
     def _pick_color(self, entry):
         c = colorchooser.askcolor(color=entry.get() or None, parent=self.root)
@@ -1983,7 +2009,8 @@ class Designer:
         func = f"{n}_{ev}"
         m = re.search(rf"^def\s+{re.escape(func)}\s*\(", text, re.M)
         if not m:
-            args = "f" + (", " + EVENT_ARGS[ev] if ev in EVENT_ARGS else "")
+            extra = self.event_args(n, ev)
+            args = "f" + (", " + extra if extra else "")
             what = "the form" if n == "Form" else n
             stub = (f"\n\ndef {func}({args}):\n"
                     f"    # runs when {what} {EVENT_HELP.get(ev, ev)}\n"

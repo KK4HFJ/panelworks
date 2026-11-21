@@ -274,7 +274,8 @@ class CodeWindow:
         from .designer import EVENT_ARGS, EVENT_HELP
         func = f"{obj}_{event}"
         if func not in self._defs():
-            args = "f" + (", " + EVENT_ARGS[event] if event in EVENT_ARGS else "")
+            extra = self.d.event_args(obj, event) if hasattr(self.d, "event_args") else EVENT_ARGS.get(event)
+            args = "f" + (", " + extra if extra else "")
             what = "the form" if obj == "Form" else obj
             stub = (f"\n\ndef {func}({args}):\n"
                     f"    # runs when {what} {EVENT_HELP.get(event, event)}\n"

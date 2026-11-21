@@ -421,6 +421,66 @@ A horizontal bar showing a value from 0 to Max. Good for tank levels and progres
 | Refresh | Redraw now, inside a long-running procedure. |
 | SetFocus | Move the keyboard focus to this control. |
 
+## PictureBox
+
+A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) with Picture, and draw lines, circles, arcs, shapes and text on it from code: gauges, dials, tank and pipe diagrams, anything the stock controls don't cover. Drawings are run-time output, never saved in the form; Cls clears them.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AutoSize | read/write | True: the box resizes to fit its Picture. |
+| BackColor | read/write | Background colour. Default white. |
+| BorderStyle | read/write | 1: a thin border (default). 0: none. |
+| CurrentX | run time | Where the next Print or LineTo starts, in your units. Set by every drawing method. |
+| CurrentY | run time | Where the next Print or LineTo starts, in your units. Print moves it down a line. |
+| DrawCount | read-only | How many drawings the box holds. Read-only. |
+| DrawWidth | read/write | Line thickness in pixels, and the size of a PSet point. Default 1. |
+| Enabled | read/write | False greys it out and ignores the mouse and keyboard. |
+| FillColor | read/write | Default fill for boxes, circles and polygons. Empty (the default): not filled. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Default colour for Line, Circle, PSet, Polygon and Print when you don't give one. |
+| Height | read/write | Height in pixels. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Picture | read/write | Picture file shown behind the drawing, relative to the form's folder (`gauges/logo.png`). PNG and GIF always work; JPEG needs Pillow (`pip install pillow`). |
+| ScaleHeight | read/write | Your units down the box. 0: pixels. Negative makes y point up (ScaleTop 100, ScaleHeight -200: y from 100 at the top to -100 at the bottom), handy for gauges and graphs. |
+| ScaleLeft | read/write | x at the left edge, when ScaleWidth is set. |
+| ScaleTop | read/write | y at the top edge, when ScaleHeight is set. |
+| ScaleWidth | read/write | Your units across the box. 0 (the default): pixels. Example: ScaleLeft -100, ScaleWidth 200 puts x = 0 in the middle. |
+| Stretch | read/write | True: the Picture is scaled to fill the box (smoothly with Pillow, roughly without). |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Circle | `Circle(x, y, radius, color=None, start=None, end=None, fill=None, aspect=1.0, width=None)`: a circle. `start`/`end` in degrees (0 = 3 o'clock, counter-clockwise) draw an arc, or a pie slice when filled; `aspect` below 1 squashes it into an ellipse. The radius is in x units. |
+| Cls | `Cls()`: clear the drawings (the Picture stays) and move CurrentX/CurrentY to the top-left. |
+| Line | `Line(x1, y1, x2, y2, color=None, box=False, fill=None, width=None)`: a line; `box=True` draws a rectangle, and `fill` a colour (or True for the line colour) fills it, like VB's `B` and `BF`. |
+| LineTo | `LineTo(x, y, color=None)`: a line from CurrentX, CurrentY (VB's `Line -(x, y)`). Good for plotting. |
+| PSet | `PSet(x, y, color=None)`: one point, DrawWidth pixels across. |
+| PaintPicture | `PaintPicture(path, x=0, y=0, width=None, height=None)`: draw a picture file at (x, y), optionally scaled to width x height in your units. |
+| Polygon | `Polygon(points, color=None, fill=None, width=None)`: a closed shape through `[(x, y), ...]`: a needle, an arrow, a tank. |
+| Print | `Print(text, x=None, y=None, color=None, anchor="nw")`: text at (x, y), or at CurrentX/CurrentY, which then moves down a line. `anchor` says which part of the text sits at (x, y): `nw` (top-left), `center`, `n`, `e`, `s`, `w`, `ne`, `se`, `sw`. Uses the box's font. |
+| Refresh | Redraw everything. |
+| Scale | `Scale(x1, y1, x2, y2)`: set ScaleLeft/Top/Width/Height in one go, from the top-left and bottom-right corners. `Scale()` goes back to pixels. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f, x, y)` | The box is clicked; x and y are where, in its Scale units. Also from a tap in the phone view. |
+| `Name_DblClick(f, x, y)` | The box is double-clicked, at x, y. |
+| `Name_MouseDown(f, x, y)` | The mouse button goes down over the box, at x, y. |
+| `Name_MouseUp(f, x, y)` | The mouse button comes up, at x, y. |
+| `Name_MouseMove(f, x, y)` | The mouse moves with the button held (a drag), at x, y. Use it for knobs and sliders you draw yourself. |
+
 ## Chart
 
 A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) adds a timestamped point, so a Chart can follow an MQTT topic or a Serial Fill with no code.

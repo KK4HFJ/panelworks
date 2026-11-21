@@ -173,6 +173,82 @@ to an MQTT topic, or point a Serial **Fill** line at it.
 
 ![Charts](img/chart.png)
 
+## Pictures and drawing (PictureBox)
+
+A **PictureBox** shows a picture and is a surface you draw on from code, as in VB.
+Use it for anything the stock controls don't cover: a round gauge, a compass rose,
+a schematic of tanks and pipes, a logo.
+
+**A picture:** set **Picture** to a file beside the form, such as `img/plant.png`. The
+designer's Browse button keeps the path relative, so the panel can move. PNG and GIF
+always work; JPEG needs Pillow (`pip install pillow`). **AutoSize** fits the box to the
+picture, **Stretch** scales the picture to the box, and BorderStyle 0 removes the border.
+
+**Drawing:**
+
+```python
+def tmrPoll_Timer(f):
+    p = f.picTank
+    p.Cls()                                               # start over
+    p.Line(10, 10, 60, 110, "gray30", box=True, width=2)  # the tank (a box)
+    p.Line(10, 110 - level, 60, 110, box=True, fill="#3b82f6")   # the water, filled
+    p.Circle(100, 40, 20, "red", fill=True)               # a lamp
+    p.Circle(100, 40, 30, "gray", start=0, end=180)       # an arc, in degrees
+    p.Polygon([(90, 80), (110, 80), (100, 60)], "black", fill="yellow")
+    p.PSet(5, 5, "green")                                 # one point
+    p.Print(f"{level} %", 35, 120, anchor="n")            # text under (35, 120)
+```
+
+Colours are names or `#rrggbb`. Leave the colour out and **ForeColor** is used;
+**FillColor** and **DrawWidth** give the defaults for fills and line thickness. Drawings
+are kept and redrawn when the box is resized. They're live output and are never saved in
+the form; **Cls** clears them, and the Picture stays.
+
+**Your own units.** Positions are pixels from the top-left until you set a scale.
+`f.picGauge.Scale(-100, 100, 100, -100)` makes the box run from -100 to 100 both ways
+with y pointing **up**, so (0, 0) is the centre. A dial can then use plain trigonometry:
+
+```python
+import math
+
+def needle(f, value):                    # 0..100 across a 270-degree dial
+    a = math.radians(225 - 2.7 * value)
+    p = f.picGauge
+    p.Cls()
+    p.Circle(0, 0, 90, "gray75", start=-45, end=225, width=8)
+    p.Line(0, 0, 80 * math.cos(a), 80 * math.sin(a), "red", width=3)
+    p.Print(f"{value:.0f}", 0, -40, anchor="center")
+```
+
+The same settings are the **ScaleLeft/ScaleTop/ScaleWidth/ScaleHeight** properties, so
+you can set them in the designer instead. Circle angles are degrees, 0 at 3 o'clock,
+counter-clockwise, which matches sin/cos when y points up.
+
+**Mouse.** Click, DblClick, MouseDown, MouseUp and MouseMove all receive `x, y` in the
+box's own units, so you can draw knobs and sliders. MouseMove fires while the button is
+held, i.e. during a drag:
+
+```python
+def picGauge_MouseMove(f, x, y):
+    f.lblAngle.Caption = f"{math.degrees(math.atan2(y, x)):.0f} degrees"
+```
+
+**Text:** `Print(text, x, y)` writes at (x, y), or at **CurrentX**/**CurrentY** when you
+leave them out. Each Print moves CurrentY down a line, so a run of Prints makes a list.
+`anchor` says which part of the text sits at (x, y): `nw` (top-left, the default), `center`,
+`n`, `s`, `e`, `w`, `ne`, `se` or `sw`. The box's FontName/FontSize/FontBold are used; change
+them between Prints for big and small text.
+
+**More pictures:** `PaintPicture("img/valve.png", x, y, width, height)` draws a picture
+file anywhere in the box, so a schematic can show valve icons on top of a background.
+
+The PictureBox works in the phone view too, where a tap fires Click with x, y.
+**Make EXE** packages the Picture files named in your forms. Put pictures your code
+draws with PaintPicture in the folder named after the form (`gauges/` for
+`gauges.json`), which is packaged whole. `examples/gauges.*` has all of this working.
+
+![PictureBox gauges](img/picturebox.png)
+
 ## Timers
 
 A Timer fires its `Timer` event every `Interval` milliseconds while `Enabled`

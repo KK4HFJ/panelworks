@@ -117,6 +117,39 @@ DOC = {
         "Max": "The value that fills the bar. Default 100.",
         "Enabled": "Always True.",
     },
+    "PictureBox": {
+        "_": "A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) with Picture, and draw lines, circles, arcs, shapes and text on it from code: gauges, dials, tank and pipe diagrams, anything the stock controls don't cover. Drawings are run-time output, never saved in the form; Cls clears them.",
+        "Picture": "Picture file shown behind the drawing, relative to the form's folder (`gauges/logo.png`). PNG and GIF always work; JPEG needs Pillow (`pip install pillow`).",
+        "AutoSize": "True: the box resizes to fit its Picture.",
+        "Stretch": "True: the Picture is scaled to fill the box (smoothly with Pillow, roughly without).",
+        "BackColor": "Background colour. Default white.",
+        "ForeColor": "Default colour for Line, Circle, PSet, Polygon and Print when you don't give one.",
+        "FillColor": "Default fill for boxes, circles and polygons. Empty (the default): not filled.",
+        "DrawWidth": "Line thickness in pixels, and the size of a PSet point. Default 1.",
+        "BorderStyle": "1: a thin border (default). 0: none.",
+        "ScaleLeft": "x at the left edge, when ScaleWidth is set.",
+        "ScaleTop": "y at the top edge, when ScaleHeight is set.",
+        "ScaleWidth": "Your units across the box. 0 (the default): pixels. Example: ScaleLeft -100, ScaleWidth 200 puts x = 0 in the middle.",
+        "ScaleHeight": "Your units down the box. 0: pixels. Negative makes y point up (ScaleTop 100, ScaleHeight -200: y from 100 at the top to -100 at the bottom), handy for gauges and graphs.",
+        "CurrentX": "Where the next Print or LineTo starts, in your units. Set by every drawing method.",
+        "CurrentY": "Where the next Print or LineTo starts, in your units. Print moves it down a line.",
+        "DrawCount": "How many drawings the box holds. Read-only.",
+        "Cls": "`Cls()`: clear the drawings (the Picture stays) and move CurrentX/CurrentY to the top-left.",
+        "Line": "`Line(x1, y1, x2, y2, color=None, box=False, fill=None, width=None)`: a line; `box=True` draws a rectangle, and `fill` a colour (or True for the line colour) fills it, like VB's `B` and `BF`.",
+        "LineTo": "`LineTo(x, y, color=None)`: a line from CurrentX, CurrentY (VB's `Line -(x, y)`). Good for plotting.",
+        "Circle": "`Circle(x, y, radius, color=None, start=None, end=None, fill=None, aspect=1.0, width=None)`: a circle. `start`/`end` in degrees (0 = 3 o'clock, counter-clockwise) draw an arc, or a pie slice when filled; `aspect` below 1 squashes it into an ellipse. The radius is in x units.",
+        "PSet": "`PSet(x, y, color=None)`: one point, DrawWidth pixels across.",
+        "Polygon": "`Polygon(points, color=None, fill=None, width=None)`: a closed shape through `[(x, y), ...]`: a needle, an arrow, a tank.",
+        "Print": "`Print(text, x=None, y=None, color=None, anchor=\"nw\")`: text at (x, y), or at CurrentX/CurrentY, which then moves down a line. `anchor` says which part of the text sits at (x, y): `nw` (top-left), `center`, `n`, `e`, `s`, `w`, `ne`, `se`, `sw`. Uses the box's font.",
+        "PaintPicture": "`PaintPicture(path, x=0, y=0, width=None, height=None)`: draw a picture file at (x, y), optionally scaled to width x height in your units.",
+        "Scale": "`Scale(x1, y1, x2, y2)`: set ScaleLeft/Top/Width/Height in one go, from the top-left and bottom-right corners. `Scale()` goes back to pixels.",
+        "Refresh": "Redraw everything.",
+        "Click!": "The box is clicked; x and y are where, in its Scale units. Also from a tap in the phone view.",
+        "DblClick!": "The box is double-clicked, at x, y.",
+        "MouseDown!": "The mouse button goes down over the box, at x, y.",
+        "MouseUp!": "The mouse button comes up, at x, y.",
+        "MouseMove!": "The mouse moves with the button held (a drag), at x, y. Use it for knobs and sliders you draw yourself.",
+    },
     "Chart": {
         "_": "A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) adds a timestamped point, so a Chart can follow an MQTT topic or a Serial Fill with no code.",
         "Value": "Set it to add a point to the first line (run time). Reads back the latest value.",
@@ -259,7 +292,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Frame", "Shape", "ProgressBar", "Chart", "Grid", "Timer", "MQTT", "Serial", "Data"]
+         "Frame", "Shape", "ProgressBar", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial", "Data"]
 
 missing = []
 
@@ -291,7 +324,9 @@ def section(t, cls_props, methods, events, settable, runtime_only=()):
     if events:
         out.append("\n**Events**\n\n| Event procedure | Fires when |\n|---|---|")
         for e in events:
-            out.append(f"| `{'Form' if t == 'Form' else 'Name'}_{e}({ARGS.get(e, 'f')})` | {desc(t, e, 'event')} |")
+            own = getattr(CONTROL_TYPES.get(t), "EVENT_ARGS", None) or {}
+            args = "f, " + own[e] if e in own else ARGS.get(e, "f")
+            out.append(f"| `{'Form' if t == 'Form' else 'Name'}_{e}({args})` | {desc(t, e, 'event')} |")
     out.append("")
     return "\n".join(out)
 

@@ -59,6 +59,11 @@ def program_files(form):
             if not isinstance(spec, dict) or "objects" not in spec:
                 continue                                # not a form
             files.append(p)
+            for o in (spec.get("objects") or {}).values():   # PictureBox pictures beside the form
+                pic = isinstance(o, dict) and o.get("type") == "PictureBox" and o.get("Picture")
+                if pic and not os.path.isabs(pic) and not os.path.normpath(pic).startswith("..") \
+                        and os.path.isfile(os.path.join(base, pic)):
+                    files.append(os.path.join(base, pic))
             if spec.get("code"):
                 cp = os.path.join(base, spec["code"])
                 if os.path.isfile(cp):
@@ -105,13 +110,17 @@ def build(form, name=None, console=False, out_dir=None, log=print):
     app = os.path.join(work, "app")
     os.makedirs(app)
     for p in files:
-        shutil.copy2(p, app)
+        dest = os.path.join(app, os.path.relpath(p, base))   # pictures keep their sub-folder
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        if not os.path.exists(dest):
+            shutil.copy2(p, dest)
     for d in folders:
-        shutil.copytree(d, os.path.join(app, os.path.basename(d)))
+        shutil.copytree(d, os.path.join(app, os.path.basename(d)), dirs_exist_ok=True)
     launcher = os.path.join(work, f"{name}.py")
     open(launcher, "w", encoding="utf-8").write(LAUNCHER.format(main=os.path.basename(form)))
-    hidden = ["panelworks.chart", "panelworks.data", "panelworks.menus", "panelworks.webview"]
-    for opt in ("paho.mqtt.client", "serial", "serial.tools.list_ports"):
+    hidden = ["panelworks.chart", "panelworks.picture", "panelworks.data", "panelworks.menus", "panelworks.webview"]
+    for opt in ("paho.mqtt.client", "serial", "serial.tools.list_ports",
+                "PIL.Image", "PIL.ImageTk", "PIL._tkinter_finder"):     # Pillow: PictureBox JPEG/scaling
         if importlib.util.find_spec(opt.split(".")[0]) is not None:
             hidden.append(opt)
     hidden += ["panelworks.mqtt", "panelworks.serialport", "panelworks.webhooks"]

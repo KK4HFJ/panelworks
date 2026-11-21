@@ -2,6 +2,20 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**New control**
+- **PictureBox**: show a PNG/GIF (JPEG with Pillow) with AutoSize/Stretch, and draw from code with VB's
+  `Line` (with `box`/`fill`), `Circle` (arcs and pie slices in degrees), `PSet`, `Print`, `Cls`, plus
+  `Polygon`, `LineTo` and `PaintPicture`. `Scale`/ScaleLeft/Top/Width/Height give it your own units
+  (negative ScaleHeight = y up). Click, DblClick, MouseDown, MouseUp and MouseMove report x, y in those units.
+  Drawings redraw on resize, show in the phone view (taps fire Click with x, y), and Make EXE packages
+  the pictures. New example: `examples/gauges.*`.
+
+**Fixes**
+- Make EXE bundles Pillow's Tk helpers when Pillow is installed (a packaged program could fail to start).
+- `examples/truck_scale.db` is no longer in the repository; databases the examples create are ignored.
+
 ## 0.2.0 (2026-11-20)
 
 **New controls**

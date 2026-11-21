@@ -62,6 +62,122 @@ def _hex(form, colour):
         return None
 
 
+MAX_SVG_ITEMS = 4000
+_IMG_TYPES = {".png": "image/png", ".gif": "image/gif", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+
+
+def picture_svg(form, o):
+    """A PictureBox's picture and drawings as SVG elements, in its pixel space."""
+    from urllib.parse import quote
+    paths = o.image_paths()
+
+    def href(path):
+        full = o._resolve(path)
+        if full not in paths:
+            return None
+        return f"/pic/{quote(o.Name)}/{paths.index(full)}?v={int(os.path.getmtime(full))}"
+
+    def col(c):
+        return (_hex(form, c) or "#000000") if c else "none"
+
+    def num(v):
+        return f"{v:.1f}".rstrip("0").rstrip(".")
+
+    out = []
+    w, h = o._size()
+    if o._picture:
+        u = href(o._picture)
+        if u:
+            try:
+                ph = o._image(o._picture)
+                iw, ih = (w, h) if o._stretch else (ph.width(), ph.height())
+                out.append(f'<image href="{u}" x="0" y="0" width="{iw}" height="{ih}" preserveAspectRatio="none"/>')
+            except Exception:
+                pass
+    for it in o._items[-MAX_SVG_ITEMS:]:
+        p = o.prims(it)
+        k = p["k"]
+        if k == "line":
+            pts = " ".join(f"{num(x)},{num(y)}" for x, y in p["pts"])
+            out.append(f'<polyline points="{pts}" fill="none" stroke="{col(p["color"])}" '
+                       f'stroke-width="{p["w"]}" stroke-linecap="round"/>')
+        elif k == "rect":
+            x1, y1, x2, y2 = p["box"]
+            out.append(f'<rect x="{num(x1)}" y="{num(y1)}" width="{num(x2 - x1)}" height="{num(y2 - y1)}" '
+                       f'fill="{col(p["fill"])}" stroke="{col(p["color"])}" stroke-width="{p["w"]}"/>')
+        elif k == "oval":
+            (cx, cy), (rx, ry) = p["c"], p["r"]
+            style = f'fill="{col(p["fill"])}" stroke="{col(p["color"])}" stroke-width="{p["w"]}"'
+            if not p["arc"] or p["arc"][1] >= 360:
+                out.append(f'<ellipse cx="{num(cx)}" cy="{num(cy)}" rx="{num(rx)}" ry="{num(ry)}" {style}/>')
+            else:
+                import math
+                s0, ext = p["arc"]
+                def pt(a):
+                    return cx + rx * math.cos(math.radians(a)), cy - ry * math.sin(math.radians(a))
+                (ax, ay), (bx, by) = pt(s0), pt(s0 + ext)
+                arc = f'A{num(rx)},{num(ry)} 0 {1 if ext > 180 else 0},0 {num(bx)},{num(by)}'
+                if p["fill"]:
+                    d = f'M{num(cx)},{num(cy)} L{num(ax)},{num(ay)} {arc} Z'
+                else:
+                    d = f'M{num(ax)},{num(ay)} {arc}'
+                    style = f'fill="none" stroke="{col(p["color"])}" stroke-width="{p["w"]}"'
+                out.append(f'<path d="{d}" {style}/>')
+        elif k == "dot":
+            (cx, cy), r = p["c"], p["r"]
+            out.append(f'<circle cx="{num(cx)}" cy="{num(cy)}" r="{num(r)}" fill="{col(p["color"])}"/>')
+        elif k == "poly":
+            pts = " ".join(f"{num(x)},{num(y)}" for x, y in p["pts"])
+            tag = "polygon" if len(p["pts"]) > 2 else "polyline"
+            out.append(f'<{tag} points="{pts}" fill="{col(p["fill"]) if tag == "polygon" else "none"}" '
+                       f'stroke="{col(p["color"])}" stroke-width="{p["w"]}"/>')
+        elif k == "text":
+            x, y = p["at"]
+            fam, size, weight = p["font"]
+            a = p["anchor"]
+            ta = "start" if a.endswith("w") else "end" if a.endswith("e") else "middle"
+            base = "hanging" if a.startswith("n") else "text-after-edge" if a.startswith("s") else "central"
+            lines = p["text"].split("\n")
+            px_size = round(abs(size) * 4 / 3, 1)
+            if len(lines) > 1 and base == "central":
+                y -= (len(lines) - 1) * px_size * 0.6
+            elif len(lines) > 1 and base == "text-after-edge":
+                y -= (len(lines) - 1) * px_size * 1.2
+            spans = "".join(f'<tspan x="{num(x)}" dy="{0 if i == 0 else "1.2em"}">{html.escape(t)}</tspan>'
+                            for i, t in enumerate(lines))
+            out.append(f'<text x="{num(x)}" y="{num(y)}" fill="{col(p["color"])}" font-size="{px_size}" '
+                       f'font-weight="{weight}" font-family="sans-serif" text-anchor="{ta}" '
+                       f'dominant-baseline="{base}">{spans}</text>')
+        elif k == "img":
+            u = href(p["path"])
+            if u:
+                pw, phh = p["size"]
+                if pw is None:
+                    try:
+                        im = o._image(p["path"])
+                        pw, phh = im.width(), im.height()
+                    except Exception:
+                        continue
+                x, y = p["at"]
+                out.append(f'<image href="{u}" x="{num(x)}" y="{num(y)}" width="{num(pw)}" height="{num(phh)}" '
+                           f'preserveAspectRatio="none"/>')
+    return "".join(out)
+
+
+def picture_file(form, name, index):
+    """(bytes, mime) of a picture a PictureBox is showing. Nothing else can be fetched."""
+    o = form.obj(name)
+    if o.TYPE != "PictureBox":
+        raise ValueError("not a PictureBox")
+    paths = o.image_paths()
+    path = paths[int(index)]
+    mime = _IMG_TYPES.get(os.path.splitext(path)[1].lower())
+    if not mime:
+        raise ValueError("not a picture")
+    with open(path, "rb") as fh:
+        return fh.read(), mime
+
+
 def snapshot(form):
     """The visible panel, in reading order, as plain data. Runs on the GUI thread."""
     from .runtime import Frame
@@ -114,6 +230,11 @@ def snapshot(form):
             d["lines"] = lines
         elif t == "Grid":
             d["columns"] = g("Columns"); d["rows"] = g("Rows")[:40]
+        elif t == "PictureBox":
+            bg = _hex(form, g("BackColor")) or "#ffffff"
+            d["bg"] = "transparent" if bg == _hex(form, form.get_BackColor()) else bg   # blends into the form
+            d["border"] = g("BorderStyle")
+            d["svg"] = picture_svg(form, o)
         if t == "CommandButton":
             d["bg"] = _hex(form, g("BackColor"))
         items.append(d)
@@ -153,7 +274,11 @@ def act(form, req):
     if o.TYPE != "Menu" and (not o.get_Visible() or not o.get_Enabled()):
         raise ValueError(f"{name} is disabled")
     t = o.TYPE
-    if what == "click" and t in ("CommandButton", "Menu", "Label", "Shape", "Frame", "Chart"):
+    if what == "click" and t == "PictureBox":
+        px, py = (float(v) for v in (req.get("value") or [0, 0])[:2])
+        x, y = o.units(px, py)
+        form.fire(name, "Click", x, y)
+    elif what == "click" and t in ("CommandButton", "Menu", "Label", "Shape", "Frame", "Chart"):
         if t in ("CommandButton", "Menu"):
             o.call("Click")
         else:
@@ -248,7 +373,8 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype + ("; charset=utf-8" if "json" in ctype or "html" in ctype else ""))
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
+        if "Cache-Control" not in (extra or {}):
+            self.send_header("Cache-Control", "no-store")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         for k, v in (extra or {}).items():
@@ -282,6 +408,16 @@ class _Handler(BaseHTTPRequestHandler):
                 return self._send(503, {"error": str(e)})
             snap["readonly"] = v.readonly
             return self._send(200, snap)
+        if path.startswith("/pic/"):
+            if not v.valid(self._token()):
+                return self._send(401, {"error": "login"})
+            from urllib.parse import unquote
+            parts = path.split("/")
+            try:
+                data, mime = self._gui(picture_file, v.form, unquote(parts[2]), parts[3])
+            except Exception:
+                return self._send(404, {"error": "not found"})
+            return self._send(200, data, mime, {"Cache-Control": "private, max-age=3600"})
         if path == "/manifest.json":
             return self._send(200, {"name": v.form.spec_name, "short_name": v.form.spec_name[:12],
                                     "start_url": "/", "display": "standalone", "background_color": "#ffffff"})
@@ -361,7 +497,7 @@ ul.list{list-style:none;margin:0;padding:0;border:1px solid #ddd;border-radius:8
 ul.list li{padding:10px;border-bottom:1px solid #eee}ul.list li.sel{background:#dbe8fb}
 .grid{overflow:auto;max-height:320px}table{border-collapse:collapse;font-size:13px;width:100%}
 th,td{border-bottom:1px solid #e3e3e3;padding:6px;text-align:left;white-space:nowrap}th{background:#f2f5f9;position:sticky;top:0}
-svg{width:100%;height:auto;display:block}.ctitle{font-size:13px;font-weight:600;color:#444;display:flex;justify-content:space-between}
+svg{width:100%;height:auto;display:block}.pic svg{margin:0 auto}.ctitle{font-size:13px;font-weight:600;color:#444;display:flex;justify-content:space-between}
 #menu{position:fixed;inset:0;background:#0006;display:none;z-index:9}#menu>div{position:absolute;right:8px;top:52px;
 background:#fff;border-radius:10px;min-width:220px;box-shadow:0 4px 18px #0004;overflow:hidden}
 #menu button{display:block;width:100%;text-align:left;font-size:16px;padding:13px 16px;border:0;background:#fff;border-bottom:1px solid #eee}
@@ -398,6 +534,8 @@ function chart(it){
   s+=`<text x="${L}" y="${H-4}" font-size="11" fill="#666">-${Math.round(it.window/60)||it.window+'s'}${it.window>=60?' min':''}</text><text x="${W-R}" y="${H-4}" font-size="11" text-anchor="end" fill="#666">now</text></svg>`;
   const last=it.lines.map((p,i)=>p.length?`<span style="color:${it.colors[i]}">${esc(it.series.length>1?it.series[i]+' ':'')}${p[p.length-1][1]}${esc(it.units?' '+it.units:'')}</span>`:'').join(' ');
   return `<div style="flex:1 1 100%"><div class="ctitle"><span>${esc(it.title)}</span><span>${last}</span></div>${s}</div>`}
+function picTap(e,name,w,h,on){if(!on)return;const r=e.currentTarget.getBoundingClientRect();
+  act(name,'click',[(e.clientX-r.left)/r.width*w,(e.clientY-r.top)/r.height*h])}
 function render(it){
   const dis=it.enabled?'':' disabled',on=f=>`onclick="act('${it.name}','click')"`;
   switch(it.type){
@@ -414,6 +552,8 @@ function render(it){
   case'ListBox':return `<ul class="list">${it.list.map((v,i)=>`<li class="${i==it.index?'sel':''}" onclick="act('${it.name}','set',${i})">${esc(v)}</li>`).join('')}</ul>`;
   case'ProgressBar':return `<div class="bar" style="flex:1 1 100%"><div style="width:${Math.max(0,Math.min(100,it.value/it.max*100))}%"></div></div>`;
   case'Chart':return chart(it);
+  case'PictureBox':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${it.w}px;background:${it.bg};${it.border?'border:1px solid #999;':''}"
+    onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
   case'Grid':return `<div class="grid" style="flex:1 1 100%"><table><tr>${it.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${it.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
   default:return ''}}
 const FIELDS=['TextBox','ComboBox'];
@@ -421,7 +561,7 @@ function rowHtml(r){const pair=r.length==2&&r[0].type=='Label'&&FIELDS.includes(
   return `<div class="row${pair?' pair':''}">${r.map(render).join('')}</div>`}
 function blocks(items){ // a label right above a control is its caption: keep them together
   const used=new Set(),out=[];
-  const CAPTIONED=['ListBox','Grid','Chart','TextBox','ComboBox','ProgressBar'];
+  const CAPTIONED=['ListBox','Grid','Chart','PictureBox','TextBox','ComboBox','ProgressBar'];
   const sameRow=lb=>items.some(c=>c!==lb&&c.type!='Label'&&Math.abs((c.y+c.h/2)-(lb.y+lb.h/2))<Math.max(12,lb.h/2));
   for(const lb of items.filter(i=>i.type=='Label'&&!sameRow(i))){
     const below=items.find(c=>!used.has(c.name)&&CAPTIONED.includes(c.type)&&Math.abs(c.x-lb.x)<16&&c.y>=lb.y+lb.h-4&&c.y-(lb.y+lb.h)<14&&c.w>lb.w*0.6);

@@ -12,3 +12,5 @@ dist/
 .idea/
 Thumbs.db
 .DS_Store
+# databases the examples create when run
+examples/*.db

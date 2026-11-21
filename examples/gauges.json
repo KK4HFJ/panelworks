@@ -1,0 +1,25 @@
+{
+  "name": "Gauges",
+  "caption": "Pump Station - PictureBox demo",
+  "width": 620,
+  "height": 345,
+  "code": "gauges.py",
+  "objects": {
+    "picLogo":  {"type": "PictureBox", "Picture": "gauges/logo.png", "BorderStyle": 0, "Left": 10, "Top": 8, "Width": 56, "Height": 56},
+    "lblTitle": {"type": "Label", "Caption": "Pump station", "FontSize": 16, "FontBold": true, "Left": 76, "Top": 12, "Width": 300, "Height": 28},
+    "lblSub":   {"type": "Label", "Caption": "Both gauges are drawn in code. Click or drag the dial to set the alarm.", "FontSize": 9, "Left": 76, "Top": 42, "Width": 530, "Height": 18},
+    "picGauge": {"type": "PictureBox", "BackColor": "white", "FontSize": 9,
+                 "ScaleLeft": -125, "ScaleTop": 125, "ScaleWidth": 250, "ScaleHeight": -250,
+                 "Left": 15, "Top": 78, "Width": 250, "Height": 250},
+    "picTank":  {"type": "PictureBox", "BackColor": "white", "FontSize": 9,
+                 "ScaleLeft": 0, "ScaleTop": 110, "ScaleWidth": 100, "ScaleHeight": -122,
+                 "Left": 280, "Top": 78, "Width": 120, "Height": 250},
+    "shpAlarm": {"type": "Shape", "FillColor": "gray", "Left": 420, "Top": 84, "Width": 26, "Height": 26},
+    "lblAlarm": {"type": "Label", "Caption": "Normal", "FontBold": true, "Left": 454, "Top": 86, "Width": 160, "Height": 22},
+    "lblSet":   {"type": "Label", "Caption": "Alarm above 75 psi", "Left": 420, "Top": 124, "Width": 190, "Height": 22},
+    "lblPress": {"type": "Label", "Caption": "Pressure --", "Left": 420, "Top": 150, "Width": 190, "Height": 22},
+    "lblLevel": {"type": "Label", "Caption": "Tank --", "Left": 420, "Top": 174, "Width": 190, "Height": 22},
+    "chkRun":   {"type": "CheckBox", "Caption": "Simulate readings", "Value": 1, "Left": 420, "Top": 212, "Width": 180, "Height": 24},
+    "tmrSim":   {"type": "Timer", "Interval": 500, "Enabled": true}
+  }
+}

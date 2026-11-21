@@ -151,6 +151,24 @@ US = in motion, OL = overload). For another format, change the `LINE` pattern at
 the top of `truck_scale.py`; the Immediate window (Ctrl+G) with
 `print(line)` in `ser1_DataArrival` shows exactly what your indicator sends.
 
+## Gauges: drawing with the PictureBox
+
+![Gauges](../../examples/gauges.png)
+
+`examples/gauges.json` + `gauges.py`, logo in `examples/gauges/`
+
+A pressure dial and a tank, both drawn in code on **PictureBox** controls. The dial's
+box is scaled -125..125 with y pointing up, so its centre is (0, 0) and plain sin/cos
+place the ticks, numbers and needle. Click the dial, or drag round it, to move the
+orange alarm marker: `picGauge_Click(f, x, y)` and `picGauge_MouseMove(f, x, y)` get
+the position in those same units. The tank is scaled 0..100 % up its height. The logo
+at the top left is a PictureBox showing a PNG. A Timer simulates the readings, and the
+whole panel works in the phone view, taps on the dial included.
+
+```
+python -m panelworks examples\gauges.json --mcp none
+```
+
 ## Copying an example
 
 Copy both files (`.json` and `.py`) to your own folder and open the copy in the

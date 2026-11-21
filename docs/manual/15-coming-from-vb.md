@@ -51,7 +51,9 @@ chapter translates the rest.
 | Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
 | Menu Editor, `mnuFile_Click` | The same: Tools → Menu Editor (Ctrl+E) |
 | File → Make Project.exe | File → Make EXE (one file, no runtime to install) |
-| PictureBox, Image, Line, MDI forms | Not yet built |
+| PictureBox (Picture, Line, Circle, PSet, Print, Cls, Scale) | **PictureBox**: the same methods, plus Polygon and PaintPicture |
+| Image control | A PictureBox with BorderStyle 0 and Picture set |
+| Line control, MDI forms | Not built (draw lines in a PictureBox) |
 
 ## Differences worth knowing
 
@@ -65,6 +67,10 @@ chapter translates the rest.
   and the second is an error.
 - **One form per file.** A program's forms sit side by side in a folder, and
   `f.Show("Settings")` opens one. Separate programs can also talk to each other over MQTT.
+- **PictureBox drawing takes arguments, not VB's special syntax.** `Line (0,0)-(50,50), vbRed, BF`
+  is `Line(0, 0, 50, 50, "red", box=True, fill=True)`; `Line -(x, y)` is `LineTo(x, y)`;
+  `Print "Hi"` is `Print("Hi")`. Circle angles are **degrees**, not radians. Drawings are
+  kept and redrawn automatically, as if AutoRedraw were always on.
 - **An error doesn't end the program.** The failing procedure stops, the error
   is shown, and the panel carries on.
 

@@ -8,6 +8,7 @@ properties to topics, publish on events, mirror the whole form) and by
 automations over **webhooks** (an n8n workflow can be an event procedure).
 Hardware comes in over **Serial** (USB auto-detect, auto-reconnect), readings go
 into live **Charts** and a **Data** control that logs to SQLite and fills a **Grid**,
+a **PictureBox** shows pictures and draws gauges and diagrams from code,
 and any running panel can be opened on a **phone** in the browser.
 
 **📖 [The PanelWorks Manual](docs/manual/README.md)**: installing, a click-by-click
@@ -32,6 +33,7 @@ examples/cistern_mqtt.*    <- a no-code panel driven entirely by MQTT subscripti
 examples/n8n_demo.*        <- a panel whose event procedures live in n8n
 examples/led_panel.*       <- Start/Stop an Arduino's LED over USB serial
 examples/truck_scale.*     <- weighbridge: serial scale, chart, tickets in SQLite, menu (+ simulator)
+examples/gauges.*          <- PictureBox: a dial and a tank drawn in code, click to set the alarm
 examples/hvac_console.*    <- read-only HVAC console for real ESP32 devices over MQTT/TLS
 examples/n8n/              <- the matching n8n workflow, ready to import
 tests/fake_esp32.py        <- simulated cistern node to test it against
@@ -41,6 +43,7 @@ panelworks/mqtt.py         <- MQTT control, subscribe / publish / mirror
 panelworks/webhooks.py     <- HTTP webhooks (n8n): events out, replies drive the form
 panelworks/serialport.py   <- Serial control (the MSComm replacement)
 panelworks/chart.py        <- Chart control: live strip chart, several series
+panelworks/picture.py      <- PictureBox: pictures, and drawing from code (gauges, diagrams)
 panelworks/data.py         <- Data control (SQLite logging) and Grid
 panelworks/menus.py        <- panel menu bars and the Menu Editor's model
 panelworks/webview.py      <- phone view: a running panel as a web page
@@ -262,6 +265,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | Frame | Caption; contents move, hide and disable with it; its OptionButtons form their own group | | Click |
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
+| PictureBox | Picture, AutoSize, Stretch, ScaleLeft/Top/Width/Height, ForeColor, FillColor, DrawWidth, CurrentX/Y | Cls, Line, LineTo, Circle, PSet, Polygon, Print, PaintPicture, Scale | Click, DblClick, MouseDown, MouseUp, MouseMove (all with x, y) |
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
 | Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
@@ -561,6 +565,30 @@ n8n's SQLite node can read it. A Grid can also be filled by hand: `Columns`, `Ad
 on the yard and finished tickets in two Data tables, and the tickets in a Grid. Its
 `truck_scale/scale_sim.py` simulates the scale, so you can try it without one.
 
+## Pictures and drawing: PictureBox
+
+![Gauges drawn on PictureBoxes](examples/gauges.png)
+
+VB's PictureBox: show a picture (PNG/GIF, or JPEG with Pillow), and draw on it from code
+with `Line`, `Circle` (with arcs), `PSet`, `Polygon`, `Print` and `PaintPicture`. `Scale`
+gives the box your own units, with y up if you like, so a gauge is just trigonometry:
+
+```python
+def show_pressure(f, psi):
+    a = math.radians(225 - 2.7 * psi)               # 0..100 psi across 270 degrees
+    p = f.picGauge                                  # scaled -100..100, y up: (0, 0) is the centre
+    p.Cls()
+    p.Circle(0, 0, 90, "gray75", start=-45, end=225, width=8)
+    p.Line(0, 0, 80 * math.cos(a), 80 * math.sin(a), "red", width=3)
+    p.Print(f"{psi:.0f} psi", 0, -40, anchor="center")
+
+def picGauge_Click(f, x, y):                        # x, y in the box's own units
+    ...
+```
+
+Drawings redraw themselves on resize and show in the phone view, where taps fire `Click(x, y)`.
+Make EXE packages the pictures. Try `examples/gauges.json`; chapter 6 of the manual has the details.
+
 ## Phone view
 
 Any running panel can be opened on a phone, laid out automatically for a narrow screen:
@@ -631,10 +659,6 @@ MCP calls go through `Form.call_on_gui()`, which queues the call and waits for t
 result on a `Future`; incoming MQTT messages go through `Form.post()`, which queues
 without waiting. The GUI thread drains the queue every 20 ms (`root.after`). `wait_for_event` blocks only the MCP thread, so an agent
 can wait for "user pressed Start" without freezing the window.
-
-## Not yet built
-
-- PictureBox/Canvas drawing
 
 ## Contributing, security, conduct
 
