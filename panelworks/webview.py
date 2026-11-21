@@ -26,7 +26,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
-HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Menu"}
+HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Alarms", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
 
@@ -275,6 +275,16 @@ def snapshot(form):
         elif t == "Gauge":
             d["svg"] = gauge_svg(form, o); d["interactive"] = g("Interactive")
             d["bg"] = _hex(form, g("BackColor")) or "#ffffff"
+        elif t == "AlarmPanel":
+            src = o.alarms()
+            d["title"] = g("Title")
+            d["summary"] = src.get_Summary() if src else "no Alarms control"
+            d["unacked"] = src.get_Unacked() if src else 0
+            from .alarms import PRIORITY_COLOURS, _fmt, _number
+            d["rows"] = [{"name": e["name"], "state": e["state"], "message": e["message"],
+                          "since": e["since"], "colour": PRIORITY_COLOURS[e["priority"]],
+                          "value": "" if e["value"] is None else _fmt(_number(e["value"]))}
+                         for e in (src.entries() if src else [])]
         elif t == "PictureBox":
             bg = _hex(form, g("BackColor")) or "#ffffff"
             d["bg"] = "transparent" if bg == _hex(form, form.get_BackColor()) else bg   # blends into the form
@@ -326,6 +336,8 @@ def act(form, req):
         if o.get("Interactive"):
             o.turn_to(o.value_at(px, py))
         form.fire(name, "Click")
+    elif what == "click" and t == "AlarmPanel":
+        o.click_row(str(req.get("value") or ""))
     elif what == "click" and t == "PictureBox":
         px, py = (float(v) for v in (req.get("value") or [0, 0])[:2])
         x, y = o.units(px, py)
@@ -547,7 +559,7 @@ label.chk{display:flex;align-items:center;gap:10px;font-size:17px;padding:6px 0}
 .bar{height:16px;background:#dde3ea;border-radius:8px;overflow:hidden}.bar>div{height:100%;background:#2f7bd6}
 ul.list{list-style:none;margin:0;padding:0;border:1px solid #ddd;border-radius:8px;max-height:220px;overflow:auto}
 ul.list li{padding:10px;border-bottom:1px solid #eee}ul.list li.sel{background:#dbe8fb}
-.grid{overflow:auto;max-height:320px}table{border-collapse:collapse;font-size:13px;width:100%}
+.alm{border:1px solid #ccc;border-radius:8px;overflow:hidden;font-size:15px}.alm .ah{display:flex;justify-content:space-between;padding:10px 12px;background:#eceff1;cursor:pointer}.alm .ah span{color:#1565c0}.alm .ar{padding:10px 12px 10px 14px;border-left:8px solid var(--c);border-top:1px solid #e0e0e0;cursor:pointer;display:block}.alm .ar i{float:right;font-style:normal}.alm .ar.active{animation:almf 1s steps(1) infinite}.alm .ar.acked{background:var(--c);color:#fff}.alm .ar.cleared{background:#f5f5f5;color:#555}.alm .ok{padding:12px;color:#2e7d32}@keyframes almf{0%{background:var(--c);color:#fff}50%{background:#fff;color:var(--c)}}.grid{overflow:auto;max-height:320px}table{border-collapse:collapse;font-size:13px;width:100%}
 th,td{border-bottom:1px solid #e3e3e3;padding:6px;text-align:left;white-space:nowrap}th{background:#f2f5f9;position:sticky;top:0}
 svg{width:100%;height:auto;display:block}.pic svg{margin:0 auto}.sld{display:flex;align-items:center;gap:10px}.sld input{flex:1;height:34px}.sv{min-width:3em;text-align:right;font-weight:600}.ctitle{font-size:13px;font-weight:600;color:#444;display:flex;justify-content:space-between}
 #menu{position:fixed;inset:0;background:#0006;display:none;z-index:9}#menu>div{position:absolute;right:8px;top:52px;
@@ -611,6 +623,7 @@ function render(it){
     onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
   case'PictureBox':return `<div class="pic" style="flex:1 1 100%"><svg viewBox="0 0 ${it.w} ${it.h}" style="max-width:${it.w}px;background:${it.bg};${it.border?'border:1px solid #999;':''}"
     onclick="picTap(event,'${it.name}',${it.w},${it.h},${it.enabled})">${it.svg}</svg></div>`;
+  case'AlarmPanel':return `<div class="alm" style="flex:1 1 100%"><div class="ah" onclick="act('${it.name}','click','')"><b>${esc(it.title?it.title+' · ':'')}${esc(it.summary)}</b>${it.unacked?'<span>Ack all</span>':''}</div>${it.rows.length?it.rows.map(r=>`<div class="ar ${r.state.toLowerCase()}" style="--c:${r.colour}" onclick="act('${it.name}','click','${esc(r.name)}')"><b>${esc(r.since)} ${esc(r.name)}</b> ${esc(r.message)}<i>${esc(r.value)} ${r.state=='Active'?'ACTIVE':r.state.toLowerCase()}</i></div>`).join(''):'<div class="ok">All normal</div>'}</div>`;
   case'Grid':return `<div class="grid" style="flex:1 1 100%"><table><tr>${it.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${it.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
   default:return ''}}
 const FIELDS=['TextBox','ComboBox'];

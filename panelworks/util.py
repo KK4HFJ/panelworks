@@ -105,6 +105,27 @@ def _recent_max():
         return RECENT_MAX
 
 
+def port_setting(v, what="Port"):
+    """A port number, or a ${VAR:-default} placeholder kept as text (so the form file
+    keeps the placeholder). Checks the placeholder gives a number now."""
+    if isinstance(v, str) and "${" in v:
+        port_number(v, what)
+        return v.strip()
+    return port_number(v, what)
+
+
+def port_number(v, what="Port"):
+    """The port to use: expands ${VAR}, then must be 0..65535."""
+    raw = expand(v) if isinstance(v, str) else v
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        raise ValueError(f"{what} must be a number (or ${{VAR:-number}}), not {v!r}") from None
+    if not 0 <= n <= 65535:
+        raise ValueError(f"{what} must be 0 to 65535, not {n}")
+    return n
+
+
 def examples_dir():
     """The bundled examples: in a git clone they sit beside the panelworks package;
     a pip install from PyPI carries a copy inside it (panelworks/_examples)."""

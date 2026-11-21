@@ -13,7 +13,7 @@ Properties marked read-only are still shown in the designer, greyed out.
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
 
-**All visible controls** (everything except Timer, MQTT, Serial and Data) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
@@ -906,6 +906,87 @@ Invisible SQLite database beside the form (VB's Data control), with no-code logg
 |---|---|
 | `Name_Logged(f, row)` | A row was logged. Argument: `row`, a dict including id and time. |
 | `Name_Error(f, message)` | Opening or logging failed. Argument: `message`. |
+
+## Alarms
+
+Invisible alarm manager: limits on any value, with delay, deadband, priorities, acknowledge and history (the basics of ISA-18.2). See chapter 18.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Active | read-only | Names of the alarms whose condition holds now. Read-only. |
+| Count | read-only | How many alarms are listed. Read-only. |
+| Enabled | read/write | False stops the checks (alarms already listed stay). |
+| Entries | read-only | The alarm list (active or not yet acknowledged), most important first: a list of dicts with name, state, priority, message, value, since. Read-only. |
+| HighestPriority | read-only | The most important priority listed: 1, 2, 3, or 0 for none. Read-only. |
+| History | read-only | What happened, newest first: `time  ALARM|CLEAR|ACK  name  message (value)`. Read-only. |
+| HistoryMax | read/write | How many History lines to keep (default 200). |
+| Interval | read/write | Milliseconds between checks of every rule (0 = only when you call Check). |
+| LastError | read-only | The last problem (a rule naming a missing control, a Telegram failure), or empty. Read-only. |
+| LastJson | read-only | The last change as JSON: name, state, message, value, priority, time. This is what MQTT publish sends. Read-only. |
+| LogTo | read/write | Name of a Data control: every alarm, clear and acknowledge is logged there as a row. |
+| NotifyPriority | read/write | Which alarms notify Telegram: 1 = critical only, 2 = critical and high, 3 = all (default). |
+| Rules | read/write | One alarm per line: `Name: source test limit [delay=s] [deadband=x] [priority=1..3] [message=text]`, e.g. `HighVolts: mb1.volts > 250 delay=5 message=Voltage high`. Source is `Control.Property` or a polling control's value (`mb1.volts`). |
+| Summary | read-only | `No alarms` or e.g. `2 alarms, 1 unacknowledged`. Read-only. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| TelegramChat | read/write | The Telegram chat id to send to. |
+| TelegramToken | read/write | A Telegram bot token, to message alarms and clears straight to Telegram. Use `${TELEGRAM_TOKEN}` to keep it out of the form file. |
+| Unacked | read-only | How many alarms are waiting to be acknowledged. Read-only. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Ack | Acknowledge an alarm by name, or all of them with `Ack()`. |
+| Check | Check every rule now. |
+| ClearHistory | Empty the History list. |
+| State | An alarm's state: Normal, Pending (waiting out its delay), Active, Acked or Cleared. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Alarm(f, name, message, value)` | An alarm's condition held (for its delay): it is now active and unacknowledged. |
+| `Name_Clear(f, name, value)` | An active alarm's condition cleared (past its deadband). |
+| `Name_Ack(f, name)` | An alarm was acknowledged (panel click, phone tap or Ack). |
+| `Name_Change(f)` | The alarm list changed: something alarmed, cleared or was acknowledged. |
+
+## AlarmPanel
+
+The alarm list of an Alarms control: priority colour, time, name, message and value. Unacknowledged alarms flash; click one to acknowledge it, or the header to acknowledge them all. Also on the phone view, where a tap acknowledges.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| BackColor | read/write | Background colour. |
+| Enabled | read/write | False greys it out and ignores the mouse and keyboard. |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Colour of the header text. |
+| Height | read/write | Height in pixels. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Source | read/write | The Alarms control to show. Empty = the form's only (or first) one. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Title | read/write | Text at the start of the header, before the summary. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Visible | read/write | False hides the control (it keeps its place and properties). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f, name)` | A row (name = that alarm) or the header (name = "") was clicked; the alarm(s) are acknowledged first. |
 
 ## Menu items
 

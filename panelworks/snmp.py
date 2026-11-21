@@ -24,7 +24,7 @@ import weakref
 
 from .polling import PollingControl, apply_modifiers, split_modifiers
 from .runtime import register_control
-from .util import expand
+from .util import expand, port_number, port_setting
 
 import pysnmp.hlapi.v3arch.asyncio as h
 from pysnmp.proto import rfc1902
@@ -129,7 +129,7 @@ class SnmpControl(PollingControl):
         object.__setattr__(self, "_interval", 5000)            # SNMP devices don't need 1 s polling
 
     def describe(self):
-        return f"{expand(self._host)}:{self._port}"
+        return f"{expand(self._host)}:{port_number(self._port)}"
 
     # ---- properties -------------------------------------------------------------------
     def _restart(self):
@@ -140,7 +140,7 @@ class SnmpControl(PollingControl):
     def get_Host(self): return self._host
     def set_Host(self, v): object.__setattr__(self, "_host", str(v).strip()); self._restart()
     def get_Port(self): return self._port
-    def set_Port(self, v): object.__setattr__(self, "_port", int(v)); self._restart()
+    def set_Port(self, v): object.__setattr__(self, "_port", port_setting(v)); self._restart()
 
     def get_Version(self): return self._version
     def set_Version(self, v):
@@ -215,7 +215,7 @@ class SnmpControl(PollingControl):
                                mpModel=0 if self._version == "1" else 1)
 
     async def _make_target(self):
-        return await h.UdpTransportTarget.create((expand(self._host), self._port), timeout=self._timeout,
+        return await h.UdpTransportTarget.create((expand(self._host), port_number(self._port)), timeout=self._timeout,
                                                  retries=self._retries)
 
     async def _get(self, oids, write=False):

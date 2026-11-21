@@ -181,6 +181,42 @@ DOC = {
         "Scroll!": "Interactive only: the needle is being dragged.",
         "Click!": "The gauge is clicked.",
     },
+    "AlarmPanel": {
+        "_": "The alarm list of an Alarms control: priority colour, time, name, message and value. Unacknowledged alarms flash; click one to acknowledge it, or the header to acknowledge them all. Also on the phone view, where a tap acknowledges.",
+        "Source": "The Alarms control to show. Empty = the form's only (or first) one.",
+        "Title": "Text at the start of the header, before the summary.",
+        "ForeColor": "Colour of the header text.",
+        "BackColor": "Background colour.",
+        "Click!": "A row (name = that alarm) or the header (name = \"\") was clicked; the alarm(s) are acknowledged first.",
+    },
+    "Alarms": {
+        "_": "Invisible alarm manager: limits on any value, with delay, deadband, priorities, acknowledge and history (the basics of ISA-18.2). See chapter 18.",
+        "Rules": "One alarm per line: `Name: source test limit [delay=s] [deadband=x] [priority=1..3] [message=text]`, e.g. `HighVolts: mb1.volts > 250 delay=5 message=Voltage high`. Source is `Control.Property` or a polling control's value (`mb1.volts`).",
+        "Interval": "Milliseconds between checks of every rule (0 = only when you call Check).",
+        "Enabled": "False stops the checks (alarms already listed stay).",
+        "HistoryMax": "How many History lines to keep (default 200).",
+        "LogTo": "Name of a Data control: every alarm, clear and acknowledge is logged there as a row.",
+        "TelegramToken": "A Telegram bot token, to message alarms and clears straight to Telegram. Use `${TELEGRAM_TOKEN}` to keep it out of the form file.",
+        "TelegramChat": "The Telegram chat id to send to.",
+        "NotifyPriority": "Which alarms notify Telegram: 1 = critical only, 2 = critical and high, 3 = all (default).",
+        "Entries": "The alarm list (active or not yet acknowledged), most important first: a list of dicts with name, state, priority, message, value, since. Read-only.",
+        "Active": "Names of the alarms whose condition holds now. Read-only.",
+        "Unacked": "How many alarms are waiting to be acknowledged. Read-only.",
+        "Count": "How many alarms are listed. Read-only.",
+        "HighestPriority": "The most important priority listed: 1, 2, 3, or 0 for none. Read-only.",
+        "Summary": "`No alarms` or e.g. `2 alarms, 1 unacknowledged`. Read-only.",
+        "History": "What happened, newest first: `time  ALARM|CLEAR|ACK  name  message (value)`. Read-only.",
+        "LastJson": "The last change as JSON: name, state, message, value, priority, time. This is what MQTT publish sends. Read-only.",
+        "LastError": "The last problem (a rule naming a missing control, a Telegram failure), or empty. Read-only.",
+        "Ack": "Acknowledge an alarm by name, or all of them with `Ack()`.",
+        "Check": "Check every rule now.",
+        "State": "An alarm's state: Normal, Pending (waiting out its delay), Active, Acked or Cleared.",
+        "ClearHistory": "Empty the History list.",
+        "Alarm!": "An alarm's condition held (for its delay): it is now active and unacknowledged.",
+        "Clear!": "An active alarm's condition cleared (past its deadband).",
+        "Ack!": "An alarm was acknowledged (panel click, phone tap or Ack).",
+        "Change!": "The alarm list changed: something alarmed, cleared or was acknowledged.",
+    },
     "Modbus": {
         "_": "A Modbus TCP or RTU master: poll registers and coils into named values, write them from code. For PLCs, VFDs, energy meters, charge controllers. Needs `pip install pymodbus`.",
         "Poll": "What to read, one per line: `name = what [*scale] [/divisor] [+offset]`. Each poll fires DataArrival with a dict of these names.",
@@ -391,7 +427,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
          "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
-         "Modbus", "SNMP", "Data"]
+         "Modbus", "SNMP", "Data", "Alarms", "AlarmPanel"]
 
 missing = []
 
@@ -445,7 +481,7 @@ Properties marked read-only are still shown in the designer, greyed out.
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
 
-**All visible controls** (everything except Timer, MQTT, Serial and Data) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in

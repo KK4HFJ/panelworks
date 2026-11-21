@@ -26,7 +26,7 @@ import struct
 
 from .polling import PollingControl, apply_modifiers, split_modifiers
 from .runtime import register_control
-from .util import expand
+from .util import expand, port_number, port_setting
 from .serialport import parse_settings, port_choices, resolve_port, BAUDS
 
 from pymodbus.client import ModbusSerialClient, ModbusTcpClient
@@ -187,7 +187,7 @@ class ModbusControl(PollingControl):
             object.__setattr__(self, k, v)
 
     def describe(self):
-        return f"{expand(self._host)}:{self._port}" if self._mode == "TCP" else f"{expand(self._serial)} ({self._settings})"
+        return f"{expand(self._host)}:{port_number(self._port)}" if self._mode == "TCP" else f"{expand(self._serial)} ({self._settings})"
 
     # ---- properties -------------------------------------------------------------------
     def _restart(self):
@@ -205,7 +205,7 @@ class ModbusControl(PollingControl):
     def get_Host(self): return self._host
     def set_Host(self, v): object.__setattr__(self, "_host", str(v).strip()); self._restart()
     def get_Port(self): return self._port
-    def set_Port(self, v): object.__setattr__(self, "_port", int(v)); self._restart()
+    def set_Port(self, v): object.__setattr__(self, "_port", port_setting(v)); self._restart()
     def get_SerialPort(self): return self._serial
     def set_SerialPort(self, v): object.__setattr__(self, "_serial", str(v).strip() or "auto"); self._restart()
     def get_Settings(self): return self._settings
@@ -236,7 +236,7 @@ class ModbusControl(PollingControl):
 
     def connect(self):
         if self._mode == "TCP":
-            client = ModbusTcpClient(expand(self._host), port=self._port, timeout=self._timeout, retries=1)
+            client = ModbusTcpClient(expand(self._host), port=port_number(self._port), timeout=self._timeout, retries=1)
         else:
             port = resolve_port(expand(self._serial))
             if port is None:

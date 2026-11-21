@@ -1163,6 +1163,7 @@ from . import chart as _chart  # noqa: F401,E402  (Chart control)
 from . import picture as _picture  # noqa: F401,E402  (PictureBox control)
 from . import slider as _slider  # noqa: F401,E402  (Slider control)
 from . import gauge as _gauge  # noqa: F401,E402  (Gauge control)
+from . import alarms as _alarms  # noqa: F401,E402  (Alarms + AlarmPanel)
 
 try:                       # optional: Modbus control (pymodbus)
     from . import modbus as _modbus  # noqa: F401,E402

@@ -24,7 +24,8 @@ A printable A4 copy of this whole manual is
 15. [Coming from Visual Basic](15-coming-from-vb.md): VB6 to PanelWorks, side by side
 16. [Phone view](16-phone-view.md): use any panel from a phone, safely
 17. [Modbus and SNMP](17-modbus-snmp.md): PLCs, drives, meters, UPSes, PDUs and switches
-18. [Appendix](99-appendix.md): shortcuts, command line, signatures
+18. [Alarms](18-alarms.md): limits, acknowledge, history, Telegram / n8n / MQTT notification
+19. [Appendix](99-appendix.md): shortcuts, command line, signatures
 
 *PanelWorks is by Steve Spence (KK4HFJ), kk4hfj.com. MIT licence.*
 

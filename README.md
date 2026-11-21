@@ -297,6 +297,8 @@ a traceback and logs the error in the event log; the app keeps running.
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
 | Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
+| Alarms | Rules, Interval, LogTo, TelegramToken, TelegramChat, NotifyPriority, Entries, Active, Unacked, Summary, History, LastJson | Ack, Check, State, ClearHistory | Alarm(name, message, value), Clear(name, value), Ack(name), Change |
+| AlarmPanel | Source, Title | | Click(name) |
 | Timer | Interval (ms), Enabled | | Timer |
 | MQTT | Broker, Port, ClientID, Username, Password, Subscriptions, AutoConnect, Connected | Connect, Disconnect, Publish, Subscribe, Unsubscribe | Connected, Disconnected, MessageArrived |
 | Modbus | Mode, Host, Port, SerialPort, Settings, UnitID, ByteOrder, Poll, PollInterval, Fill, Values | Read, Write, PollNow, Open, Close | DataArrival(values), Connected, Disconnected, Error |
@@ -627,6 +629,35 @@ from environment variables (`${UPS_COMMUNITY}`). The power_meter and rack_status
 simulators, so they run without hardware. Chapter 17 of the manual covers both.
 
 ![Power meter over Modbus](examples/power_meter.png)
+
+## Alarms
+
+An **Alarms** control watches any value with plain rules, one per line, and an **AlarmPanel**
+lists what's wrong. New alarms flash until someone clicks them:
+
+```
+HighVolts: mb1.volts > 250 delay=5 deadband=2 priority=1 message=Voltage high
+LowTank:   lblLevel.Caption < 20 message=Tank below 20 %
+CommsLost: mb1.Connected == False delay=5 priority=1 message=Meter not answering
+```
+
+Delay (it must hold that long), deadband (no chattering), three priorities, acknowledge,
+and a history, which are the basics of ISA-18.2. Alarms can go straight to Telegram
+(`TelegramToken`, `TelegramChat`), to n8n with a webhook, to MQTT as JSON, and into a Data
+control's log. The AlarmPanel works on the phone too: tap to acknowledge. Chapter 18 of the
+manual has the details.
+
+The **solar_battery** example reads a Victron GX (Cerbo GX, Venus GX) over Modbus TCP:
+state of charge, solar, battery and load power, and a generator on the GX's relay 1, with
+alarms for a low battery, low voltage, heavy load and the GX going quiet. Its simulator
+runs a whole off-grid day in 10 minutes:
+
+```
+python examples/solar_battery/gx_sim.py
+python -m panelworks examples/solar_battery.json --mcp none
+```
+
+![Solar and battery from a Victron GX, with alarms](examples/solar_battery.png)
 
 ## Pictures and drawing: PictureBox
 

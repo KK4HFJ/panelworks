@@ -203,6 +203,33 @@ python -m panelworks examples\rack_status.json --mcp none
 python examples\rack_status\agent_sim.py --trap
 ```
 
+## Solar and battery: a Victron GX over Modbus, with alarms
+
+![Solar and battery](../../examples/solar_battery.png)
+
+`examples/solar_battery.json` + `solar_battery.py`, simulator `examples/solar_battery/gx_sim.py`
+
+An off-grid system read from a Victron GX device (Cerbo GX, Venus GX) over Modbus TCP.
+It reads the GX's own system registers on Unit-ID 100: battery voltage, current, power,
+state of charge and time to go, solar power, AC and DC loads and generator power. So it
+works whatever chargers, inverters and battery monitor are behind the GX. Fill drives
+three **Gauges** and a three-line **Chart**. The CheckBox starts the generator through
+the GX's relay 1 (register 806). An **Alarms** control watches for a low or critical
+battery, low voltage, heavy load, a running generator and the GX going quiet. The
+**AlarmPanel** lists them (chapter 18).
+
+The pretend GX runs a whole day in 10 minutes: the sun comes up, the battery fills, and
+overnight loads pull it down until the low-battery alarm asks for the generator.
+
+```
+python examples\solar_battery\gx_sim.py
+python -m panelworks examples\solar_battery.json --mcp none
+```
+
+For a real system, turn on **Settings → Services → Modbus TCP** on the GX, then set the
+environment variables `GX_HOST` to its address and `GX_PORT` to `502` before starting the
+panel.
+
 ## Copying an example
 
 Copy both files (`.json` and `.py`) to your own folder and open the copy in the

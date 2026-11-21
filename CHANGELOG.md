@@ -2,6 +2,25 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**New controls**
+- **Alarms**: limits on any value from plain rules (`HighVolts: mb1.volts > 250 delay=5 deadband=2
+  priority=1 message=Voltage high`): delay, deadband, three priorities, acknowledge, history. Events
+  Alarm, Clear, Ack and Change. Notifies Telegram directly (TelegramToken / TelegramChat), n8n via
+  webhook, MQTT (LastJson), and logs to a Data control (LogTo).
+- **AlarmPanel**: the alarm list. Unacknowledged alarms flash; click (or tap on the phone) to acknowledge.
+
+**Examples**
+- **solar_battery**: an off-grid Victron system read from a GX device over Modbus TCP (Unit-ID 100
+  system registers), a generator on relay 1, and alarms. Its simulator runs a day in 10 minutes.
+
+**Smaller**
+- Modbus and SNMP `Port` accept `${VAR:-default}`, like Host.
+
+**Docs**
+- Manual chapter 18, Alarms; the solar_battery example in chapter 13; control reference updated.
+
 ## 0.4.2 (2026-11-21)
 
 **Distribution**

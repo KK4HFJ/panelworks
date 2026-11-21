@@ -43,12 +43,12 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid"]
-NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data"]
+                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "PictureBox", "Chart", "Grid", "AlarmPanel"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Alarms"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
           "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP"}
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
          "Orientation": ["Horizontal", "Vertical"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
@@ -66,7 +66,8 @@ EVENT_HELP = {"Scroll": "is being moved (dragged)",
               "Disconnected": "loses the broker", "Error": "has a connection error",
               "WebhookResponse": "gets a webhook reply", "WebhookError": "webhook call fails",
               "MqttError": "MQTT link has an error",
-              "DataArrival": "receives a line", "Logged": "logs a row"}
+              "DataArrival": "receives a line", "Logged": "logs a row",
+              "Alarm": "raises an alarm", "Clear": "sees an alarm clear", "Ack": "has an alarm acknowledged"}
 
 
 def rename_in_code(text, old, new, events):

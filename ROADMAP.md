@@ -15,7 +15,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 - **SNMP**: load MIB files so any vendor's OID names work, not just the built-in ones.
 - **InfluxDB logging**: a Data control mode writing to InfluxDB for Grafana, alongside SQLite.
 - **BLE**: read and write characteristics directly (ESP32, sensors) without MQTT in between.
-- **Alarm manager**: limits on any value, acknowledge, alarm history, optional Telegram / n8n notification.
 
 ## Designer
 
@@ -38,12 +37,12 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Examples
 
-- Solar / battery monitor (Victron over MQTT or Modbus).
 - Modbus VFD control panel.
 - Weather station.
 
 ## Done
 
+- Unreleased: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus).
 - 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.
 - 0.4.1: scrollable toolbox.
 - 0.4.0: Slider, Gauge (also a knob), Modbus TCP/RTU, SNMP with traps; power_meter and rack_status examples;
