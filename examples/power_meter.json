@@ -20,7 +20,7 @@
     "lblLoad":   {"type": "Label", "Caption": "Load setpoint --", "Left": 440, "Top": 172, "Width": 205, "Height": 20},
     "sldLoad":   {"type": "Slider", "Min": 0, "Max": 100, "TickFrequency": 25, "ShowValue": false,
                   "Left": 436, "Top": 192, "Width": 210, "Height": 45},
-    "chtPower":  {"type": "Chart", "Title": "Power", "Units": "W", "Window": 120, "AutoScale": false,
+    "chtPower":  {"type": "Chart", "Title": "Power", "Units": "W", "Window": 120, "AutoScale": false, "Decimals": 0,
                   "YMin": 0, "YMax": 3500, "Left": 15, "Top": 250, "Width": 630, "Height": 165},
     "mb1":       {"type": "Modbus", "Mode": "TCP", "Host": "${METER_HOST:-127.0.0.1}", "Port": 5020, "UnitID": 1,
                   "PollInterval": 500,

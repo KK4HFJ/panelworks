@@ -1,5 +1,7 @@
 # PanelWorks
 
+[![Tests](https://github.com/KK4HFJ/panelworks/actions/workflows/tests.yml/badge.svg)](https://github.com/KK4HFJ/panelworks/actions/workflows/tests.yml)
+
 Draw a form in JSON, write `Object_Event` procedures in Python, and run it as a
 real Tkinter desktop window. Every object is live-addressable, by agents over
 **MCP** (Claude can read and set properties, call methods, wait for events, even

@@ -50,6 +50,7 @@ def sldLoad_Scroll(f):
 
 
 def sldLoad_Change(f):
+    f.lblLoad.Caption = f"Load setpoint {f.sldLoad.Value} %"      # also when set from the phone
     if not state["quiet"]:
         write(f, "hr 10", f.sldLoad.Value)
 

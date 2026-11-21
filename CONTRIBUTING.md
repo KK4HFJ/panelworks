@@ -24,7 +24,11 @@ python -m venv .venv
 ```
 
 - The tests are plain scripts in `tests/`; GUI ones need a display
-  (on Linux, `Xvfb :99 &` and `DISPLAY=:99`). Each prints `ALL PASS`.
+  (on Linux, `Xvfb :99 &` and `DISPLAY=:99`, or `xvfb-run`). Each prints `ALL PASS`.
+  `python tools/run_tests.py` runs them all (or `run_tests.py modbus snmp` for some)
+  and exits non-zero if any fail. GitHub Actions runs them on every push and pull
+  request, on Python 3.10 and 3.12. Install the extras first: `pip install -e ".[all]"
+  pyinstaller snmpsim pysmi`.
 - Chapter 12 of the manual is generated: change descriptions in
   `tools/gen_reference.py` and run it. `tools/build_manual.py` builds the PDF.
 - Keep controls' names, properties and events in the VB style (`Caption`,
