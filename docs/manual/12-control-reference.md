@@ -15,7 +15,7 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 
 **Every control** has **Index**, its number in a control array (chapter 6).
 
-**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
@@ -936,6 +936,53 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 | `Name_Disconnected(f)` | The device stopped answering. It keeps retrying. |
 | `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
 | `Name_Trap(f, source, values)` | A trap arrived: source is the sender's IP, values a dict of its contents with readable names where known. |
+
+## WebRequest
+
+Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control. Poll lines are paths into the reply; Fill puts values on controls. See chapter 19.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AutoOpen | read/write | Start reading when the panel starts (default True). |
+| Body | read/write | Text sent with POST or PUT (sent as JSON when it starts with `{` or `[`); `${VAR}` works. |
+| Connected | run time | True while replies keep coming. Read-only. |
+| Fill | read/write | `name -> Control.Property`, one per line, as on Serial and Modbus. With no Poll lines, full paths work (`current.temperature_2m -> segTemp.Value`). |
+| Headers | read/write | One `Name: value` per line, e.g. `Authorization: Bearer ${HA_TOKEN}`. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| LastError | read-only | The last problem, or empty. Read-only. |
+| LastUpdate | read-only | When the last good reply arrived. Read-only. |
+| Method | read/write | GET (the usual), POST or PUT. |
+| Poll | read/write | One value per line: `name = path`, e.g. `temp = current.temperature_2m`, `desc = weather[0].description`, with optional scaling (`*0.02953`). No lines: DataArrival gets the whole reply. |
+| PollInterval | read/write | Milliseconds between requests (default 60000). 0 = only when PollNow is called. After a failure it waits 5 to 60 s. |
+| Response | read-only | The raw text of the last reply, for finding paths. Read-only. |
+| StatusCode | read-only | The HTTP status of the last reply (200 = fine). Read-only. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Target | read-only | Host and path in use (no query string). Read-only. |
+| Timeout | read/write | Seconds to wait for a reply (1 to 300, default 15). |
+| URL | read/write | The address. `${VAR}` fills in keys from the environment. Messages and Target never show the part after `?`. |
+| Values | read-only | The latest values, by Poll name. Read-only. |
+| ValuesJson | read-only | Values as JSON (what MQTT publish sends). Read-only. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Close | Stop reading. |
+| Fetch | Ask once and return the reply (JSON as dicts and lists, or text). It waits for it, so use it for occasional button presses. |
+| Get | The latest value of one Poll name. |
+| Open | Start reading (if AutoOpen is False). |
+| PollNow | Ask now instead of waiting for PollInterval. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_DataArrival(f, values)` | A reply arrived: values (by Poll name, or the whole reply with no Poll lines). |
+| `Name_Connected(f)` | The first good reply after starting or after a failure. |
+| `Name_Disconnected(f)` | Replies stopped (no internet, an HTTP error). |
+| `Name_Error(f, message)` | Something went wrong: message says what (HTTP status and a hint, a missing path...). |
 
 ## Data
 

@@ -1,5 +1,5 @@
 """
-Shared plumbing for controls that poll a device on a timer (Modbus, SNMP).
+Shared plumbing for controls that poll a device on a timer (Modbus, SNMP, WebRequest).
 
 A subclass says how to connect, how to parse one Poll line's "what to read" part, and
 how to read a batch of them. This base runs the poll loop on a background thread,
@@ -92,6 +92,9 @@ class PollingControl(VBObject):
     def describe(self):                         # "192.168.1.20:502" for messages
         return self.Name
 
+    def retry_delay(self):                      # seconds to wait before trying again after a failure
+        return 3.0
+
     # ---- lifecycle --------------------------------------------------------------------
     def on_form_loaded(self):
         if self._auto_open:
@@ -182,7 +185,7 @@ class PollingControl(VBObject):
                 if not self._reported:
                     object.__setattr__(self, "_reported", True)
                     self._error(f"{self.describe()}: {e}")
-                stop.wait(3.0)
+                stop.wait(self.retry_delay())
                 continue
             object.__setattr__(self, "_reported", False)
             object.__setattr__(self, "_last_error", "")
@@ -198,7 +201,7 @@ class PollingControl(VBObject):
             self._form.post(self.fire, "Disconnected")
             if problem:
                 self._error(f"{self.describe()}: {problem}")
-            stop.wait(2.0)
+            stop.wait(min(2.0, self.retry_delay()) if not problem else self.retry_delay())
 
     def _poll_loop(self, stop):
         """Poll until stopped (None) or the link fails (the reason)."""

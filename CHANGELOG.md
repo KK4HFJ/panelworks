@@ -2,6 +2,33 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**New control**
+- **WebRequest**: reads a web API (JSON) on a timer, like VB's Inet control. Poll lines are paths into the
+  reply (`temp = current.temperature_2m`, `desc = weather[0].description`) with scaling; Fill drives controls
+  with no code; no Poll lines hands DataArrival the whole reply. GET/POST/PUT, Headers and Body with
+  `${VAR}` for keys, Timeout, StatusCode, Response, LastUpdate, and `Fetch(url)` for one-off calls. Messages
+  never show the query string, so a key in the URL stays off screen. After a failure it waits 5 to 60 s.
+  Uses only Python's own libraries.
+
+**Examples**
+- **weather**: Open-Meteo (free, no key) on an LCD temperature readout, wind and humidity gauges, a
+  pressure readout, a chart, and alarms for frost, gusts, thunderstorms and stale data. Location from
+  `WEATHER_LAT` / `WEATHER_LON`; `--simulator weather` runs a pretend Open-Meteo with a passing cold front.
+
+**Fixes**
+- A form that uses a control whose library isn't installed (Modbus, SNMP, MQTT) now says which library and
+  gives the exact install command for the Python in use, instead of "Unknown type". The designer shows
+  such controls greyed out in the toolbox, with the same explanation on a click. PictureBox's JPEG message
+  gives the exact command too.
+- A control named like one of the form's own attributes (`web`, `main`, `root`, `code`, `path`...) couldn't
+  be reached as `f.name`. The designer and `add_object` now refuse those names with a reason; an existing
+  form that has one still loads, with a warning to use `f["name"]` or rename it.
+
+**Docs**
+- Manual chapter 19, Web APIs; the weather example in chapter 13; Inet in the VB table; extras in chapter 2.
+
 ## 0.6.0 (2026-11-21)
 
 **New control**

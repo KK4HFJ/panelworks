@@ -33,7 +33,8 @@ import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, ttk
 
 from . import __version__
-from .runtime import CONTROL_TYPES, split_name, valid_object_name
+from .runtime import (CONTROL_TYPES, OPTIONAL_TYPES, missing_type_message, reserved_name, split_name,
+                      valid_object_name)
 
 try:                                    # the MQTT control is optional (paho-mqtt)
     from . import mqtt as _mqtt  # noqa: F401
@@ -44,13 +45,14 @@ GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
                 "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "AlarmPanel"]
-NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Alarms"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "Alarms"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
           "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg"}
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg", "WebRequest": "web"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
-         "Orientation": ["Horizontal", "Vertical"], "Style": ["LED", "LCD", "LCD Reverse"]}
+         "Orientation": ["Horizontal", "Vertical"], "Style": ["LED", "LCD", "LCD Reverse"],
+         "Method": ["GET", "POST", "PUT"]}
 GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
@@ -379,6 +381,11 @@ class Designer:
         self.btn_update.bind("<Enter>", lambda e: self.say("A newer PanelWorks is on GitHub: click to see what's new"))
         self._update_info = None                # shown (packed) only when an update exists
 
+    def _explain_missing(self, typ):
+        msg = missing_type_message(typ)
+        self.say(msg.splitlines()[0])
+        messagebox.showinfo(f"{typ} isn't installed", msg, parent=self.root)
+
     def _build_toolbox_scroller(self):
         """A left-hand column that scrolls: a Canvas holding the toolbox frame, with a
         vertical scrollbar shown only when the tools don't fit. Returns the inner frame."""
@@ -439,6 +446,10 @@ class Designer:
         tk.Label(tb, text="Toolbox", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 4))
         for t in ["Pointer"] + VISUAL_ORDER + NONVISUAL_ORDER:
             if t != "Pointer" and t not in CONTROL_TYPES:
+                if t in OPTIONAL_TYPES:          # its library isn't installed: say so, don't hide it
+                    b = tk.Button(tb, text=t, width=14, anchor="w", padx=6, fg="gray55", relief="flat",
+                                  command=lambda t=t: self._explain_missing(t))
+                    b.pack(fill="x", pady=1)
                 continue
             b = tk.Radiobutton(tb, text=t, value=t, variable=self.tool, indicatoron=0,
                                width=14, anchor="w", padx=6)
@@ -1378,7 +1389,8 @@ class Designer:
     def _create(self, name, ospec):
         cls = CONTROL_TYPES.get(ospec.get("type"))
         if cls is None:
-            raise ValueError(f"unknown type {ospec.get('type')!r}")
+            why = missing_type_message(ospec.get("type"))
+            raise ValueError(f"{name}: {why}" if why else f"unknown type {ospec.get('type')!r}")
         o = cls(self.host, name, ospec)
         props = {k: v for k, v in ospec.items() if k not in ("type", "bind", "subscribe", "publish", "webhook")}
         order = list(cls.PERSIST_ORDER)
@@ -1968,6 +1980,9 @@ class Designer:
         if not valid_object_name(new) or new in self.host.objects:
             raise ValueError(f"'{new}' must be a new, valid name: letters, digits and _, not starting "
                              "with a digit, or an array element like Lamp(3)")
+        if reserved_name(new):
+            raise ValueError(f"'{new}' is a name the form itself uses: f.{split_name(new)[0]} would mean the "
+                             "form's, not this control. Choose another (a prefix helps: web1, tmrMain)")
         nbase, nidx = split_name(new)
         others = [k for k in self.host.objects if k != old]
         if nidx is None and any(split_name(k)[0] == new and split_name(k)[1] is not None for k in others):

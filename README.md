@@ -309,6 +309,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
 | Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
+| WebRequest | URL, Method, Headers, Body, Timeout, Poll, Fill, PollInterval, Values, StatusCode, Response, LastUpdate | Open, Close, PollNow, Get, Fetch | DataArrival(values), Connected, Disconnected, Error(message) |
 | Alarms | Rules, Interval, LogTo, TelegramToken, TelegramChat, NotifyPriority, Entries, Active, Unacked, Summary, History, LastJson | Ack, Check, State, ClearHistory | Alarm(name, message, value), Clear(name, value), Ack(name), Change |
 | AlarmPanel | Source, Title | | Click(name) |
 | Timer | Interval (ms), Enabled | | Timer |
@@ -656,6 +657,30 @@ from environment variables (`${UPS_COMMUNITY}`). The power_meter and rack_status
 simulators, so they run without hardware. Chapter 17 of the manual covers both.
 
 ![Power meter over Modbus](examples/power_meter.png)
+
+## Web APIs: weather, Home Assistant, anything JSON
+
+A **WebRequest** reads a web address on a timer, like VB's Inet control, and puts the values on
+your panel with no code. Poll lines are paths into the JSON reply; Fill drives controls:
+
+```
+URL:   https://api.open-meteo.com/v1/forecast?latitude=36.16&longitude=-86.78&current=temperature_2m,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph
+Poll:  temp = current.temperature_2m
+       wind = current.wind_speed_10m
+Fill:  temp -> segTemp.Value
+       wind -> gauWind.Value
+```
+
+Keys stay out of the form file with `${VARIABLE}` (`appid=${OWM_KEY}`, `Authorization: Bearer ${HA_TOKEN}`),
+and never appear in messages. GET, POST and PUT, headers, a gentle retry after failures, and
+`Fetch(url)` for one-off calls. The **weather** example reads Open-Meteo (free, no key) into LCD
+readouts, gauges, a chart and alarms; a pretend Open-Meteo runs it offline:
+
+```
+python -m panelworks --example weather --mcp none
+```
+
+![Weather from Open-Meteo](examples/weather.png)
 
 ## Alarms
 

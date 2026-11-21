@@ -94,6 +94,21 @@ def split_name(name):
     return (m.group(1), int(m.group(2))) if m else (name, None)
 
 
+# The form's own attributes: a control with one of these names can't be reached as f.name
+# (f.web would be the form's phone-view server, not your control).
+_FORM_ATTRS = {"bus", "code", "code_file", "forms", "hooks", "main", "mqtt_cfg", "objects", "owner",
+               "path", "root", "spec_name", "web", "web_cfg", "webhooks_cfg"}
+
+
+def reserved_name(name):
+    """True if name is taken by the form itself, so f.name wouldn't reach the control."""
+    base = split_name(name)[0] or ""
+    if base.startswith("_") or base in _FORM_ATTRS:
+        return True
+    form_cls = globals().get("Form")
+    return bool(form_cls) and hasattr(form_cls, base) and not base.startswith(("get_", "set_", "m_"))
+
+
 def valid_object_name(name):
     base, _ = split_name(name)
     return bool(base) and base.isidentifier() and not keyword.iskeyword(base) and base not in ("Form", "Me")
@@ -846,6 +861,9 @@ class Form:
 
         for name, ospec in spec.get("objects", {}).items():
             self._add(name, ospec)
+            if reserved_name(name):
+                print(f"[form] '{name}' is also a name the form itself uses, so f.{name} won't reach this "
+                      f"control; use f[\"{name}\"] or rename it in the designer")
         auto_option_groups(self)
         if spec.get("menu"):
             from . import menus
@@ -1091,7 +1109,9 @@ class Form:
         typ = ospec.get("type")
         cls = CONTROL_TYPES.get(typ)
         if cls is None:
-            raise ValueError(f"Unknown type '{typ}'. Types: {', '.join(CONTROL_TYPES)}")
+            why = missing_type_message(typ)
+            raise ValueError(f"{name}: {why}" if why else
+                             f"Unknown type '{typ}'. Types: {', '.join(CONTROL_TYPES)}")
         o = cls(self, name, ospec)
         self.objects[name] = o
         props = {k: v for k, v in ospec.items() if k not in ("type", "bind", "subscribe", "publish", "webhook")}
@@ -1108,6 +1128,9 @@ class Form:
         return o
 
     def add_object(self, name, type, properties=None):
+        if reserved_name(name):
+            raise ValueError(f"'{name}' is a name the form itself uses (f.{name} would mean the form's, "
+                             "not your control). Choose another, e.g. with a prefix like web1 or tmrMain")
         return self._add(name, {"type": type, **(properties or {})})
 
     def remove_object(self, name):
@@ -1282,10 +1305,42 @@ def load_form(path):
     return Form(spec, path=path)
 
 
-try:                       # optional: MQTT control + JSON bind/publish/mirror
-    from . import mqtt as _mqtt  # noqa: F401,E402
-except ImportError:        # paho-mqtt not installed
-    pass
+# Controls whose library is an optional extra. If the library isn't installed the control
+# isn't registered, and a form or toolbox that wants it says what to install.
+OPTIONAL_TYPES = {}       # type -> (library, extra or None, the import error)
+
+
+def install_command(lib, extra=None):
+    """The exact command for the Python running PanelWorks (so it lands in the right venv)."""
+    target = f'"panelworks[{extra}]"' if extra else lib
+    exe = os.path.normpath(os.path.abspath(sys.executable)) if sys.executable else "python"
+    exe = f'"{exe}"' if " " in exe else exe
+    return f"{exe} -m pip install {target}"
+
+
+def missing_type_message(typ):
+    """Why control type typ isn't available, and how to fix it ('' if it isn't an optional one)."""
+    if typ not in OPTIONAL_TYPES:
+        return ""
+    lib, extra, _err = OPTIONAL_TYPES[typ]
+    return (f"The {typ} control needs the {lib} library, which isn't installed. Install it with:\n"
+            f"  {install_command(lib, extra)}\n"
+            f"then start PanelWorks again.")
+
+
+def _optional(types, lib, extra, load):
+    try:
+        load()
+    except ImportError as e:
+        for t in types:
+            OPTIONAL_TYPES[t] = (lib, extra, str(e))
+
+
+def _load_mqtt():
+    from . import mqtt as _mqtt  # noqa: F401
+
+
+_optional(["MQTT"], "paho-mqtt", "mqtt", _load_mqtt)      # MQTT control + JSON bind/publish/mirror
 
 from . import chart as _chart  # noqa: F401,E402  (Chart control)
 from . import picture as _picture  # noqa: F401,E402  (PictureBox control)
@@ -1293,19 +1348,22 @@ from . import slider as _slider  # noqa: F401,E402  (Slider control)
 from . import gauge as _gauge  # noqa: F401,E402  (Gauge control)
 from . import alarms as _alarms  # noqa: F401,E402  (Alarms + AlarmPanel)
 from . import segdisplay as _segdisplay  # noqa: F401,E402  (SegmentDisplay)
+from . import webrequest as _webrequest  # noqa: F401,E402  (WebRequest: web APIs, stdlib only)
 
-try:                       # optional: Modbus control (pymodbus)
-    from . import modbus as _modbus  # noqa: F401,E402
-except ImportError:
-    pass
+def _load_modbus():
+    from . import modbus as _modbus  # noqa: F401
 
-try:                       # optional: SNMP control (pysnmp)
-    from . import snmp as _snmp  # noqa: F401,E402
-except ImportError:
-    pass
+
+def _load_snmp():
+    from . import snmp as _snmp  # noqa: F401
+
+
+_optional(["Modbus"], "pymodbus", "modbus", _load_modbus)
+_optional(["SNMP"], "pysnmp", "snmp", _load_snmp)
 from . import data as _data  # noqa: F401,E402  (Data and Grid controls)
 
-try:                       # optional: Serial control (pyserial)
-    from . import serialport as _serialport  # noqa: F401,E402
-except ImportError:
-    pass
+def _load_serial():
+    from . import serialport as _serialport  # noqa: F401
+
+
+_optional(["Serial"], "pyserial", None, _load_serial)      # normally installed with PanelWorks

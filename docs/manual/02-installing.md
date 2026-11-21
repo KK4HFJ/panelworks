@@ -245,5 +245,11 @@ install command, e.g. `pip install -e ".[mqtt,modbus]"`, or `".[all]"` for every
 | `snmp` | `pysnmp` | The SNMP control (chapter 17) |
 | `pictures` | `pillow` | JPEG pictures and smooth scaling in a PictureBox |
 
-Tkinter (the windowing toolkit) comes with Python. PanelWorks has no other
-dependencies.
+If a form uses a control whose extra isn't installed, PanelWorks says so and gives
+the exact command, for example *"The Modbus control needs the pymodbus library, which
+isn't installed. Install it with: C:\dev\panelworks\.venv\Scripts\python.exe -m pip
+install "panelworks[modbus]""*. In the designer such a control shows greyed out in the
+toolbox; click it for the same message.
+
+Tkinter (the windowing toolkit) comes with Python. The WebRequest control (chapter
+19) uses only Python's own libraries. PanelWorks has no other dependencies.

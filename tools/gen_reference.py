@@ -182,6 +182,35 @@ DOC = {
         "Scroll!": "Interactive only: the needle is being dragged.",
         "Click!": "The gauge is clicked.",
     },
+    "WebRequest": {
+        "_": "Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control. Poll lines are paths into the reply; Fill puts values on controls. See chapter 19.",
+        "URL": "The address. `${VAR}` fills in keys from the environment. Messages and Target never show the part after `?`.",
+        "Method": "GET (the usual), POST or PUT.",
+        "Headers": "One `Name: value` per line, e.g. `Authorization: Bearer ${HA_TOKEN}`.",
+        "Body": "Text sent with POST or PUT (sent as JSON when it starts with `{` or `[`); `${VAR}` works.",
+        "Timeout": "Seconds to wait for a reply (1 to 300, default 15).",
+        "Poll": "One value per line: `name = path`, e.g. `temp = current.temperature_2m`, `desc = weather[0].description`, with optional scaling (`*0.02953`). No lines: DataArrival gets the whole reply.",
+        "Fill": "`name -> Control.Property`, one per line, as on Serial and Modbus. With no Poll lines, full paths work (`current.temperature_2m -> segTemp.Value`).",
+        "PollInterval": "Milliseconds between requests (default 60000). 0 = only when PollNow is called. After a failure it waits 5 to 60 s.",
+        "AutoOpen": "Start reading when the panel starts (default True).",
+        "Connected": "True while replies keep coming. Read-only.",
+        "Values": "The latest values, by Poll name. Read-only.",
+        "ValuesJson": "Values as JSON (what MQTT publish sends). Read-only.",
+        "Target": "Host and path in use (no query string). Read-only.",
+        "StatusCode": "The HTTP status of the last reply (200 = fine). Read-only.",
+        "Response": "The raw text of the last reply, for finding paths. Read-only.",
+        "LastUpdate": "When the last good reply arrived. Read-only.",
+        "LastError": "The last problem, or empty. Read-only.",
+        "Open": "Start reading (if AutoOpen is False).",
+        "Close": "Stop reading.",
+        "PollNow": "Ask now instead of waiting for PollInterval.",
+        "Get": "The latest value of one Poll name.",
+        "Fetch": "Ask once and return the reply (JSON as dicts and lists, or text). It waits for it, so use it for occasional button presses.",
+        "DataArrival!": "A reply arrived: values (by Poll name, or the whole reply with no Poll lines).",
+        "Connected!": "The first good reply after starting or after a failure.",
+        "Disconnected!": "Replies stopped (no internet, an HTTP error).",
+        "Error!": "Something went wrong: message says what (HTTP status and a hint, a missing path...).",
+    },
     "SegmentDisplay": {
         "_": "A seven-segment readout, like a scale head, meter or clock: LED (lit segments on black), LCD (black segments on a grey panel) or LCD Reverse. Drawn as shapes, so it needs no special font and looks the same on the phone.",
         "Value": "What to show: a number (numeric text such as `\"61240\"` from a device counts), or short text like `Err`, `OL`, `-OL-`. Letters a seven-segment display can't form are blank.",
@@ -445,7 +474,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
          "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
-         "Modbus", "SNMP", "Data", "Alarms", "AlarmPanel"]
+         "Modbus", "SNMP", "WebRequest", "Data", "Alarms", "AlarmPanel"]
 
 missing = []
 
@@ -501,7 +530,7 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 
 **Every control** has **Index**, its number in a control array (chapter 6).
 
-**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in

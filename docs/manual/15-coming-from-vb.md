@@ -49,6 +49,7 @@ chapter translates the rest.
 | Slider (Common Controls), HScroll/VScroll | **Slider** |
 | Third-party gauge and Modbus/SNMP OCXs | **Gauge**, **Modbus** and **SNMP**, built in (chapter 17) |
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
+| Inet (`OpenURL`) | **WebRequest**: reads a web API on a timer into your controls; `Fetch(url)` for one-off calls (chapter 19) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
 | Control arrays: `Lamp(3).FillColor`, `Sub Lamp_Click(Index As Integer)` | The same: `f.Lamp(3).FillColor`, `def Lamp_Click(f, index):` (chapter 6) |

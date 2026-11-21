@@ -243,6 +243,29 @@ For a real system, turn on **Settings → Services → Modbus TCP** on the GX, t
 environment variables `GX_HOST` to its address and `GX_PORT` to `502` before starting the
 panel.
 
+## Weather: a web API with no code (WebRequest)
+
+![Weather](../../examples/weather.png)
+
+`examples/weather.json` + `weather.py`, simulator `examples/weather/weather_sim.py`
+
+Current conditions from Open-Meteo, a free weather service that needs no key, read by a
+**WebRequest** every 10 minutes (chapter 19). The Poll list picks values out of the
+reply and Fill puts the temperature on an LCD **SegmentDisplay**, wind and humidity on
+**Gauges**, pressure (converted to inHg in the Poll line) on a reverse LCD, and both
+temperatures on a **Chart**, with no code. The code file turns the weather code into
+words and formats sunrise and sunset. **Alarms** warn of freezing temperatures, high
+gusts, thunderstorms and a stale reading.
+
+```
+python -m panelworks --example weather --mcp none
+```
+
+Set `WEATHER_LAT` and `WEATHER_LON` for your own location (it starts on Nashville).
+Offline, `python -m panelworks --simulator weather` and
+`WEATHER_URL=http://127.0.0.1:5023/v1/forecast` give you a pretend Open-Meteo with a
+cold front passing every six minutes.
+
 ## Copying an example
 
 Copy both files (`.json` and `.py`) to your own folder and open the copy in the

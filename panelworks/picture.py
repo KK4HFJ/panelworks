@@ -142,8 +142,10 @@ class PictureBox(Control):
             try:
                 photo = tk.PhotoImage(master=root, file=full)
             except tk.TclError:
-                raise ValueError(f"{self.Name}: can't read {os.path.basename(full)}. Without Pillow, "
-                                 "PNG and GIF work; for JPEG, pip install pillow") from None
+                from .runtime import install_command
+                raise ValueError(f"{self.Name}: can't read {os.path.basename(full)}. Without the Pillow "
+                                 "library only PNG and GIF work; for JPEG and other formats install it with: "
+                                 + install_command("pillow", "pictures")) from None
             if w and h and (photo.width(), photo.height()) != (int(w), int(h)):
                 nx, mx = _ratio(w / photo.width())
                 ny, my = _ratio(h / photo.height())

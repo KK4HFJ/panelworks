@@ -26,7 +26,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
-HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "Data", "Alarms", "Menu"}
+HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "Alarms", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
 

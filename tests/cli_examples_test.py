@@ -63,7 +63,7 @@ cli.example_form("solar_battery")
 check("PyPI: a second run keeps your copy (and your changes)", os.path.getsize(dest) == mark)
 sims = cli._simulators(bundled)
 check("PyPI: simulators found in the bundled copy",
-      set(sims) == {"power_meter", "rack_status", "solar_battery", "truck_scale"}, sorted(sims))
+      set(sims) == {"power_meter", "rack_status", "solar_battery", "truck_scale", "weather"}, sorted(sims))
 
 # --simulator really runs the script as __main__ with the extra arguments
 fake = os.path.join(bundled, "solar_battery", "gx_sim.py")
