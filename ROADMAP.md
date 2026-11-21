@@ -39,7 +39,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
-- Unreleased: WebRequest (web APIs) and the weather example; clearer missing-library errors.
+- 0.7.0: WebRequest (web APIs) and the weather example; clearer missing-library errors.
 - 0.6.0: SegmentDisplay (LED / LCD seven-segment readouts); control arrays (`Lamp(0)`..., `Lamp_Click(f, index)`, copy/paste, Load/Unload).
 - 0.5.0: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus); --example and --simulator; f.AppPath.
 - 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.

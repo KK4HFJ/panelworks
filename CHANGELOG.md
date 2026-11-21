@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.7.0 (2026-11-22)
 
 **New control**
 - **WebRequest**: reads a web API (JSON) on a timer, like VB's Inet control. Poll lines are paths into the
