@@ -355,11 +355,63 @@ class Designer:
         self.btn_update.bind("<Enter>", lambda e: self.say("A newer PanelWorks is on GitHub: click to see what's new"))
         self._update_info = None                # shown (packed) only when an update exists
 
+    def _build_toolbox_scroller(self):
+        """A left-hand column that scrolls: a Canvas holding the toolbox frame, with a
+        vertical scrollbar shown only when the tools don't fit. Returns the inner frame."""
+        outer = tk.Frame(self.root)
+        outer.pack(side="left", fill="y")
+        canvas = tk.Canvas(outer, highlightthickness=0, bd=0)
+        sb = tk.Scrollbar(outer, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=sb.set)
+        canvas.pack(side="left", fill="y")
+        inner = tk.Frame(canvas, padx=4, pady=4)
+        canvas.create_window(0, 0, window=inner, anchor="nw")
+        self.toolbox_canvas, self.toolbox_scrollbar = canvas, sb
+
+        def refit(_e=None):
+            w, h = inner.winfo_reqwidth(), inner.winfo_reqheight()
+            canvas.configure(width=w, scrollregion=(0, 0, w, h))
+            need = h > canvas.winfo_height() > 1
+            if need and not sb.winfo_ismapped():
+                sb.pack(side="right", fill="y")
+            elif not need and sb.winfo_ismapped():
+                sb.pack_forget()
+                canvas.yview_moveto(0)
+        inner.bind("<Configure>", refit)
+        canvas.bind("<Configure>", refit)
+
+        def wheel(e):
+            if not sb.winfo_ismapped():
+                return
+            if e.num == 4:
+                step = -1
+            elif e.num == 5:
+                step = 1
+            else:                       # Windows: multiples of 120; macOS: small numbers
+                step = -int(e.delta / 120) if abs(e.delta) >= 120 else (-1 if e.delta > 0 else 1)
+            canvas.yview_scroll(step * 2, "units")
+            return "break"
+
+        def enter(_e):
+            for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                self.root.bind_all(seq, wheel)
+
+        def leave(_e):
+            w = self.root.winfo_containing(*self.root.winfo_pointerxy())
+            while w is not None:                # still over a tool button inside the toolbox
+                if w is outer:
+                    return
+                w = w.master
+            for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                self.root.unbind_all(seq)
+        outer.bind("<Enter>", enter)
+        outer.bind("<Leave>", leave)
+        return inner
+
     def _build_layout(self):
         self._build_toolbar()
-        # toolbox
-        tb = tk.Frame(self.root, padx=4, pady=4)
-        tb.pack(side="left", fill="y")
+        # toolbox (scrolls when the window is too short for all the tools)
+        tb = self._build_toolbox_scroller()
         tk.Label(tb, text="Toolbox", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 4))
         for t in ["Pointer"] + VISUAL_ORDER + NONVISUAL_ORDER:
             if t != "Pointer" and t not in CONTROL_TYPES:
@@ -458,7 +510,7 @@ class Designer:
         self.canvas.bind("<Motion>", lambda e: self._status_xy(e.x, e.y))
 
         self.status = tk.Label(self.root, text="", anchor="w", bd=1, relief="sunken")
-        self.status.pack(side="bottom", fill="x", before=tb)          # full-width, under everything
+        self.status.pack(side="bottom", fill="x", before=tb.master.master)          # full-width, under everything
 
         # hidden surface for working out each control type's default properties
         self._scratch = tk.Canvas(self.root)
