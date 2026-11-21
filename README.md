@@ -321,6 +321,17 @@ All visible controls also have Left, Top, Width, Height, Visible, Enabled,
 FontName, FontSize, FontBold, Tag, SetFocus, Refresh; the plain-Tk ones have
 BackColor and ForeColor. Ask the `control_types` tool for the authoritative list.
 
+**Control arrays**, as in VB: copy a control and paste it beside itself (Ctrl+C, Ctrl+V), say
+Yes, and you have `Lamp(0)`, `Lamp(1)`... sharing one procedure:
+
+```python
+def Lamp_Click(f, index):
+    f.Lamp(index).FillColor = "red"
+
+for lamp in f.Lamp:                  # f.Lamp(3), len(f.Lamp), f.Lamp.UBound, f.Lamp.Load(8)
+    lamp.FillColor = "gray"
+```
+
 ## MCP tools
 
 | Tool | Classic RAD equivalent |

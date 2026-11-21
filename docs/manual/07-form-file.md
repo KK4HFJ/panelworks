@@ -45,11 +45,12 @@ complete description.
 
 ## Object entries
 
-Each key in `objects` is the control's Name. Its value has:
+Each key in `objects` is the control's Name. An element of a control array is keyed
+with its index, `"Lamp(0)"`, `"Lamp(1)"`... (chapter 6). Its value has:
 
 | Key | Meaning |
 |---|---|
-| `type` | Required. `Label`, `CommandButton`, `TextBox`, `CheckBox`, `OptionButton`, `ListBox`, `ComboBox`, `Shape`, `ProgressBar`, `Timer`, `MQTT`, `Serial`. |
+| `type` | Required. Any type from chapter 12: `Label`, `CommandButton`, `TextBox`, `Shape`, `Gauge`, `Timer`, `MQTT`, `Serial`, `Modbus`, `Alarms`... |
 | *Property names* | Any settable property, spelt as in chapter 12: `"Caption": "Start"`, `"Left": 15`, `"Enabled": false`. |
 | `subscribe` | Properties that follow MQTT topics (chapter 8). `bind` is accepted as an older spelling. |
 | `publish` | Events that send MQTT messages (chapter 8). |

@@ -18,8 +18,10 @@ import importlib.util
 import gc
 import inspect
 import json
+import keyword
 import os
 import queue
+import re
 import sys
 import threading
 import time
@@ -78,6 +80,108 @@ def free_parked_tk():
 # --------------------------------------------------------------------------
 # Base object: anything with a Name, properties, methods and events
 # --------------------------------------------------------------------------
+# ---- control arrays -------------------------------------------------------------
+# An element of a control array is named like VB's: Lamp(0), Lamp(1)... That is its key in the
+# form file, MCP and connections. In code f.Lamp is the whole array, f.Lamp(3) one element,
+# and one procedure Lamp_Click(f, index, ...) handles them all.
+NAME_PATTERN = r"[A-Za-z_]\w*(?:\(\d+\))?"          # a plain name or an array element
+_ARRAY_NAME = re.compile(r"^([A-Za-z_]\w*)\((\d+)\)$")
+
+
+def split_name(name):
+    """'Lamp(3)' -> ('Lamp', 3); 'Label1' -> ('Label1', None)."""
+    m = _ARRAY_NAME.match(name or "")
+    return (m.group(1), int(m.group(2))) if m else (name, None)
+
+
+def valid_object_name(name):
+    base, _ = split_name(name)
+    return bool(base) and base.isidentifier() and not keyword.iskeyword(base) and base not in ("Form", "Me")
+
+
+class ControlArray:
+    """f.Lamp for a control array: f.Lamp(3) or f.Lamp[3] is one element; for lamp in f.Lamp,
+    len(f.Lamp), f.Lamp.Count / LBound / UBound / Indexes; Load(i) and Unload(i) as in VB."""
+
+    def __init__(self, form, base):
+        self._form, self.Name = form, base
+
+    def _members(self):
+        out = []
+        for n, o in self._form.objects.items():
+            b, i = split_name(n)
+            if b == self.Name and i is not None:
+                out.append((i, o))
+        return sorted(out, key=lambda t: t[0])
+
+    def __call__(self, index):
+        for i, o in self._members():
+            if i == int(index):
+                return o
+        raise IndexError(f"{self.Name}({index}) doesn't exist. Elements: "
+                         + (", ".join(str(i) for i, _ in self._members()) or "none"))
+
+    __getitem__ = __call__
+
+    def __iter__(self):
+        return iter([o for _, o in self._members()])
+
+    def __len__(self):
+        return len(self._members())
+
+    def __repr__(self):
+        return f"<control array {self.Name}: {', '.join(str(i) for i in self.Indexes)}>"
+
+    @property
+    def Count(self): return len(self._members())
+
+    @property
+    def Indexes(self): return [i for i, _ in self._members()]
+
+    @property
+    def LBound(self):
+        m = self._members()
+        return m[0][0] if m else None
+
+    @property
+    def UBound(self):
+        m = self._members()
+        return m[-1][0] if m else None
+
+    def Load(self, index):
+        """VB's Load Lamp(8): a new element copied from the lowest one, hidden until you
+        set Visible = True. Returns it."""
+        index = int(index)
+        name = f"{self.Name}({index})"
+        if name in self._form.objects:
+            raise ValueError(f"{name} already exists")
+        if index < 0:
+            raise ValueError("An index can't be negative")
+        first = self._members()
+        if not first:
+            raise ValueError(f"There's no {self.Name} array to copy from")
+        src = first[0][1]
+        spec = {"type": src.TYPE, **src.persist()}
+        if "Visible" in src.property_names():
+            spec["Visible"] = False
+        o = self._form._add(name, spec)
+        object.__setattr__(o, "_loaded_at_run_time", True)
+        if hasattr(o, "widget") and hasattr(src, "widget"):
+            try:
+                o.widget.lift(src.widget)
+            except Exception:
+                pass
+        return o
+
+    def Unload(self, index):
+        """VB's Unload Lamp(8): removes an element that Load made (not one drawn in the designer)."""
+        o = self(index)
+        if not getattr(o, "_loaded_at_run_time", False):
+            raise ValueError(f"{o.Name} was drawn in the designer; only elements made with Load can be unloaded "
+                             "(set Visible = False to hide it)")
+        self._form.remove_object(o.Name)
+
+
 class VBObject:
     TYPE = "Object"
     EVENTS: tuple = ()
@@ -142,6 +246,11 @@ class VBObject:
 
     def fire(self, event, *args):
         return self._form.fire(self.Name, event, *args)
+
+    def get_Index(self):
+        """The element's number in a control array (Lamp(3) -> 3), or "" if it isn't in one."""
+        i = split_name(self.Name)[1]
+        return "" if i is None else i
 
     def snapshot(self):
         props = {}
@@ -779,6 +888,8 @@ class Form:
         objs = self.__dict__.get("objects", {})
         if name in objs:
             return objs[name]
+        if any(split_name(n)[0] == name and split_name(n)[1] is not None for n in objs):
+            return ControlArray(self, name)
         cls = type(self)
         if hasattr(cls, "get_" + name):
             return getattr(cls, "get_" + name)(self)
@@ -968,8 +1079,15 @@ class Form:
     def _add(self, name, ospec):
         if name in self.objects or name in ("Form", "Me"):
             raise ValueError(f"Object '{name}' already exists")
-        if not name.isidentifier():
-            raise ValueError(f"'{name}' is not a valid object name")
+        if not valid_object_name(name):
+            raise ValueError(f"'{name}' is not a valid object name (letters, digits and _, "
+                             "or an array element like Lamp(3))")
+        base, idx = split_name(name)
+        if idx is None and any(split_name(n)[0] == name and split_name(n)[1] is not None for n in self.objects):
+            raise ValueError(f"'{name}' is a control array here; name this one {name}(n)")
+        if idx is not None and base in self.objects:
+            raise ValueError(f"There's already a single control called {base}; "
+                             f"rename it {base}(0) to make an array")
         typ = ospec.get("type")
         cls = CONTROL_TYPES.get(typ)
         if cls is None:
@@ -1040,7 +1158,8 @@ class Form:
 
     def describe(self):
         def handlers_for(name, events):
-            return [e for e in events if self.code and hasattr(self.code, f"{name}_{e}")]
+            base = split_name(name)[0]
+            return [e for e in events if self.code and hasattr(self.code, f"{base}_{e}")]
         out = {
             "Form": {"type": "Form", "properties": self.snapshot(),
                      "methods": self.method_names(), "events": list(self.EVENTS),
@@ -1064,11 +1183,13 @@ class Form:
             self._events.append(rec)
             self._cond.notify_all()
         result = None
-        handler = getattr(self.code, f"{obj}_{event}", None) if self.code else None
+        base, index = split_name(obj)
+        handler = getattr(self.code, f"{base}_{event}", None) if self.code else None
+        call_args = args if index is None else (index,) + tuple(args)   # arrays: Lamp_Click(f, index, ...)
         if handler is not None:
             try:
                 n = len(inspect.signature(handler).parameters)
-                result = handler(*((self,) + args)[:n])
+                result = handler(*((self,) + tuple(call_args))[:n])
             except Exception as e:
                 traceback.print_exc()
                 rec["error"] = f"{type(e).__name__}: {e}"

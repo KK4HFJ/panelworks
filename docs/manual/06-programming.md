@@ -336,16 +336,79 @@ PanelWorks's own connections (Serial, MQTT, webhooks) already work this way.
 Their events always arrive on the window's thread, so you never need
 `f.post` for them.
 
-## Reaching controls by name (VB's control arrays)
+## Control arrays
 
-`f["name"]` reaches a control by a name built at run time. It does the job
-VB's control arrays did:
+Eight zone lamps, sixteen relay buttons: a **control array** is a row of controls
+that share a name and one set of event procedures, told apart by their **Index**,
+exactly as in VB. The elements are called `Lamp(0)`, `Lamp(1)`, `Lamp(2)`...
+
+**Making one in the designer**, the VB way:
+
+1. Draw a Shape and name it `Lamp`.
+2. Select it, press **Ctrl+C**, then **Ctrl+V**.
+3. PanelWorks asks *"You already have a control named 'Lamp'. Do you want to create a
+   control array?"* Click **Yes**. The first one becomes `Lamp(0)`, the copy `Lamp(1)`.
+4. Press **Ctrl+V** again for `Lamp(2)`, `Lamp(3)`... no more questions. **Ctrl+D**
+   (Duplicate) on an element adds the next one too.
+
+Or set a control's **Index** property to `0` to start an array, and give the next
+control the same name with Index `1`. Clear Index to make an element a single
+control again. If the control already had procedures, making it an array gives them
+the `index` argument and changes `f.Lamp.` to `f.Lamp(0).` in your code.
+
+**One procedure for all of them.** The Code window lists the array once, as `Lamp`.
+Its procedures get the element's index first, then the event's usual arguments:
 
 ```python
-# four lamps called shpZone1 .. shpZone4
-def set_zones(f, states):
-    for i, on in enumerate(states, start=1):
-        f[f"shpZone{i}"].FillColor = "lime green" if on else "gray"
+def Lamp_Click(f, index):
+    f.Lamp(index).FillColor = "red" if f.Lamp(index).FillColor != "red" else "gray"
+    f.lblStatus.Caption = f"Zone {index + 1} toggled"
+
+def txtSet_KeyPress(f, index, key_ascii):    # a TextBox array
+    ...
+```
+
+**In code**, `f.Lamp` is the whole array:
+
+| Code | Means |
+|---|---|
+| `f.Lamp(3)` or `f.Lamp[3]` | element 3 |
+| `for lamp in f.Lamp:` | every element, in index order |
+| `len(f.Lamp)`, `f.Lamp.Count` | how many |
+| `f.Lamp.LBound`, `f.Lamp.UBound` | lowest and highest index |
+| `f.Lamp.Indexes` | the indexes in use, e.g. `[0, 1, 2, 7]` (gaps are allowed) |
+| `f.Lamp(3).Index` | 3 |
+
+```python
+def set_zones(f, states):            # states: [True, False, True, ...]
+    for lamp, on in zip(f.Lamp, states):
+        lamp.FillColor = "lime green" if on else "gray"
+```
+
+**Adding elements while the panel runs**, like VB's `Load Lamp(8)`:
+
+```python
+lamp = f.Lamp.Load(8)          # a copy of the lowest element, hidden
+lamp.Left = f.Lamp(7).Left + 40
+lamp.Visible = True
+...
+f.Lamp.Unload(8)               # remove it again
+```
+
+Only elements made with `Load` can be unloaded; hide a designer-drawn one with
+`Visible = False`. Elements made with `Load` fire the same `Lamp_Click`.
+
+Everywhere else an element is named like that too: `Lamp(3).FillColor` in Fill lines,
+alarm rules, webhook `send` lists and the Immediate window, and `Lamp(3)` in MCP,
+MQTT and the form file.
+
+## Reaching controls by name
+
+`f["name"]` reaches a control by a name built at run time:
+
+```python
+def clear_box(f, n):
+    f[f"txtLine{n}"].Text = ""
 ```
 
 `f.objects` is a dictionary of every control, so you can loop over them all:

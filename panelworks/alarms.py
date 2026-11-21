@@ -41,7 +41,7 @@ OPS = {">": lambda a, b: a > b, ">=": lambda a, b: a >= b, "<": lambda a, b: a <
        "<=": lambda a, b: a <= b, "==": lambda a, b: a == b, "!=": lambda a, b: a != b}
 PRIORITY_COLOURS = {1: "#d32f2f", 2: "#f57c00", 3: "#f9a825"}
 PRIORITY_NAMES = {1: "critical", 2: "high", 3: "low"}
-_RULE = re.compile(r"^\s*([A-Za-z_]\w*)\s*:\s*([A-Za-z_]\w*)\.([\w.]+)\s*(>=|<=|==|!=|>|<)\s*(\S+)(.*)$")
+_RULE = re.compile(r"^\s*([A-Za-z_]\w*)\s*:\s*([A-Za-z_]\w*(?:\(\d+\))?)\.([\w.]+)\s*(>=|<=|==|!=|>|<)\s*(\S+)(.*)$")
 _OPT = re.compile(r"\s(delay|deadband|priority|message)\s*=\s*")
 
 

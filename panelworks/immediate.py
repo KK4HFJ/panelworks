@@ -27,16 +27,17 @@ import tkinter as tk
 from .codeeditor import FONT
 
 HELP = """Type at the running panel, like VB's Immediate window:
-  ? lblStatus.Caption          read a property        (? lblStatus  = all of them)
+  ? lblStatus.Caption          read a property        (? lblStatus  = all of them; Lamp(3) for an array)
   lblStatus.Caption = "Hi"     set a property         (numbers, True/False, "text", [lists])
   lstLog.AddItem("x", 0)       call a method
   cmdStart_Click               fire an event
   cls                          clear      ·  Up/Down: previous lines
 print() in your code shows up here, and so do errors."""
 
-_GET = re.compile(r"^(?:\?|print\b)\s*(?:(?:f|Me)\.)?(\w+)(?:\.(\w+))?\s*$")
-_SET = re.compile(r"^(?:(?:f|Me)\.)?(\w+)\.(\w+)\s*=\s*(.+)$")
-_CALL = re.compile(r"^(?:\?\s*)?(?:(?:f|Me)\.)?(\w+)\.(\w+)\s*\((.*)\)\s*$")
+_OBJ = r"(\w+(?:\(\d+\))?)"                  # lblStatus, or an array element: Lamp(3)
+_GET = re.compile(r"^(?:\?|print\b)\s*(?:(?:f|Me)\.)?" + _OBJ + r"(?:\.(\w+))?\s*$")
+_SET = re.compile(r"^(?:(?:f|Me)\.)?" + _OBJ + r"\.(\w+)\s*=\s*(.+)$")
+_CALL = re.compile(r"^(?:\?\s*)?(?:(?:f|Me)\.)?" + _OBJ + r"\.(\w+)\s*\((.*)\)\s*$")
 _FIRE = re.compile(r"^(\w+)_([A-Za-z]+)\s*(?:\((.*)\))?\s*$")
 
 

@@ -272,11 +272,14 @@ class CodeWindow:
     def goto(self, obj, event):
         """Jump to obj_event, writing a stub into the buffer if it isn't there yet."""
         from .designer import EVENT_ARGS, EVENT_HELP
+        from .runtime import split_name
+        obj = split_name(obj)[0]                  # Lamp(3) -> Lamp: one procedure for the array
         func = f"{obj}_{event}"
         if func not in self._defs():
             extra = self.d.event_args(obj, event) if hasattr(self.d, "event_args") else EVENT_ARGS.get(event)
             args = "f" + (", " + extra if extra else "")
-            what = "the form" if obj == "Form" else obj
+            is_array = hasattr(self.d, "is_array") and self.d.is_array(obj)
+            what = "the form" if obj == "Form" else (f"any {obj} (index says which)" if is_array else obj)
             stub = (f"\n\ndef {func}({args}):\n"
                     f"    # runs when {what} {EVENT_HELP.get(event, event)}\n"
                     f"    pass\n")

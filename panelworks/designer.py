@@ -15,7 +15,7 @@ resize.
   Move:      drag; arrow keys nudge 1 px, Shift+arrow 10 px
   Resize:    drag the black grip at the bottom-right of the selection
   Code:      double-click a control, or an event on the Events tab
-  Keys:      Del delete, Ctrl+D duplicate, Ctrl+Z undo, Ctrl+S save, F5 (or the green Start button) run
+  Keys:      Del delete, Ctrl+C/Ctrl+V copy/paste (a copy beside its original offers a control array), Ctrl+D duplicate, Ctrl+Z undo, Ctrl+S save, F5 (or the green Start button) run
 
 Works alongside Claude: if the open file changes on disk (Claude's save_form,
 another editor), the designer reloads it, asking first if you have unsaved work.
@@ -33,7 +33,7 @@ import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, ttk
 
 from . import __version__
-from .runtime import CONTROL_TYPES
+from .runtime import CONTROL_TYPES, split_name, valid_object_name
 
 try:                                    # the MQTT control is optional (paho-mqtt)
     from . import mqtt as _mqtt  # noqa: F401
@@ -75,7 +75,28 @@ def rename_in_code(text, old, new, events):
 
     - def Old_Event(  -> def New_Event(   only for that control's real events
     - f.Old / f["Old"] / f.obj("Old")      -> the new name (whole words only)
+
+    Turning a single control into an array element (Lamp -> Lamp(0)) also gives its
+    procedures the index argument (Lamp_Click(f) -> Lamp_Click(f, index)) and points
+    f.Lamp at f.Lamp(0). An element leaving or moving inside an array changes nothing:
+    its procedures still serve the rest of the array.
     """
+    obase, oidx = split_name(old)
+    nbase, nidx = split_name(new)
+    if oidx is not None:
+        return text, 0, 0
+    if nidx is not None:
+        procs = refs = 0
+        for ev in events:
+            pat = rf"^(\s*def\s+){re.escape(old)}_{re.escape(ev)}\s*\(\s*(\w+)\s*(,\s*)?"
+            text, n = re.subn(pat, lambda m: f"{m.group(1)}{nbase}_{ev}({m.group(2)}, index"
+                                             + (", " if m.group(3) else ""), text, flags=re.M)
+            procs += n
+        text, n = re.subn(rf"(?<![\w.])f\.{re.escape(old)}\b(?!\s*\()", f"f.{nbase}({nidx})", text)
+        refs += n
+        text, n = re.subn(rf"""(\bf\[|\.obj\()(["']){re.escape(old)}\2""", rf"\g<1>\g<2>{new}\g<2>", text)
+        refs += n
+        return text, procs, refs
     procs = refs = 0
     for ev in events:
         text, n = re.subn(rf"^(\s*def\s+){re.escape(old)}_{re.escape(ev)}(\s*\()",
@@ -281,6 +302,8 @@ class Designer:
         m.add_cascade(label="File", menu=f)
         e = tk.Menu(m, tearoff=0)
         e.add_command(label="Undo", accelerator="Ctrl+Z", command=self.undo)
+        e.add_command(label="Copy", accelerator="Ctrl+C", command=self.copy_selected)
+        e.add_command(label="Paste", accelerator="Ctrl+V", command=self.paste)
         e.add_command(label="Duplicate", accelerator="Ctrl+D", command=self.duplicate_selected)
         e.add_command(label="Delete", accelerator="Del", command=self.delete_selected)
         e.add_separator()
@@ -530,7 +553,8 @@ class Designer:
         r.bind("<F5>", lambda e: self.run_form())
         r.bind("<F7>", lambda e: self.show_code())
         for seq, fn in (("<Delete>", self.delete_selected), ("<Control-z>", self.undo),
-                        ("<Control-d>", self.duplicate_selected)):
+                        ("<Control-d>", self.duplicate_selected), ("<Control-c>", self.copy_selected),
+                        ("<Control-v>", self.paste)):
             r.bind(seq, lambda e, fn=fn: None if self._typing() else fn())
         for key, dx, dy in (("Left", -1, 0), ("Right", 1, 0), ("Up", 0, -1), ("Down", 0, 1)):
             r.bind(f"<{key}>", lambda e, dx=dx, dy=dy: None if self._typing() else self.nudge(dx, dy))
@@ -855,8 +879,27 @@ class Designer:
         return [e["name"] for e in tree_to_flat(self.extras.get("menu")) if e["name"] and e["caption"] != "-"]
 
     def code_objects(self):
-        """Controls and menu items: everything that can have event procedures."""
-        return list(self.order) + self.menu_names()
+        """Controls and menu items: everything that can have event procedures. A control
+        array is listed once, by its name (Lamp), since one procedure serves every element."""
+        out = []
+        for n in self.order:
+            base = split_name(n)[0]
+            if base not in out:
+                out.append(base)
+        return out + self.menu_names()
+
+    def _array_member(self, name):
+        """The first element of control array `name` (or `name` itself if it's a control)."""
+        if name in self.host.objects:
+            return self.host.objects[name]
+        for n in self.order:
+            if split_name(n)[0] == name and split_name(n)[1] is not None:
+                return self.host.objects[n]
+        return None
+
+    def is_array(self, name):
+        base = split_name(name)[0]
+        return any(split_name(n)[0] == base and split_name(n)[1] is not None for n in self.host.objects)
 
     def _draw_menustrip(self):
         from .menus import split_caption
@@ -1383,9 +1426,9 @@ class Designer:
             i += 1
         return f"{prefix}{i}"
 
-    def add_object(self, typ, left=None, top=None, width=None, height=None, props=None):
+    def add_object(self, typ, left=None, top=None, width=None, height=None, props=None, name=None):
         self._checkpoint()
-        name = self.unique_name(typ)
+        name = name or self.unique_name(typ)
         ospec = {"type": typ}
         cls = CONTROL_TYPES[typ]
         if typ not in NONVISUAL_ORDER:
@@ -1530,12 +1573,79 @@ class Designer:
         for k in ("Left", "Top", "Width", "Height"):
             spec.pop(k, None) if typ in NONVISUAL_ORDER else None
         caption_was_name = spec.get("Caption") == n
+        base, idx = split_name(n)
         new = self.add_object(typ, spec.pop("Left", None), spec.pop("Top", None),
-                              spec.pop("Width", None), spec.pop("Height", None), props=spec)
+                              spec.pop("Width", None), spec.pop("Height", None), props=spec,
+                              name=self.next_element(base) if idx is not None else None)
         if caption_was_name:
             self.host.objects[new].set("Caption", new)
             self.refresh_panels()
         return new
+
+    def next_element(self, base):
+        """The next free element name of control array base: Lamp(3) after Lamp(0..2)."""
+        used = [split_name(k)[1] for k in self.host.objects if split_name(k)[0] == base]
+        used = [i for i in used if i is not None]
+        return f"{base}({max(used) + 1 if used else 0})"
+
+    def copy_selected(self):
+        """Edit > Copy: remember the selected controls (with their properties) for Paste."""
+        names = [n for n in self.sel_names() if n != "Form" and n in self.host.objects]
+        if not names:
+            return
+        objs = self.build_spec()["objects"]
+        self._clip = [(n, json.loads(json.dumps(objs[n]))) for n in names]
+        self.say(f"Copied {', '.join(names)}. Ctrl+V pastes"
+                 + (": pasting a copy beside its original offers to make a control array." if len(names) == 1 else "."))
+
+    def _ask_array(self, name):
+        return messagebox.askyesnocancel(
+            "Control array", f"You already have a control named '{name}'.\n\n"
+            "Do you want to create a control array?\n\nYes: they become "
+            f"{name}(0) and {name}(1), sharing one {name}_Click(f, index).\n"
+            "No: the copy gets a name of its own.", parent=self.root)
+
+    def paste(self):
+        """Edit > Paste, as in VB: pasting a copy of Lamp next to Lamp asks whether to make
+        a control array; copies of an array element join the array with the next index."""
+        clip = getattr(self, "_clip", None)
+        if not clip:
+            self.say("Nothing to paste: select a control and press Ctrl+C first.")
+            return None
+        news = []
+        for name, spec in clip:
+            spec = json.loads(json.dumps(spec))
+            typ = spec.pop("type")
+            base, idx = split_name(name)
+            if self.is_array(base):                 # the array exists (made by an earlier paste): join it
+                new_name = self.next_element(base)
+            elif name in self.host.objects:
+                ans = self._ask_array(name)
+                if ans is None:
+                    return None
+                if ans:
+                    self.rename(name, f"{name}(0)")
+                    new_name = f"{name}(1)"
+                else:
+                    new_name = None
+            elif base in self.host.objects or (idx is None and self.is_array(base)):
+                new_name = None
+            else:
+                new_name = name                     # pasted into another form: keep its name
+            if typ not in NONVISUAL_ORDER:
+                for g in ("Left", "Top"):
+                    spec[g] = spec.get(g, 20) + 10
+            else:
+                for k in ("Left", "Top", "Width", "Height"):
+                    spec.pop(k, None)
+            if spec.get("Caption") == name and new_name:
+                spec["Caption"] = new_name
+            news.append(self.add_object(typ, spec.pop("Left", None), spec.pop("Top", None),
+                                        spec.pop("Width", None), spec.pop("Height", None), props=spec,
+                                        name=new_name))
+        if len(news) > 1:
+            self.select_many(news)
+        return news[0] if len(news) == 1 else news
 
     def _restack(self, front):
         n = self.selected
@@ -1683,8 +1793,8 @@ class Designer:
         for p in sorted(snap_):
             if p in GEOMETRY or p in HIDDEN_PROPS:
                 continue
-            rows.append((p, snap_[p], not hasattr(type(o), "set_" + p)
-                         or p in getattr(type(o), "RUNTIME_ONLY", ())))
+            rows.append((p, snap_[p], p != "Index" and (not hasattr(type(o), "set_" + p)
+                                                        or p in getattr(type(o), "RUNTIME_ONLY", ()))))
         return rows
 
     # -------------------------------------------------------- property editor
@@ -1756,11 +1866,12 @@ class Designer:
 
     def event_args(self, name, ev):
         """The arguments an event handler receives after f, e.g. "x, y" for a PictureBox Click."""
-        o = self.host.objects.get(name) if hasattr(self, "host") else None
+        o = self._array_member(split_name(name)[0]) if hasattr(self, "host") else None
         own = getattr(type(o), "EVENT_ARGS", None) if o is not None else None
-        if own and ev in own:
-            return own[ev]
-        return EVENT_ARGS.get(ev)
+        args = own[ev] if own and ev in own else EVENT_ARGS.get(ev)
+        if hasattr(self, "host") and self.is_array(name):
+            return "index" + (", " + args if args else "")
+        return args
 
     def _pick_picture(self, entry):
         start = os.path.dirname(os.path.abspath(self.path)) if self.path else self._start_dir()
@@ -1799,6 +1910,13 @@ class Designer:
                 return
             if prop == "Name":
                 self.rename(n, str(raw).strip())
+                return
+            if prop == "Index":                    # VB: setting Index makes (or leaves) an array
+                base = split_name(n)[0]
+                raw = str(raw).strip()
+                if raw and not raw.isdigit():
+                    raise ValueError("Index is a whole number (0, 1, 2...), or empty for no array")
+                self.rename(n, f"{base}({int(raw)})" if raw else base)
                 return
             o = self.host.objects[n]
             value = coerce(o.get(prop), raw) if isinstance(raw, str) else raw
@@ -1847,8 +1965,16 @@ class Designer:
     def rename(self, old, new):
         if new == old:
             return
-        if not new.isidentifier() or new in ("Form", "Me") or new in self.host.objects:
-            raise ValueError(f"'{new}' must be a new, valid name (letters, digits, _; not starting with a digit)")
+        if not valid_object_name(new) or new in self.host.objects:
+            raise ValueError(f"'{new}' must be a new, valid name: letters, digits and _, not starting "
+                             "with a digit, or an array element like Lamp(3)")
+        nbase, nidx = split_name(new)
+        others = [k for k in self.host.objects if k != old]
+        if nidx is None and any(split_name(k)[0] == new and split_name(k)[1] is not None for k in others):
+            raise ValueError(f"{new} is a control array on this form: call this one {new}(n) to join it")
+        if nidx is not None and nbase in others:
+            raise ValueError(f"There's already a single control called {nbase}. Rename it {nbase}(0) first "
+                             "(or set its Index to 0) to make an array")
         events = set(self._events_for(old)) | {"WebhookResponse", "WebhookError"}
         self._checkpoint(include_code=True)
         spec = self.build_spec()
@@ -1957,7 +2083,7 @@ class Designer:
             return ev
         if n in self.menu_names():
             return ["Click"]
-        o = self.host.objects[n]
+        o = self._array_member(split_name(n)[0]) or self.host.objects[n]
         ev = list(o.EVENTS)
         if o._webhook:
             ev += ["WebhookResponse", "WebhookError"]
@@ -2042,6 +2168,7 @@ class Designer:
         """Make sure n_ev exists (writing a stub if needed) and show it: in the built-in
         code window normally, in an outside editor if PANELWORKS_EDITOR is set, or just
         written to the file when launch_editor is False (scripts and tests)."""
+        n = split_name(n)[0]                     # Lamp(3) -> Lamp: one procedure for the array
         cw = self.code_window(create=False)
         prefer_outside = bool(os.environ.get("PANELWORKS_EDITOR")) or self.settings["editor_default"]
         if launch_editor and not prefer_outside or cw:
@@ -2070,7 +2197,7 @@ class Designer:
         if not m:
             extra = self.event_args(n, ev)
             args = "f" + (", " + extra if extra else "")
-            what = "the form" if n == "Form" else n
+            what = "the form" if n == "Form" else (f"any {n} (index says which)" if self.is_array(n) else n)
             stub = (f"\n\ndef {func}({args}):\n"
                     f"    # runs when {what} {EVENT_HELP.get(ev, ev)}\n"
                     f"    pass\n")

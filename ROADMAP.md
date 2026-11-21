@@ -20,7 +20,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 - **Tab order** editor.
 - **Alignment guides** while dragging.
-- **Control arrays**: copy/paste as `Lamp(0..7)` with one shared handler.
 - **New from template**: blank, MQTT monitor, serial bench, gauge panel.
 - **Dark theme** for the designer and panels.
 
@@ -42,6 +41,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
+- Unreleased: control arrays (`Lamp(0)`..., `Lamp_Click(f, index)`, copy/paste, Load/Unload).
 - 0.5.0: Alarms and AlarmPanel; solar_battery example (Victron GX over Modbus); --example and --simulator; f.AppPath.
 - 0.4.2: on PyPI (`pip install panelworks`), published automatically on release.
 - 0.4.1: scrollable toolbox.

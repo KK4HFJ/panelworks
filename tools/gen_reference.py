@@ -14,6 +14,7 @@ sys.path.insert(0, ROOT)
 from panelworks.runtime import CONTROL_TYPES, Form  # noqa: E402
 
 COMMON = {
+    "Index": "Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only.",
     "Left": "Distance from the form's left edge, in pixels.",
     "Top": "Distance from the form's top edge, in pixels.",
     "Width": "Width in pixels.",
@@ -481,6 +482,8 @@ Properties marked read-only are still shown in the designer, greyed out.
 
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
+
+**Every control** has **Index**, its number in a control array (chapter 6).
 
 **All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag

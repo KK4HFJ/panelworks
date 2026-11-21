@@ -51,7 +51,9 @@ chapter translates the rest.
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
-| Control arrays (`Lamp(3)`) | Names with numbers and `f[f"Lamp{i}"]` (chapter 6) |
+| Control arrays: `Lamp(3).FillColor`, `Sub Lamp_Click(Index As Integer)` | The same: `f.Lamp(3).FillColor`, `def Lamp_Click(f, index):` (chapter 6) |
+| `Load Lamp(8)` / `Unload Lamp(8)` | `f.Lamp.Load(8)` / `f.Lamp.Unload(8)` |
+| `Lamp.UBound`, `Lamp.Count` | `f.Lamp.UBound`, `f.Lamp.Count`, `len(f.Lamp)` |
 | Menu Editor, `mnuFile_Click` | The same: Tools → Menu Editor (Ctrl+E) |
 | File → Make Project.exe | File → Make EXE (one file, no runtime to install) |
 | PictureBox (Picture, Line, Circle, PSet, Print, Cls, Scale) | **PictureBox**: the same methods, plus Polygon and PaintPicture |

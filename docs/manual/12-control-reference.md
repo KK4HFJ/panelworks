@@ -13,6 +13,8 @@ Properties marked read-only are still shown in the designer, greyed out.
 Event procedures may take fewer arguments than listed: `def cmdGo_Click(f):`
 and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`.
 
+**Every control** has **Index**, its number in a control array (chapter 6).
+
 **All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, Data and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
 and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
@@ -70,6 +72,7 @@ Text the user can't edit: captions, readings, status lines.
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -106,6 +109,7 @@ A push button.
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -143,6 +147,7 @@ A one-line text entry box.
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Locked | read/write | True: read-only, but the text can still be selected and copied. |
 | PasswordChar | read/write | Show this character instead of what's typed, e.g. `*`. Empty for normal text. |
@@ -186,6 +191,7 @@ An on/off box with a caption.
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -223,6 +229,7 @@ A radio button. Buttons with the same Group are mutually exclusive.
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Group | read/write | Group name. Buttons sharing a group act as one set. Left as `default`, buttons inside a Frame use the frame's name, so each frame is its own set. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -258,6 +265,7 @@ A scrolling list; the user picks one item.
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | List | read/write | All items, as a list of strings. Setting it replaces them. |
 | ListCount | read-only | Number of items. Read-only. |
@@ -298,6 +306,7 @@ A drop-down list the user can also type into.
 | FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
 | FontSize | read/write | Font size in points. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | List | read/write | The drop-down items. |
 | ListCount | read-only | Number of items. Read-only. |
@@ -340,6 +349,7 @@ A captioned box that groups controls, like VB's Frame. Anything drawn inside its
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -374,6 +384,7 @@ A rectangle or circle. Most often an indicator lamp.
 | FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
 | FontSize | read/write | Font size in points. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Shape | read/write | `Oval` or `Rectangle`. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
@@ -407,6 +418,7 @@ A horizontal bar showing a value from 0 to Max. Good for tank levels and progres
 | FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
 | FontSize | read/write | Font size in points. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Max | read/write | The value that fills the bar. Default 100. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
@@ -437,6 +449,7 @@ Drag to set a value, like VB's Slider: a setpoint, a speed, a dimmer. Value is a
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Text colour: a name or `#rrggbb`. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LargeChange | read/write | How far a click in the trough moves it (0 = SmallChange). |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Max | read/write | The value at the right (or bottom). |
@@ -481,6 +494,7 @@ A ready-made dial: set Value and the needle moves. Coloured Zones mark warning a
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Colour of the numbers, ticks and text. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Interactive | read/write | True: drag the needle to set Value (a knob). Also works by tapping in the phone view. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | MajorTicks | read/write | How many numbered divisions round the scale (default 5). |
@@ -533,6 +547,7 @@ A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) wit
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Default colour for Line, Circle, PSet, Polygon and Print when you don't give one. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Picture | read/write | Picture file shown behind the drawing, relative to the form's folder (`gauges/logo.png`). PNG and GIF always work; JPEG needs Pillow (`pip install pillow`). |
 | ScaleHeight | read/write | Your units down the box. 0: pixels. Negative makes y point up (ScaleTop 100, ScaleHeight -200: y from 100 at the top to -100 at the bottom), handy for gauges and graphs. |
@@ -591,6 +606,7 @@ A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) a
 | ForeColor | read/write | Colour of the title and axis text. |
 | GridLines | read/write | Horizontal grid lines. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | LineWidth | read/write | Line thickness in pixels. |
 | Series | read/write | Line names, one per line in the designer (also the legend). Default `Value`. |
@@ -638,6 +654,7 @@ A table of rows and columns (VB's DBGrid). Set DataSource to a Data control to s
 | FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
 | FontSize | read/write | Font size in points. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Row | read/write | Index of the selected row (0 = first), or -1. Setting it selects and scrolls to that row. |
 | RowCount | read-only | Number of rows. Read-only. |
@@ -674,6 +691,7 @@ Invisible. Fires its Timer event every Interval milliseconds while Enabled.
 | Property | Access | Description |
 |---|---|---|
 | Enabled | read/write | True runs the timer. Default False, so set it in the designer or Form_Load. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Interval | read/write | Milliseconds between ticks. 0 stops it. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 
@@ -696,6 +714,7 @@ Invisible MQTT client for code: subscribe in Form_Load or the Subscriptions prop
 | CAFile | read/write | CA certificate file for private or self-signed brokers. Empty uses the system's trusted roots. |
 | ClientID | read/write | MQTT client id. Empty picks a random one. |
 | Connected | read-only | True while connected. Read-only. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LastError | read-only | The last connection error, or empty. Read-only. |
 | Password | read/write | Broker password. Use `${VAR}` to keep it out of the file. |
 | Port | read/write | Broker port. 0 means 1883 (8883 with TLS). `${VAR:-8883}` allowed. |
@@ -738,6 +757,7 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | Encoding | read/write | Text encoding. Default `utf-8`; `latin-1` for raw 8-bit data. |
 | Fill | read/write | Lines like `temp -> lblTemp.Caption`. Fields of incoming JSON lines (or `key=value` lines) are copied to those properties. |
 | InBufferCount | read-only | Characters waiting in Input. Read-only. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Input | read-only | Everything received since Input was last read; reading clears it. Read-only. |
 | LastError | read-only | The last error, or empty. Read-only. |
 | Line | read-only | The last complete line received. Read-only. |
@@ -782,6 +802,7 @@ A Modbus TCP or RTU master: poll registers and coils into named values, write th
 | Connected | run time | True while the device answers. Set False/True to close/open. |
 | Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `volts -> gauVolts.Value`. |
 | Host | read/write | TCP: the device's IP address or name. `${METER_HOST}` reads an environment variable. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LastError | read-only | The last problem, or empty. Read-only. |
 | Mode | read/write | TCP (Ethernet) or RTU (serial, RS-485). |
 | Poll | read/write | What to read, one per line: `name = what [*scale] [/divisor] [+offset]`. Each poll fires DataArrival with a dict of these names. |
@@ -831,6 +852,7 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 | Connected | run time | True while the device answers. Set False/True to close/open. |
 | Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `volts -> gauVolts.Value`. |
 | Host | read/write | The device's IP address or name. `${UPS_HOST}` reads an environment variable. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LastError | read-only | The last problem, or empty. Read-only. |
 | Poll | read/write | What to read, one per line: `name = what [*scale] [/divisor] [+offset]`. Each poll fires DataArrival with a dict of these names. |
 | PollInterval | read/write | Milliseconds between polls (0 = only when you call PollNow). |
@@ -880,6 +902,7 @@ Invisible SQLite database beside the form (VB's Data control), with no-code logg
 |---|---|---|
 | Columns | read-only | Column names from the last RecordSource query. Read-only. |
 | DatabaseName | read/write | The database file. Empty: `<form name>.db` next to the form. A relative name is relative to the form's folder. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LastError | read-only | The last error, or empty. Read-only. |
 | LogEvery | read/write | Seconds between automatic rows (0 = only when Log() is called). |
 | LogFields | read/write | What a logged row holds, one per line: `column = Object.Property`, e.g. `level = barLevel.Value`. Columns are created automatically. |
@@ -923,6 +946,7 @@ Invisible alarm manager: limits on any value, with delay, deadband, priorities, 
 | HighestPriority | read-only | The most important priority listed: 1, 2, 3, or 0 for none. Read-only. |
 | History | read-only | What happened, newest first: `time  ALARM|CLEAR|ACK  name  message (value)`. Read-only. |
 | HistoryMax | read/write | How many History lines to keep (default 200). |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Interval | read/write | Milliseconds between checks of every rule (0 = only when you call Check). |
 | LastError | read-only | The last problem (a rule naming a missing control, a Telegram failure), or empty. Read-only. |
 | LastJson | read-only | The last change as JSON: name, state, message, value, priority, time. This is what MQTT publish sends. Read-only. |
@@ -968,6 +992,7 @@ The alarm list of an Alarms control: priority colour, time, name, message and va
 | FontSize | read/write | Font size in points. |
 | ForeColor | read/write | Colour of the header text. |
 | Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Source | read/write | The Alarms control to show. Empty = the form's only (or first) one. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |

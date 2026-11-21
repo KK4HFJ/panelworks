@@ -2,6 +2,19 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**Control arrays**, as in VB
+- Elements are named `Lamp(0)`, `Lamp(1)`... and share one procedure, `Lamp_Click(f, index)`, with the
+  index before the event's own arguments. In code `f.Lamp` is the array: `f.Lamp(3)`, `for lamp in f.Lamp`,
+  `len()`, `Count`, `LBound`, `UBound`, `Indexes`, and `Load(i)` / `Unload(i)` at run time.
+- Designer: **Edit > Copy / Paste** (Ctrl+C, Ctrl+V); pasting a copy beside its original asks to make a
+  control array, as VB did. Duplicate on an element adds the next index. Every control has an **Index**
+  property; setting it makes or leaves an array. The Code window lists an array once. Making an array
+  gives existing procedures the `index` argument and points `f.Lamp.` at `f.Lamp(0).`.
+- Elements work everywhere a name does: Fill lines, alarm rules, webhook fields, the Immediate window
+  (`? Lamp(3).FillColor`), MCP, MQTT, the phone view and the form file.
+
 ## 0.5.0 (2026-11-21)
 
 **New controls**

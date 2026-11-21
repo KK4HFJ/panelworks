@@ -39,6 +39,9 @@ instead of drawing again.
   corner to resize the form.
 - **Arrow keys** nudge 1 pixel; **Shift+arrows** nudge 10.
 - **Del** deletes the selected control; **Ctrl+D** duplicates it.
+- **Ctrl+C** and **Ctrl+V** copy and paste. Pasting a copy of a control on the same form
+  asks whether to make a **control array** (`Lamp(0)`, `Lamp(1)`...), as VB did; see
+  chapter 6.
 - **Edit → Bring to front / Send to back** changes which control is on top
   where they overlap.
 - **Ctrl+Z** undoes, up to 50 steps, including deletes, moves, renames and
@@ -311,6 +314,7 @@ variable, if set, still overrides the editor setting.
 | Ctrl+, | Preferences |
 | Ctrl+E | Menu Editor |
 | Ctrl+Z | Undo |
+| Ctrl+C / Ctrl+V | Copy / paste the selected control(s); pasting beside the original offers a control array |
 | Ctrl+D | Duplicate the selected control(s) |
 | Del | Delete the selected control(s) |
 | Ctrl+A | Select all controls |
