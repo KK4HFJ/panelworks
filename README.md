@@ -6,6 +6,9 @@ real Tkinter desktop window. Every object is live-addressable, by agents over
 draw new controls while the app runs), by devices over **MQTT** (subscribe
 properties to topics, publish on events, mirror the whole form) and by
 automations over **webhooks** (an n8n workflow can be an event procedure).
+Hardware comes in over **Serial** (USB auto-detect, auto-reconnect), readings go
+into live **Charts** and a **Data** control that logs to SQLite and fills a **Grid**,
+and any running panel can be opened on a **phone** in the browser.
 
 **📖 [The PanelWorks Manual](docs/manual/README.md)**: installing, a click-by-click
 first panel, the designer, programming, MQTT, serial, n8n, Claude, and the full control
@@ -36,8 +39,15 @@ panelworks/runtime.py      <- controls, Form, event dispatch, thread bridge
 panelworks/mcp_bridge.py   <- MCP server, single-instance lock and relay
 panelworks/mqtt.py         <- MQTT control, subscribe / publish / mirror
 panelworks/webhooks.py     <- HTTP webhooks (n8n): events out, replies drive the form
+panelworks/serialport.py   <- Serial control (the MSComm replacement)
+panelworks/chart.py        <- Chart control: live strip chart, several series
+panelworks/data.py         <- Data control (SQLite logging) and Grid
+panelworks/menus.py        <- panel menu bars and the Menu Editor's model
+panelworks/webview.py      <- phone view: a running panel as a web page
 panelworks/designer.py     <- the visual form designer
 panelworks/codeeditor.py   <- its built-in Code window
+panelworks/immediate.py    <- the Immediate window
+panelworks/make_exe.py     <- File > Make EXE (PyInstaller)
 panelworks/cli.py          <- the `panelworks` command
 ```
 
@@ -108,6 +118,9 @@ Claude Code over HTTP: start with the default `--mcp http`, then
 ## Designer: draw forms without writing JSON
 
 ![PanelWorks Designer](docs/designer.png)
+
+*The truck scale example open in the designer: a Chart, a Frame, a Grid, a panel menu
+bar, and Serial and Data controls in the tray. The Data control `datTickets` is selected.*
 
 **Desktop shortcut (Windows), no console window:** right-click the desktop, then
 New > Shortcut, with the location
@@ -505,6 +518,65 @@ panelworks examples/n8n_demo.json
 
 For Claude Desktop, put the variable in the server's `"env"` block:
 `"env": {"N8N_WEBHOOK_BASE": "https://your-n8n/webhook/"}`.
+
+## Charts, logging and grids: Chart, Data, Grid
+
+A **Chart** plots readings over time. Setting `Value` adds a point; `AddPoint(value, "series")`
+feeds one of several lines. Set **Window** (seconds shown), or turn **AutoScale** off and set
+**YMin**/**YMax** for a fixed scale. Often it needs no code: subscribe its `Value` to an MQTT
+topic, or point a Serial `Fill` line at it.
+
+A **Data** control sits in the tray and is a SQLite database beside your form
+(`<form>.db` unless you set **DatabaseName**). For logging with no code, list what a row
+holds in **LogFields** and set **LogEvery** in seconds:
+
+```
+level = barLevel.Value
+pump = shpPump.FillColor
+```
+
+That logs a timestamped row every LogEvery seconds; columns are created for you. Draw a
+**Grid**, set its **DataSource** to the Data control, and it shows the newest rows
+(**RecordSource** is the query it runs) and updates as rows are logged. In code:
+
+```python
+def cmdOut_Click(f):
+    f.datTickets.Log({"plate": plate, "gross": gross, "tare": tare, "net": gross - tare})
+
+def datTickets_Logged(f, row):
+    f.lblLast.Caption = f"Ticket #{row['id']} at {row['time']}"
+
+def cmdToday_Click(f):
+    rows = f.datLog.Query("SELECT AVG(level) AS avg FROM log WHERE time >= date('now','localtime')")
+
+def mnuFileExport_Click(f):
+    f.MsgBox(f"Saved {f.datTickets.ExportCSV()}")    # opens in Excel / LibreOffice
+```
+
+`Execute(sql, params)` runs anything else. The `.db` file opens in any SQLite tool, and
+n8n's SQLite node can read it. A Grid can also be filled by hand: `Columns`, `AddRow(...)`,
+`Clear()`, `Cell(row, col)`. A built program (Make EXE) keeps its database beside the `.exe`.
+
+`examples/truck_scale.*` uses all three: the platform weight on a fixed-scale Chart, trucks
+on the yard and finished tickets in two Data tables, and the tickets in a Grid. Its
+`truck_scale/scale_sim.py` simulates the scale, so you can try it without one.
+
+## Phone view
+
+Any running panel can be opened on a phone, laid out automatically for a narrow screen:
+labels paired with their values, frames as cards, live charts, the menu as a list.
+Turn it on with **Tools → Phone View** in the designer, or from the command line:
+
+```
+panelworks examples/truck_scale.json --web 8080 --pin 4821            # full control
+panelworks examples/hvac_console.json --web 8080 --pin 4821 --readonly
+```
+
+Then browse to `http://<pc-address>:8080`. It's PIN-protected, with a lockout after
+wrong guesses. `--readonly` shows everything and lets nothing be pressed. A menu item
+can be kept off the phone with its **On phone** box in the Menu Editor (File → Exit,
+for instance). Away from home, reach it over Tailscale or a VPN, not an open port.
+See [chapter 16](docs/manual/16-phone-view.md).
 
 ## Example: HVAC console (real devices, MQTT over TLS)
 
