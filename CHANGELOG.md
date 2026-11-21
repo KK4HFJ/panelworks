@@ -16,7 +16,7 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
   `upsEstimatedMinutesRemaining`), Fill, Get/Walk/Set, and a `Trap(source, values)` event.
 - Both poll in the background, reconnect by themselves, fire `DataArrival(values)`, and publish their values as
   JSON to MQTT. Host, communities and keys accept `${ENVIRONMENT}` variables.
-- New examples with simulators: `power_meter` (Modbus) and `rack_status` (SNMP, needs `pip install snmpsim`).
+- New examples with simulators: `power_meter` (Modbus) and `rack_status` (SNMP, needs `pip install snmpsim pysmi`).
 - Install extras: `[modbus]`, `[snmp]`, `[pictures]` (Pillow), `[all]`.
 
 **Fixes**

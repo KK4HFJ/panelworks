@@ -192,8 +192,9 @@ d.open_form(d.path)
 d.select("lblRoom")
 r.update()
 time.sleep(0.3)
-os.system(f"import -window root {os.path.join(work, 'designer.png')} 2>/dev/null")
-shutil.copy(os.path.join(work, "designer.png"), "/tmp/designer_full.png")
+if "--shot" in sys.argv:                     # needs ImageMagick's import
+    os.system(f"import -window root {os.path.join(work, 'designer.png')} 2>/dev/null")
+    shutil.copy(os.path.join(work, "designer.png"), "/tmp/designer_full.png")
 
 d.dirty = False
 d.root.destroy()

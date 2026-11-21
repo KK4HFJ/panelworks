@@ -38,8 +38,11 @@ check("File > Make EXE builds the program into dist/", exe and os.path.exists(ex
       d._exe_dialog["res"])
 d.dirty = False; d.root.destroy()
 env = {"DISPLAY": os.environ.get("DISPLAY", ":99"), "PATH": "/usr/bin:/bin", "HOME": tempfile.mkdtemp()}
+if os.environ.get("XAUTHORITY"):              # xvfb-run (CI) protects its display with a cookie file
+    env["XAUTHORITY"] = os.environ["XAUTHORITY"]
 r = subprocess.run([exe], env=env, cwd="/", timeout=60, capture_output=True, text=True)
-check("the program runs without Python or PanelWorks installed", r.returncode == 0, r.stderr[-300:])
+check("the program runs without Python or PanelWorks installed", r.returncode == 0,
+      "" if r.returncode == 0 else "\n" + r.stderr[-1500:])
 proof = json.load(open(os.path.join(T, "dist", "proof.json")))
 check("its second form and its code's imports work", proof == {"caption": "mean 3", "settings": "settings loaded"}, proof)
 rows = sqlite3.connect(os.path.join(T, "dist", "Main.db")).execute("select note from log").fetchall()

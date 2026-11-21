@@ -1,4 +1,4 @@
-"""SNMP control against snmpsim (pip install snmpsim).   DISPLAY=:99 python tests/snmp_test.py"""
+"""SNMP control against snmpsim (pip install snmpsim pysmi).   DISPLAY=:99 python tests/snmp_test.py"""
 import asyncio, os, shutil, socket, subprocess, sys, tempfile, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -21,7 +21,7 @@ check("labels back", oid_label("1.3.6.1.2.1.2.2.1.2.3") == "ifDescr.3" and oid_l
 # ---------------- live, against snmpsim with the rack_status example's data
 exe = shutil.which("snmpsim-command-responder") or os.path.join(os.path.dirname(sys.executable), "snmpsim-command-responder")
 if not os.path.exists(exe):
-    print("SKIP  live checks: snmpsim isn't installed (pip install snmpsim)")
+    print("SKIP  live checks: snmpsim isn't installed (pip install snmpsim pysmi)")
     print("ALL PASS" if ok else "SOME CHECKS FAILED")
     sys.exit(0)
 def free_udp():
@@ -36,8 +36,14 @@ for fn in ("public.snmprec", "private.snmprec"):
 cmd = [exe, f"--data-dir={data}", f"--agent-udpv4-endpoint=127.0.0.1:{port}", f"--cache-dir={cache}"]
 if hasattr(os, "geteuid") and os.geteuid() == 0:            # snmpsim refuses to run as root
     cmd += ["--process-user=nobody", "--process-group=nogroup"]
-agent = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+agent_log = tempfile.TemporaryFile()
+agent = subprocess.Popen(cmd, stdout=agent_log, stderr=subprocess.STDOUT)
 time.sleep(4)
+if agent.poll() is not None:                 # it died: say why (often: pip install pysmi)
+    agent_log.seek(0)
+    print("FAIL  snmpsim agent didn't start:\n" + agent_log.read().decode(errors="replace")[-1500:])
+    print("SOME CHECKS FAILED")
+    sys.exit(1)
 
 from panelworks.runtime import Form
 f = Form({"name": "R", "width": 300, "height": 200, "objects": {

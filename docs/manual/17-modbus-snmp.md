@@ -249,7 +249,7 @@ the firewall. Traps must use **TrapCommunity** (default `public`), or the v3 Use
 ### Try it without a device
 
 ```
-pip install snmpsim
+pip install snmpsim pysmi
 python examples\rack_status\agent_sim.py           (a pretend UPS, PDU and switch on UDP 1161)
 python -m panelworks examples\rack_status.json --mcp none
 python examples\rack_status\agent_sim.py --trap    (in a third window: send an "on battery" trap)

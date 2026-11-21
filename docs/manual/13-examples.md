@@ -194,7 +194,7 @@ python -m panelworks examples\power_meter.json --mcp none
 
 A UPS, a PDU and a switch over SNMP. Gauges show battery runtime and load; lamps show
 mains or battery and three switch ports, named from the switch itself with a Walk; four
-CheckBoxes switch PDU outlets with Set; a list logs traps. Needs `pip install snmpsim`
+CheckBoxes switch PDU outlets with Set; a list logs traps. Needs `pip install snmpsim pysmi`
 for the pretend devices:
 
 ```

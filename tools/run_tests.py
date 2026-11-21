@@ -38,8 +38,11 @@ def main(names):
         if not ok:
             failed.append(name)
             lines = out.splitlines()
-            shown = [l for l in lines if l.startswith("FAIL")] or lines[-25:]
-            for line in shown[:40]:
+            fails = [l for l in lines if l.startswith("FAIL")]
+            for line in fails[:20]:
+                print(f"      {line}")
+            print("      --- last lines of its output ---")
+            for line in lines[-30:]:
                 print(f"      {line}")
     print(f"\n{len(suites) - len(failed)} of {len(suites)} suites passed" + (f"; failed: {', '.join(failed)}" if failed else ""))
     return 1 if failed else 0

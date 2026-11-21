@@ -1,6 +1,6 @@
 """
 A pretend UPS + PDU + switch on SNMP, so the rack_status example runs without hardware.
-Needs snmpsim:  pip install snmpsim
+Needs snmpsim:  pip install snmpsim pysmi
 
     python examples/rack_status/agent_sim.py            # UDP 127.0.0.1:1161
     python examples/rack_status/agent_sim.py --trap     # also send a test trap to UDP 1162
@@ -42,7 +42,7 @@ def main():
     exe = shutil.which("snmpsim-command-responder") or os.path.join(os.path.dirname(sys.executable),
                                                                     "snmpsim-command-responder")
     if not os.path.exists(exe) and not os.path.exists(exe + ".exe"):
-        sys.exit("snmpsim isn't installed: pip install snmpsim")
+        sys.exit("snmpsim isn't installed: pip install snmpsim pysmi")
     cache = tempfile.mkdtemp(prefix="snmpsim-")
     cmd = [exe, f"--data-dir={os.path.join(HERE, 'agent')}", f"--agent-udpv4-endpoint=127.0.0.1:{PORT}",
            f"--cache-dir={cache}"]
