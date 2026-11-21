@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb xauth
+
+      - name: Install PanelWorks with every extra, plus the test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[all]" pyinstaller snmpsim
+
+      - name: Run every test suite
+        run: xvfb-run -a -s "-screen 0 1280x800x24" python tools/run_tests.py
+
+  manual:
+    name: Build the PDF manual
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pandoc and fonts (Chrome is already on the runner)
+        run: sudo apt-get update && sudo apt-get install -y pandoc fonts-dejavu
+
+      - name: Install PanelWorks
+        run: python -m pip install -e .
+
+      - name: Build
+        run: python tools/build_manual.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PanelWorks-Manual
+          path: docs/PanelWorks-Manual.pdf
+          retention-days: 30
