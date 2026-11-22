@@ -20,11 +20,13 @@ def main(names):
     if names:
         suites = [s for s in suites if any(n in os.path.basename(s) for n in names)]
     failed = []
+    # no "newer PanelWorks on GitHub" notice mid-test: CI runs while new commits land
+    env = dict(os.environ, PANELWORKS_NO_UPDATE_CHECK="1")
     for path in suites:
         name = os.path.basename(path)
         t0 = time.time()
         try:
-            r = subprocess.run([sys.executable, path], cwd=ROOT, capture_output=True, text=True, timeout=TIMEOUT)
+            r = subprocess.run([sys.executable, path], cwd=ROOT, env=env, capture_output=True, text=True, timeout=TIMEOUT)
             out = (r.stdout + r.stderr).strip()
             last = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""
             ok = r.returncode == 0 and last == "ALL PASS"

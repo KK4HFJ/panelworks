@@ -233,7 +233,9 @@ class Designer:
         else:
             self.new_form(path)
         self.root.after(1500, self._watch_file)
-        if self.settings.get("check_updates", True):
+        # PANELWORKS_NO_UPDATE_CHECK=1 turns the startup check off (the test
+        # runner sets it, so a commit pushed during CI can't change the status bar)
+        if self.settings.get("check_updates", True) and not os.environ.get("PANELWORKS_NO_UPDATE_CHECK"):
             self.root.after(3000, self._startup_update_check)
 
     # ------------------------------------------------------------------ about

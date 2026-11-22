@@ -2,6 +2,12 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+- **Tests no longer depend on GitHub.** `tools/run_tests.py` sets `PANELWORKS_NO_UPDATE_CHECK=1`, which turns off
+  the designer's startup update check. CI on a commit that was already behind main showed "A newer PanelWorks is
+  on GitHub" in the status bar, and `startbutton_test` read that instead of the handler error it was looking for.
+
 ## 0.8.2 (2026-11-22)
 
 - **SegmentDisplay: upright by default.** Slant now defaults to 0. The old 6° lean drew a one-pixel step

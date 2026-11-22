@@ -4,6 +4,7 @@ import os, subprocess, sys, tempfile, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.environ["PANELWORKS_CONFIG_DIR"] = tempfile.mkdtemp()
+os.environ.pop("PANELWORKS_NO_UPDATE_CHECK", None)   # GitHub is faked below; this suite tests the startup check
 from panelworks import updates
 from panelworks.designer import Designer
 ok = True
