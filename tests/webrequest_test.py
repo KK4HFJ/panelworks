@@ -225,7 +225,8 @@ if "--shot" in sys.argv:
     f.pnlAlarms._blink = True
     f.pnlAlarms._draw()
     pump(0.3)
-    os.system(f"import -window root {os.path.join(ROOT, 'examples', 'weather.png')}")
+    os.system(f"import -window root -crop {f.root.winfo_width()}x{f.root.winfo_height()}+{f.root.winfo_rootx()}+{f.root.winfo_rooty()} "
+              f"{os.path.join(ROOT, 'examples', 'weather.png')}")
 f.m_Unload()
 pump(0.3)
 print("ALL PASS" if ok else "SOME FAILED")

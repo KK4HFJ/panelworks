@@ -2,6 +2,16 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+- **SegmentDisplay: upright by default.** Slant now defaults to 0. The old 6° lean drew a one-pixel step
+  partway along every vertical segment, because Tk can only move an edge in whole pixels; real displays
+  are straight from end to end. Slant is still there (0 to 15°) for a lean on big displays. Forms saved
+  with Slant 6 keep it: set it to 0 in the Properties window.
+- **SegmentDisplay: segments shaped like real display glass.** Each segment's outer edge is straight,
+  corners are mitred at 45° with a thin gap, and the middle bar's pointed ends sit between the upper and
+  lower verticals. On the phone view too.
+
 ## 0.8.1 (2026-11-22)
 
 Fixes found while writing and testing the PanelWorks book.

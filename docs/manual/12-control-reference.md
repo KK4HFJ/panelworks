@@ -599,7 +599,7 @@ A seven-segment readout, like a scale head, meter or clock: LED (lit segments on
 | OffColor | read/write | Colour of the unlit segments (the faint 'ghosts'). Empty = a dark shade of OnColor. |
 | OnColor | read/write | Colour of the lit segments. |
 | ShowOff | read/write | True: draw the unlit segments faintly, as real displays show them. |
-| Slant | read/write | Lean of the digits in degrees, 0 to 15 (default 6). |
+| Slant | read/write | Lean of the digits in degrees, 0 to 15 (default 0, upright). A lean looks best on big displays: on small ones the edges can only move in whole pixels, so each vertical segment shows a step. |
 | Style | read/write | LED, LCD or LCD Reverse. Choosing one sets OnColor, OffColor and BackColor; change those afterwards for your own colours. |
 | TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |

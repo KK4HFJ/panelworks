@@ -259,7 +259,7 @@ DOC = {
         "OnColor": "Colour of the lit segments.",
         "OffColor": "Colour of the unlit segments (the faint 'ghosts'). Empty = a dark shade of OnColor.",
         "ShowOff": "True: draw the unlit segments faintly, as real displays show them.",
-        "Slant": "Lean of the digits in degrees, 0 to 15 (default 6).",
+        "Slant": "Lean of the digits in degrees, 0 to 15 (default 0, upright). A lean looks best on big displays: on small ones the edges can only move in whole pixels, so each vertical segment shows a step.",
         "BackColor": "Background colour of the panel.",
         "Click!": "The display was clicked (or tapped on the phone).",
     },

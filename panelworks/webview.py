@@ -191,7 +191,7 @@ def gauge_svg(form, o):
                        f'stroke="{col(p["color"])}" stroke-width="{p["w"]}"/>')
         elif k == "poly":
             pts = " ".join(f"{num(x)},{num(y)}" for x, y in p["pts"])
-            out.append(f'<polygon points="{pts}" fill="{col(p["fill"])}" stroke="{col(p["color"])}"/>')
+            out.append(f'<polygon points="{pts}" fill="{col(p["fill"])}"/>')   # no stroke: keep the gaps
         elif k == "dot":
             (cx, cy), r = p["c"], p["r"]
             out.append(f'<circle cx="{num(cx)}" cy="{num(cy)}" r="{num(r)}" fill="{col(p["color"])}"/>')

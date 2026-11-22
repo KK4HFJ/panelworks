@@ -12,7 +12,7 @@ digital display on a scale head, a meter or a clock.
     Digits     how many digit positions it has (the decimal point doesn't take one)
     Decimals   places after the point for numbers; -1 shows them as they come
     LeadingZeros, Alignment (Right/Left/Center), OnColor, OffColor (the dim unlit segments;
-    empty = a darker shade of OnColor), BackColor, ShowOff, Slant (degrees, 0..15)
+    empty = a darker shade of OnColor), BackColor, ShowOff, Slant (degrees, 0..15, default 0: upright)
 
 A value with more digits than fit shows dashes in every position, never a wrong number.
 """
@@ -80,7 +80,7 @@ class SegmentDisplay(Control):
 
     def create(self, parent):
         for k, v in dict(_value=0, _digits=6, _dec=-1, _lead=False, _align="Right", _on="#ff3b1f",
-                         _off="", _show_off=True, _slant=6.0, _style="LED", _redraw=None).items():
+                         _off="", _show_off=True, _slant=0.0, _style="LED", _redraw=None).items():
             object.__setattr__(self, k, v)
         c = tk.Canvas(parent, highlightthickness=0, bg="black")
         c.bind("<Configure>", lambda e: self._schedule())
@@ -171,29 +171,38 @@ class SegmentDisplay(Control):
         cell = (w - 2 * pad) / n
         dw = min(cell * 0.78, ch_h * 0.55)                       # digit width
         t = max(1.5, dw * 0.17)                                  # segment thickness
-        g = t * 0.12                                             # gap between segments
+        g = max(1.2, t * 0.16)                                   # gap between segments
         k = __import__("math").tan(__import__("math").radians(max(0.0, min(15.0, self._slant))))
         out = []
 
         def P(x, y):                                             # slant: shift right as y goes up
             return (x + (pad + ch_h - y) * k * 0.6, y)
 
-        def hseg(x0, x1, y):
-            return [P(x0 + g, y), P(x0 + t / 2 + g, y - t / 2), P(x1 - t / 2 - g, y - t / 2),
-                    P(x1 - g, y), P(x1 - t / 2 - g, y + t / 2), P(x0 + t / 2 + g, y + t / 2)]
-
-        def vseg(x, y0, y1):
-            return [P(x, y0 + g), P(x + t / 2, y0 + t / 2 + g), P(x + t / 2, y1 - t / 2 - g),
-                    P(x, y1 - g), P(x - t / 2, y1 - t / 2 - g), P(x - t / 2, y0 + t / 2 + g)]
-
         for i, (ch, dp) in enumerate(self.shown()):
             x0 = pad + i * cell + (cell - dw) / 2 - cell * 0.06
             x1 = x0 + dw
             top, bot = pad + t / 2, pad + ch_h - t / 2
             mid = (top + bot) / 2
-            shapes = {"a": hseg(x0, x1, top), "g": hseg(x0, x1, mid), "d": hseg(x0, x1, bot),
-                      "f": vseg(x0, top, mid), "b": vseg(x1, top, mid),
-                      "e": vseg(x0, mid, bot), "c": vseg(x1, mid, bot)}
+            # Cut like real display glass: each side's outer edge is straight, corners are
+            # mitred at 45 degrees, and the middle bar's pointed ends sit in the V between the
+            # upper and lower verticals, all with the same thin gap g.
+            L, Li, Ri, R = x0 - t / 2, x0 + t / 2, x1 - t / 2, x1 + t / 2
+            T, Ti, Bi, B = top - t / 2, top + t / 2, bot - t / 2, bot + t / 2
+            Mt, Mb = mid - t / 2, mid + t / 2
+            cg = g * 0.75                      # corner mitre gap
+            d = g * 0.6                        # middle bar tip, clear of the bevels by about g
+
+            def poly(*pts):
+                return [P(x, y) for x, y in pts]
+            shapes = {
+                "a": poly((L + cg, T), (R - cg, T), (Ri - cg, Ti), (Li + cg, Ti)),
+                "g": poly((L + d, mid), (Li + d, Mt), (Ri - d, Mt), (R - d, mid), (Ri - d, Mb), (Li + d, Mb)),
+                "d": poly((Li + cg, Bi), (Ri - cg, Bi), (R - cg, B), (L + cg, B)),
+                "f": poly((L, T + cg), (Li, Ti + cg), (Li, Mt - g), (L, mid - g)),
+                "b": poly((R, T + cg), (R, mid - g), (Ri, Mt - g), (Ri, Ti + cg)),
+                "e": poly((L, mid + g), (Li, Mb + g), (Li, Bi - cg), (L, B - cg)),
+                "c": poly((R, mid + g), (R, B - cg), (Ri, Bi - cg), (Ri, Mb + g)),
+            }
             lit = segments_for(ch)
             for s, pts in shapes.items():
                 if s in lit:
@@ -214,7 +223,7 @@ class SegmentDisplay(Control):
             return
         for p in self.prims():
             if p["k"] == "poly":
-                c.create_polygon(*[v for pt in p["pts"] for v in pt], fill=p["fill"], outline=p["color"])
+                c.create_polygon(*[v for pt in p["pts"] for v in pt], fill=p["fill"], outline="")
             else:
                 (cx, cy), r = p["c"], p["r"]
                 c.create_oval(cx - r, cy - r, cx + r, cy + r, fill=p["color"], outline="")
