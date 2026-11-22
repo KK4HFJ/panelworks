@@ -36,6 +36,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
+- 0.8.2: SegmentDisplay upright by default, segments shaped like real display glass.
 - 0.8.1: fixes from the book (SNMP OID values, TrapPort ${VAR}, Telegram title, Disconnected at start); test server.
 - 0.8.0: TabStrip, New from Template, InfluxDB logging for Grafana.
 - 0.7.0: WebRequest (web APIs) and the weather example; clearer missing-library errors.

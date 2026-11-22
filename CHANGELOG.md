@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.8.2 (2026-11-22)
 
 - **SegmentDisplay: upright by default.** Slant now defaults to 0. The old 6° lean drew a one-pixel step
   partway along every vertical segment, because Tk can only move an edge in whole pixels; real displays
