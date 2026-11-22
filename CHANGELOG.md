@@ -2,7 +2,7 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.8.0 (2026-11-22)
 
 **New controls**
 - **TabStrip**: several pages on one form, like VB's SSTab. Set Tabs (one caption per line), click a tab in
