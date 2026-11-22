@@ -26,7 +26,8 @@ A printable A4 copy of this whole manual is
 17. [Modbus and SNMP](17-modbus-snmp.md): PLCs, drives, meters, UPSes, PDUs and switches
 18. [Alarms](18-alarms.md): limits, acknowledge, history, Telegram / n8n / MQTT notification
 19. [Web APIs](19-web-apis.md): weather, Home Assistant, n8n and any JSON service, with WebRequest
-20. [Appendix](99-appendix.md): shortcuts, command line, signatures
+20. [InfluxDB and Grafana](20-influxdb.md): long-term logging and dashboards, no code
+21. [Appendix](99-appendix.md): shortcuts, command line, signatures
 
 *PanelWorks is by Steve Spence (KK4HFJ), kk4hfj.com. MIT licence.*
 

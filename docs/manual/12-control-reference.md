@@ -15,7 +15,7 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 
 **Every control** has **Index**, its number in a control array (chapter 6).
 
-**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data, InfluxDB and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag,
 TabPage (chapter 4) and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
@@ -1077,6 +1077,51 @@ Invisible SQLite database beside the form (VB's Data control), with no-code logg
 |---|---|
 | `Name_Logged(f, row)` | A row was logged. Argument: `row`, a dict including id and time. |
 | `Name_Error(f, message)` | Opening or logging failed. Argument: `message`. |
+
+## InfluxDB
+
+Invisible: logs panel values to InfluxDB 2.x for Grafana, with no code. LogFields say what a point holds, LogEvery how often; points are written in batches on a background thread and kept in memory while the server is away. See chapter 20.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| Bucket | read/write | The bucket, default `${INFLUX_BUCKET:-panelworks}`. |
+| Connected | run time | True after a write succeeds, False after one fails. Read-only. (Events: Connected, Disconnected.) |
+| Dropped | run time | Points thrown away because MaxBuffer was full. Read-only. |
+| FlushEvery | read/write | Seconds between writes (0.5 to 3600, default 5). Points wait in memory until then. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| LastError | run time | The last problem, or empty. Read-only. |
+| LastWrite | run time | When points were last written. Read-only. |
+| LogEvery | read/write | Seconds between automatic points; 0 = only when code calls Log. |
+| LogFields | read/write | `field = Control.Property`, one per line, as on the Data control: `level = barLevel.Value`. |
+| MaxBuffer | read/write | Points kept while InfluxDB can't be reached (default 10000); the oldest go first. |
+| Measurement | read/write | The measurement name (default: the form's name). |
+| Org | read/write | The organization, default `${INFLUX_ORG}`. |
+| Pending | run time | Points waiting to be written. Read-only. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Tags | read/write | `name = value`, one per line, added to every point (`site = barn`, `host = ${COMPUTERNAME}`). |
+| Token | read/write | An API token that can write to the bucket, default `${INFLUX_TOKEN}`. Keep it in the environment, not the form file. |
+| URL | read/write | The server, default `${INFLUX_URL:-http://localhost:8086}`. |
+| Written | run time | Points written since the panel started. Read-only. (Event: Written(count) after each write.) |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Flush | Write what's waiting now, and wait. True if it all went. |
+| Log | Queue a point: `Log()` logs the LogFields; `Log({"amps": 12.5})` your own fields; `Log(values, measurement="pump", tags={"unit": "2"})` another series. Returns the line protocol. |
+| Ping | True if the server answers. |
+| Query | Run a Flux query; returns a list of dicts (`_time`, `_value`, `_field` ...). It waits, so use it from a button, not a timer. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Written(f, count)` | Points written since the panel started. Read-only. (Event: Written(count) after each write.) |
+| `Name_Error(f, message)` | A write failed (once, until one works again), or Log got bad values. |
+| `Name_Connected(f)` | True after a write succeeds, False after one fails. Read-only. (Events: Connected, Disconnected.) |
+| `Name_Disconnected(f)` | Writes started failing; points wait in memory and are retried. |
 
 ## Alarms
 

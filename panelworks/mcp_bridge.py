@@ -193,7 +193,7 @@ def build_server(call):
     def add_object(name: str, type: str, properties: dict | None = None) -> dict:
         """Draw a new control on the form. Types: Label, CommandButton, TextBox,
         CheckBox, OptionButton, ListBox, ComboBox, Frame, TabStrip, Shape, ProgressBar, Slider, Gauge, SegmentDisplay, PictureBox, Chart, Grid, AlarmPanel,
-        Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data, Alarms (call control_types for each one's properties).
+        Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data, InfluxDB, Alarms (call control_types for each one's properties).
         Example: add_object('Command2', 'CommandButton',
         {'Caption': 'Stop', 'Left': 10, 'Top': 80, 'Width': 80, 'Height': 30})"""
         return call("add_object", name=name, type=type, properties=properties)

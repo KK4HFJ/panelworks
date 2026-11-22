@@ -11,7 +11,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 - **Modbus**: test with pymodbus 4 when it ships (the extra pins pymodbus<4 until then).
 - **SNMP**: load MIB files so any vendor's OID names work, not just the built-in ones.
-- **InfluxDB logging**: a Data control mode writing to InfluxDB for Grafana, alongside SQLite.
 - **BLE**: read and write characteristics directly (ESP32, sensors) without MQTT in between.
 
 ## Designer

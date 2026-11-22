@@ -318,6 +318,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | Chart | Value..Value4 (adds a point), Series, Window, AutoScale, YMin, YMax, Title, Units | AddPoint, Clear | Click |
 | Grid | DataSource, Columns, Rows, Row, RowCount, Text | AddRow, Clear, Cell, Refresh | Click, DblClick |
 | Data | DatabaseName, Table, LogFields, LogEvery, RecordSource, RecordCount | Log, Query, Execute, ExportCSV, Refresh, Clear | Logged(row), Error |
+| InfluxDB | URL, Org, Bucket, Token, Measurement, Tags, LogFields, LogEvery, FlushEvery, MaxBuffer, Pending, Written | Log, Flush, Query, Ping | Written(count), Error(message), Connected, Disconnected |
 | WebRequest | URL, Method, Headers, Body, Timeout, Poll, Fill, PollInterval, Values, StatusCode, Response, LastUpdate | Open, Close, PollNow, Get, Fetch | DataArrival(values), Connected, Disconnected, Error(message) |
 | Alarms | Rules, Interval, LogTo, TelegramToken, TelegramChat, NotifyPriority, Entries, Active, Unacked, Summary, History, LastJson | Ack, Check, State, ClearHistory | Alarm(name, message, value), Clear(name, value), Ack(name), Change |
 | AlarmPanel | Source, Title | | Click(name) |
@@ -690,6 +691,23 @@ python -m panelworks --example weather --mcp none
 ```
 
 ![Weather from Open-Meteo](examples/weather.png)
+
+## InfluxDB and Grafana
+
+An **InfluxDB** control logs panel values to InfluxDB 2.x with no code, for Grafana dashboards. Settings
+come from `INFLUX_URL`, `INFLUX_ORG`, `INFLUX_BUCKET` and `INFLUX_TOKEN`, so the token stays out of the
+form file:
+
+```
+LogFields:  volts = gauVolts.Value
+            amps = gauAmps.Value
+Tags:       site = barn
+LogEvery:   10
+```
+
+Points are batched and written on a background thread; while InfluxDB is away they wait in memory
+(up to MaxBuffer) and go when it's back, so graphs have no gaps. `Log({...}, measurement=, tags=)`
+logs your own series and `Query(flux)` reads history back. Standard library only. See chapter 20.
 
 ## Alarms
 

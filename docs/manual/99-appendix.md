@@ -85,6 +85,8 @@ python -m panelworks ...                  if the command isn't on the PATH
 | WebhookResponse | `def Name_WebhookResponse(f, data):` |
 | WebhookError | `def Name_WebhookError(f, message):` |
 | Form MqttError | `def Form_MqttError(f, message):` |
+| Written (InfluxDB) | `def Name_Written(f, count):` |
+| Click (TabStrip) | `def Name_Click(f, previous_tab):` |
 
 ## Licence
 

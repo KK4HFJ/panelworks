@@ -4,12 +4,18 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
-**New control**
+**New controls**
 - **TabStrip**: several pages on one form, like VB's SSTab. Set Tabs (one caption per line), click a tab in
   the designer and draw on that page; each control's TabPage says its page. A Frame on a page carries its
   contents, and OptionButtons on each page form their own group. `f.tabMain.Tab = 2` switches pages;
   `tabMain_Click(f, previous_tab)` fires when the user picks a tab. On the phone view it's a card with tab
   buttons, and Frames inside it nest as cards.
+- **InfluxDB**: logs panel values to InfluxDB 2.x for Grafana with no code. LogFields and LogEvery as on
+  the Data control, plus Tags and Measurement. Batched writes on a background thread; points wait in
+  memory while the server is away (MaxBuffer, Pending, Dropped) and are written in order when it's back.
+  `Log(values, measurement, tags)`, `Flush()`, `Query(flux)`, `Ping()`; events Written(count), Error,
+  Connected, Disconnected. Settings default to `${INFLUX_URL}`, `${INFLUX_ORG}`, `${INFLUX_BUCKET}`,
+  `${INFLUX_TOKEN}`. Standard library only. New manual chapter 20.
 
 **Designer**
 - **New from Template** (File menu, Ctrl+Shift+N): MQTT monitor, Serial bench, Gauge panel and Tabbed

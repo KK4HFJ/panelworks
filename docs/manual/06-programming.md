@@ -513,6 +513,9 @@ Data control, and it shows the newest rows, updating as they're logged.
 
 ![A Data control logging to a Grid](img/data-grid.png)
 
+For weeks of history on Grafana dashboards, the **InfluxDB** control logs the same
+way to an InfluxDB server (chapter 20).
+
 In code:
 
 ```python

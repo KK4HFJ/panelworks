@@ -193,6 +193,31 @@ DOC = {
         "Scroll!": "Interactive only: the needle is being dragged.",
         "Click!": "The gauge is clicked.",
     },
+    "InfluxDB": {
+        "_": "Invisible: logs panel values to InfluxDB 2.x for Grafana, with no code. LogFields say what a point holds, LogEvery how often; points are written in batches on a background thread and kept in memory while the server is away. See chapter 20.",
+        "URL": "The server, default `${INFLUX_URL:-http://localhost:8086}`.",
+        "Org": "The organization, default `${INFLUX_ORG}`.",
+        "Bucket": "The bucket, default `${INFLUX_BUCKET:-panelworks}`.",
+        "Token": "An API token that can write to the bucket, default `${INFLUX_TOKEN}`. Keep it in the environment, not the form file.",
+        "Measurement": "The measurement name (default: the form's name).",
+        "Tags": "`name = value`, one per line, added to every point (`site = barn`, `host = ${COMPUTERNAME}`).",
+        "LogFields": "`field = Control.Property`, one per line, as on the Data control: `level = barLevel.Value`.",
+        "LogEvery": "Seconds between automatic points; 0 = only when code calls Log.",
+        "FlushEvery": "Seconds between writes (0.5 to 3600, default 5). Points wait in memory until then.",
+        "MaxBuffer": "Points kept while InfluxDB can't be reached (default 10000); the oldest go first.",
+        "Pending": "Points waiting to be written. Read-only.",
+        "Dropped": "Points thrown away because MaxBuffer was full. Read-only.",
+        "LastError": "The last problem, or empty. Read-only.",
+        "LastWrite": "When points were last written. Read-only.",
+        "Log": "Queue a point: `Log()` logs the LogFields; `Log({\"amps\": 12.5})` your own fields; `Log(values, measurement=\"pump\", tags={\"unit\": \"2\"})` another series. Returns the line protocol.",
+        "Flush": "Write what's waiting now, and wait. True if it all went.",
+        "Query": "Run a Flux query; returns a list of dicts (`_time`, `_value`, `_field` ...). It waits, so use it from a button, not a timer.",
+        "Ping": "True if the server answers.",
+        "Written": "Points written since the panel started. Read-only. (Event: Written(count) after each write.)",
+        "Error": "A write failed (once, until one works again), or Log got bad values.",
+        "Connected": "True after a write succeeds, False after one fails. Read-only. (Events: Connected, Disconnected.)",
+        "Disconnected": "Writes started failing; points wait in memory and are retried.",
+    },
     "WebRequest": {
         "_": "Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control. Poll lines are paths into the reply; Fill puts values on controls. See chapter 19.",
         "URL": "The address. `${VAR}` fills in keys from the environment. Messages and Target never show the part after `?`.",
@@ -485,7 +510,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
          "Frame", "TabStrip", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
-         "Modbus", "SNMP", "WebRequest", "Data", "Alarms", "AlarmPanel"]
+         "Modbus", "SNMP", "WebRequest", "Data", "InfluxDB", "Alarms", "AlarmPanel"]
 
 missing = []
 
@@ -541,7 +566,7 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 
 **Every control** has **Index**, its number in a control array (chapter 6).
 
-**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
+**All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data, InfluxDB and Alarms) also have
 Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag,
 TabPage (chapter 4) and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
