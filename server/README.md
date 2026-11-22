@@ -32,6 +32,17 @@ in your router's DHCP settings, or, if you don't control the router (a work netw
 name (`pwserver`) from anywhere you're signed in. `setup.sh` uses the Tailscale address when it finds
 one; `PW_HOST=name ./setup.sh` sets it yourself.
 
+**Straight after the first login, make Wi-Fi permanent** (skip this on Ethernet). On current
+Raspberry Pi OS, Imager's settings are applied at first boot by cloud-init, and the Wi-Fi it sets
+up may not survive the first update and reboot: the Pi comes back with no network at all. Save
+the network the ordinary way, then switch cloud-init off, since its one job is done:
+
+```
+nmcli connection show                                # note your Wi-Fi's NAME, if it's listed
+sudo nmcli --ask device wifi connect "YOUR-SSID"     # asks for the password; saves it for good
+sudo touch /etc/cloud/cloud-init.disabled
+```
+
 If a Pi 5 won't boot from the SSD: boot once from an SD card and run `sudo rpi-eeprom-update -a`
 (then reboot), or add `dtparam=pciex1` to `config.txt` on the SSD's boot partition, which some
 M.2 adapters need.
@@ -107,6 +118,30 @@ Run these in `panelworks/server`:
 
 The containers restart by themselves after a power cut or reboot. `mosquitto/passwd` and
 `mosquitto/acl` belong to Mosquitto's user once setup has run, so edit the ACL with `sudo`.
+
+## If something goes wrong
+
+**No network after an update and reboot (Wi-Fi).** The screen says `My IP address is 127.0.0.1`
+and SSH can't connect. At the Pi's own keyboard:
+
+| Check | Means |
+|---|---|
+| `ip -br addr` shows only `lo ... 127.0.0.1` | No network: `lo` is the loopback, always there |
+| `rfkill list` shows `Soft blocked: yes` | Wi-Fi is switched off: `sudo raspi-config nonint do_wifi_country US` (your country), then `sudo rfkill unblock wifi` |
+| `nmcli device status` shows `wlan0 disconnected` and `nmcli connection show` lists no Wi-Fi | The saved network is gone. That was the case on the Pi this was written on. |
+
+Fix the last case with the three commands from "Straight after the first login" above:
+`sudo nmcli --ask device wifi connect "YOUR-SSID"`, then
+`sudo touch /etc/cloud/cloud-init.disabled`. `ip -br addr` should then show `wlan0 UP` with an
+address. The address may have changed; the screen shows it at the next login prompt.
+
+**A reboot that never finishes.** After a bootloader update (`sudo rpi-eeprom-update -a`) one reboot
+can stall: a blinking cursor on the screen, a green LED, and SSH that connects and is closed at once
+("Connection closed by ... port 22"). Give it five minutes, then press the Pi 5's power button once
+to shut down (hold it for 5 seconds if the LED stays green), and press it again to start. It came
+up normally on the next boot.
+
+**`.local` names don't resolve.** Use the IP address; see "A fixed address" above.
 
 ## Notes
 
