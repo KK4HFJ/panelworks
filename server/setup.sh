@@ -9,6 +9,7 @@
 #     5. starts Grafana (and n8n if you asked for it)
 #     6. writes panelworks.env and panelworks-setx.cmd for the PCs that run panels
 #   ./setup.sh -y     the same, taking every default without asking
+#   PW_HOST=pwserver ./setup.sh     write this name into the PC settings instead of an IP
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -143,7 +144,13 @@ say "Starting Grafana$([[ "$(getenv COMPOSE_PROFILES)" == *n8n* ]] && echo ' and
 docker compose up -d
 
 # ---- 6. settings for the PCs that run panels --------------------------------------------------
-ip="$(hostname -I 2>/dev/null | awk '{print $1}')"; ip="${ip:-$(hostname)}"
+# The address PCs use to reach this server. Set PW_HOST to a name or IP that won't change
+# (a Tailscale name such as pwserver, or a DHCP reservation); otherwise: Tailscale's IP if
+# it's running, else this machine's first IP.
+ip="${PW_HOST:-}"
+if [[ -z "$ip" ]] && command -v tailscale >/dev/null; then ip="$(tailscale ip -4 2>/dev/null | head -1)"; fi
+[[ -n "$ip" ]] || ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+ip="${ip:-$(hostname)}"
 umask 077
 cat > panelworks.env <<EOF
 INFLUX_URL=http://$ip:8086

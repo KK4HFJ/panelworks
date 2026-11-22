@@ -22,7 +22,15 @@ SD cards out; an SSD is better.
 3. When asked, **edit the settings**: a hostname (`pwserver`), your username and password, Wi-Fi if
    you need it, your time zone, and on the Services tab **Enable SSH**.
 4. Write it, put the SSD back in the Pi, **take out any SD card**, and power up.
-5. From your PC: `ssh you@pwserver.local` (or the Pi's IP address from your router).
+5. From your PC: `ssh you@<the Pi's IP>`. The IP shows on the Pi's screen at the login prompt.
+   `you@pwserver.local` may work too, but many networks (and Windows firewalls) block the mDNS it needs.
+
+**A fixed address.** PCs reach the server by address, so it mustn't change. Either reserve the Pi's IP
+in your router's DHCP settings, or, if you don't control the router (a work network, say), install
+[Tailscale](https://tailscale.com) on the Pi (`curl -fsSL https://tailscale.com/install.sh | sh`, then
+`sudo tailscale up`) and on each PC: the Pi gets a 100.x address that never changes, reachable by
+name (`pwserver`) from anywhere you're signed in. `setup.sh` uses the Tailscale address when it finds
+one; `PW_HOST=name ./setup.sh` sets it yourself.
 
 If a Pi 5 won't boot from the SSD: boot once from an SD card and run `sudo rpi-eeprom-update -a`
 (then reboot), or add `dtparam=pciex1` to `config.txt` on the SSD's boot partition, which some
@@ -65,7 +73,7 @@ it keeps the passwords and tokens it made.
 ## 3. Your PC
 
 Copy `panelworks-setx.cmd` to the Windows PC that runs panels (for example
-`scp you@pwserver.local:panelworks/server/panelworks-setx.cmd .`) and run it once. It sets
+`scp you@<server>:panelworks/server/panelworks-setx.cmd .`) and run it once. It sets
 `MQTT_HOST`, `MQTT_USER`, `MQTT_PASS`, `INFLUX_URL`, `INFLUX_ORG`, `INFLUX_BUCKET` and
 `INFLUX_TOKEN`. **Open a new window** afterwards: `setx` doesn't change windows already open.
 On Linux or macOS, put the lines from `panelworks.env` in `~/.profile` with `export ` in front.
@@ -78,7 +86,7 @@ python -m panelworks server/check/ServerCheck.json --mcp none
 
 Both lamps go green: MQTT is logged in and the slider's value comes back from the broker, and
 InfluxDB is taking a point every 5 seconds. **Count what's in InfluxDB** reads them back. In
-Grafana (`http://pwserver.local:3000`, user `admin`), open **Dashboards → PanelWorks → PanelWorks
+Grafana (`http://<server>:3000`, user `admin`), open **Dashboards → PanelWorks → PanelWorks
 panels**, pick **ServerCheck**, and move the slider.
 
 Every panel that uses `${MQTT_HOST}` or an InfluxDB control now finds the server with no changes.
