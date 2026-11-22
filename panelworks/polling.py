@@ -5,7 +5,9 @@ A subclass says how to connect, how to parse one Poll line's "what to read" part
 how to read a batch of them. This base runs the poll loop on a background thread,
 reconnects after failures, applies scaling, fills properties (Fill, as on the Serial
 control) and fires DataArrival(values), Connected, Disconnected and Error(message)
-on the GUI thread.
+on the GUI thread. Disconnected means "not talking to the device": it fires once when a
+link drops, and once when the first attempt to reach a device fails (with Error saying
+why), so a lamp driven by Connected/Disconnected is right from the start.
 
 A Poll line is   key = <what to read> [*scale] [/divisor] [+offset] [-offset]
 e.g.             volts = hr 100 u16 *0.1        runtime = 1.3.6.1.2.1.33.1.2.3.0
@@ -72,7 +74,7 @@ class PollingControl(VBObject):
         super().__init__(form, name, spec)
         for k, v in dict(_poll=[], _parsed=[], _fill=[], _interval=1000, _auto_open=True,
                          _values={}, _connected=False, _last_error="", _thread=None, _stop=None,
-                         _lock=threading.RLock(), _reported=False, _want_open=False,
+                         _lock=threading.RLock(), _reported=False, _want_open=False, _down_said=False,
                          _wake=threading.Event()).items():
             object.__setattr__(self, k, v)
 
@@ -140,6 +142,7 @@ class PollingControl(VBObject):
         if self._thread and self._thread.is_alive():
             return
         object.__setattr__(self, "_want_open", True)
+        object.__setattr__(self, "_down_said", False)      # a fresh start: say it if it can't connect
         stop = threading.Event()
         object.__setattr__(self, "_stop", stop)
         t = threading.Thread(target=self._run, args=(stop,), daemon=True, name=f"{self.TYPE}:{self.Name}")
@@ -185,11 +188,15 @@ class PollingControl(VBObject):
                 if not self._reported:
                     object.__setattr__(self, "_reported", True)
                     self._error(f"{self.describe()}: {e}")
+                if not getattr(self, "_down_said", False):   # never got through: that's disconnected too
+                    object.__setattr__(self, "_down_said", True)
+                    self._form.post(self.fire, "Disconnected")
                 stop.wait(self.retry_delay())
                 continue
             object.__setattr__(self, "_reported", False)
             object.__setattr__(self, "_last_error", "")
             object.__setattr__(self, "_connected", True)
+            object.__setattr__(self, "_down_said", False)
             self._form.post(self.fire, "Connected")
             problem = self._poll_loop(stop)
             with self._lock:
@@ -198,6 +205,7 @@ class PollingControl(VBObject):
                 except Exception:
                     pass
             object.__setattr__(self, "_connected", False)
+            object.__setattr__(self, "_down_said", True)        # retries that fail don't repeat it
             self._form.post(self.fire, "Disconnected")
             if problem:
                 self._error(f"{self.describe()}: {problem}")

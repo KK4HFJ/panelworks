@@ -2,6 +2,24 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## 0.8.1 (2026-11-22)
+
+Fixes found while writing and testing the PanelWorks book.
+
+- **SNMP: OID-typed values are numbers.** sysObjectID and other OID values came back as
+  `SNMPv2-SMI::enterprises.318.1.3.27` from Get, Poll and Walk; they're now `1.3.6.1.4.1.318.1.3.27`,
+  the same as in traps and Walk keys.
+- **SNMP: TrapPort takes `${VAR}`**, like Port (`${TRAP_PORT:-1162}`).
+- **SNMP: UPS names** `upsIdentManufacturer`, `upsIdentModel`, `upsIdentUPSSoftwareVersion` and
+  `upsIdentName`.
+- **Alarms: Telegram messages start with the form's designed caption**, not the live title bar, so
+  a panel that shows its alarm summary in the title doesn't repeat it in every message.
+- **Modbus, SNMP, WebRequest: Disconnected fires when a device can't be reached at the start**, once,
+  with Error saying why. Before, a device that never answered only raised Error, so a lamp driven by
+  Connected/Disconnected stayed grey.
+- New: the `server/` folder, a test server for a Raspberry Pi (Mosquitto, InfluxDB 2, Grafana, optional
+  n8n) set up by one script, with a check panel. See `server/README.md`.
+
 ## 0.8.0 (2026-11-22)
 
 **New controls**

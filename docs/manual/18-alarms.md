@@ -113,7 +113,9 @@ An alarm nobody sees doesn't help. Pick any of these; they work together.
 4. **NotifyPriority** chooses which alarms go out: 1 = only critical, 3 = all (the default).
 
 Each alarm and each clear arrives as a message, with a red or green dot: "Pump house:
-Alarm HighVolts: Voltage high (252.4)".
+Alarm HighVolts: Voltage high (252.4)". The name at the front is the form's caption as
+designed (the `caption` in its `.json`), so code that puts live status in the title bar,
+like the Change example above, doesn't clutter the messages.
 
 **n8n.** Send the Alarm and Clear events to a workflow (chapter 10), and let it email,
 text or escalate:

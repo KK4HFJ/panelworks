@@ -934,7 +934,7 @@ A Modbus TCP or RTU master: poll registers and coils into named values, write th
 |---|---|
 | `Name_DataArrival(f, values)` | A poll finished; values is a dict of the Poll names, scaled. |
 | `Name_Connected(f)` | The device answered (after starting or reconnecting). |
-| `Name_Disconnected(f)` | The device stopped answering. It keeps retrying. |
+| `Name_Disconnected(f)` | The device stopped answering, or couldn't be reached at all when the panel started (once, with Error saying why). It keeps retrying. |
 | `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
 
 ## SNMP
@@ -964,7 +964,7 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 | Target | read-only | The address in use, with ${VARIABLES} filled in. Read-only. |
 | Timeout | read/write | Seconds to wait for an answer. |
 | TrapCommunity | read/write | Community traps must use (v1/v2c). |
-| TrapPort | read/write | UDP port to listen for traps on (0 = don't). 162 is standard but needs admin rights; 1162 doesn't. |
+| TrapPort | read/write | UDP port to listen for traps on (0 = don't). 162 is standard but needs admin rights; 1162 doesn't. Takes `${VAR:-1162}` like Port. |
 | User | read/write | SNMPv3 user name. |
 | Values | read-only | The last polled values, as a dict. Read-only. |
 | ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
@@ -988,7 +988,7 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 |---|---|
 | `Name_DataArrival(f, values)` | A poll finished; values is a dict of the Poll names, scaled. |
 | `Name_Connected(f)` | The device answered (after starting or reconnecting). |
-| `Name_Disconnected(f)` | The device stopped answering. It keeps retrying. |
+| `Name_Disconnected(f)` | The device stopped answering, or couldn't be reached at all when the panel started (once, with Error saying why). It keeps retrying. |
 | `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
 | `Name_Trap(f, source, values)` | A trap arrived: source is the sender's IP, values a dict of its contents with readable names where known. |
 
@@ -1036,7 +1036,7 @@ Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control.
 |---|---|
 | `Name_DataArrival(f, values)` | A reply arrived: values (by Poll name, or the whole reply with no Poll lines). |
 | `Name_Connected(f)` | The first good reply after starting or after a failure. |
-| `Name_Disconnected(f)` | Replies stopped (no internet, an HTTP error). |
+| `Name_Disconnected(f)` | Replies stopped (no internet, an HTTP error), or never came when the panel started (once, with Error saying why). |
 | `Name_Error(f, message)` | Something went wrong: message says what (HTTP status and a hint, a missing path...). |
 
 ## Data

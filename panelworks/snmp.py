@@ -28,6 +28,7 @@ from .util import expand, port_number, port_setting
 
 import pysnmp.hlapi.v3arch.asyncio as h
 from pysnmp.proto import rfc1902
+from pysnmp.smi.rfc1902 import ObjectIdentity as _SmiObjectIdentity
 
 logging.getLogger("pysnmp").setLevel(logging.CRITICAL)
 
@@ -40,6 +41,8 @@ NAMES = {
     "ifInOctets": "1.3.6.1.2.1.2.2.1.10", "ifOutOctets": "1.3.6.1.2.1.2.2.1.16",
     "ifHCInOctets": "1.3.6.1.2.1.31.1.1.1.6", "ifHCOutOctets": "1.3.6.1.2.1.31.1.1.1.10",
     "hrProcessorLoad": "1.3.6.1.2.1.25.3.3.1.2", "hrSystemUptime": "1.3.6.1.2.1.25.1.1.0",
+    "upsIdentManufacturer": "1.3.6.1.2.1.33.1.1.1.0", "upsIdentModel": "1.3.6.1.2.1.33.1.1.2.0",
+    "upsIdentUPSSoftwareVersion": "1.3.6.1.2.1.33.1.1.3.0", "upsIdentName": "1.3.6.1.2.1.33.1.1.5.0",
     "upsBatteryStatus": "1.3.6.1.2.1.33.1.2.1.0", "upsSecondsOnBattery": "1.3.6.1.2.1.33.1.2.2.0",
     "upsEstimatedMinutesRemaining": "1.3.6.1.2.1.33.1.2.3.0",
     "upsEstimatedChargeRemaining": "1.3.6.1.2.1.33.1.2.4.0", "upsBatteryVoltage": "1.3.6.1.2.1.33.1.2.5.0",
@@ -79,6 +82,11 @@ def plain(value):
         return str(ipaddress.IPv4Address(bytes(value)))
     if isinstance(value, rfc1902.ObjectName):
         return str(value)
+    if isinstance(value, _SmiObjectIdentity):          # an OID-typed value (sysObjectID ...): keep
+        try:                                           # it numeric, as traps and Walk keys are
+            return str(value.get_oid())
+        except Exception:
+            return str(value)
     if isinstance(value, rfc1902.OctetString) or cls == "OctetString":
         raw = bytes(value)
         try:
@@ -179,11 +187,11 @@ class SnmpControl(PollingControl):
     def set_Retries(self, v): object.__setattr__(self, "_retries", max(0, int(v))); self._restart()
 
     def get_TrapPort(self): return self._trap_port
-    def set_TrapPort(self, v):
-        v = int(v)
-        if not 0 <= v <= 65535:
-            raise ValueError("TrapPort is a UDP port, 0 = don't listen for traps")
-        object.__setattr__(self, "_trap_port", v); self._restart()
+    def set_TrapPort(self, v):                         # a UDP port, 0 = don't listen; ${VAR} like Port
+        object.__setattr__(self, "_trap_port", port_setting(v, "TrapPort")); self._restart()
+
+    def _trap_port_now(self):
+        return port_number(self._trap_port, "TrapPort")
     def get_TrapCommunity(self): return self._trap_community
     def set_TrapCommunity(self, v): object.__setattr__(self, "_trap_community", str(v)); self._restart()
 
@@ -280,7 +288,7 @@ class SnmpControl(PollingControl):
         from pysnmp.entity import config, engine
         from pysnmp.entity.rfc3413 import ntfrcv
         eng = engine.SnmpEngine()
-        config.add_transport(eng, udp.DOMAIN_NAME, udp.UdpAsyncioTransport().open_server_mode(("0.0.0.0", self._trap_port)))
+        config.add_transport(eng, udp.DOMAIN_NAME, udp.UdpAsyncioTransport().open_server_mode(("0.0.0.0", self._trap_port_now())))
         config.add_v1_system(eng, "panelworks-area", expand(self._trap_community))
         if self._user:
             ak, pk = expand(self._auth_key) or None, expand(self._priv_key) or None
@@ -309,11 +317,11 @@ class SnmpControl(PollingControl):
 
     def m_Open(self):
         self._ensure_loop()
-        if self._trap_port and self._trap_engine is None:
+        if self._trap_port_now() and self._trap_engine is None:
             try:
                 object.__setattr__(self, "_trap_engine", self._call(self._start_traps(), timeout=5))
             except Exception as e:
-                self._error(f"{self.Name}: can't listen for traps on UDP {self._trap_port}: "
+                self._error(f"{self.Name}: can't listen for traps on UDP {self._trap_port_now()}: "
                             f"{e or type(e).__name__}")
         super().m_Open()
 

@@ -36,6 +36,7 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Done
 
+- 0.8.1: fixes from the book (SNMP OID values, TrapPort ${VAR}, Telegram title, Disconnected at start); test server.
 - 0.8.0: TabStrip, New from Template, InfluxDB logging for Grafana.
 - 0.7.0: WebRequest (web APIs) and the weather example; clearer missing-library errors.
 - 0.6.0: SegmentDisplay (LED / LCD seven-segment readouts); control arrays (`Lamp(0)`..., `Lamp_Click(f, index)`, copy/paste, Load/Unload).

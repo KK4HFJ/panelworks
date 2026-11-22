@@ -97,7 +97,7 @@ def split_name(name):
 # The form's own attributes: a control with one of these names can't be reached as f.name
 # (f.web would be the form's phone-view server, not your control).
 _FORM_ATTRS = {"bus", "code", "code_file", "forms", "hooks", "main", "mqtt_cfg", "objects", "owner",
-               "path", "root", "spec_name", "web", "web_cfg", "webhooks_cfg"}
+               "path", "root", "spec_caption", "spec_name", "web", "web_cfg", "webhooks_cfg"}
 
 
 def reserved_name(name):
@@ -905,6 +905,7 @@ class Form:
         self.__dict__["objects"] = {}
         self.path = path
         self.spec_name = spec.get("name", "Form1")
+        self.spec_caption = spec.get("caption", self.spec_name)     # as designed: for messages
         self.code_file = spec.get("code")
         # The first form is the program's main window; forms opened with Show() are
         # child windows of it (one Tk, one event loop), as in VB.

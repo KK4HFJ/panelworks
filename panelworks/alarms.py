@@ -244,7 +244,9 @@ class Alarms(VBObject):
             except Exception as e:
                 object.__setattr__(self, "_last_error", f"LogTo {self._log_to}: {e}")
         if what in ("ALARM", "CLEAR") and rule["priority"] <= self._notify_priority:
-            self._telegram(f"{'🔴' if what == 'ALARM' else '🟢'} {self._form.get_Caption()}: "
+            # the caption from the form file, not the title bar: code often puts live status there
+            title = getattr(self._form, "spec_caption", None) or self._form.get_Caption()
+            self._telegram(f"{'🔴' if what == 'ALARM' else '🟢'} {title}: "
                            f"{what.title()} {name}: {rule['message']}"
                            + (f" ({_fmt(value)})" if value is not None else ""))
         if what == "ALARM":

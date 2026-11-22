@@ -42,7 +42,9 @@ def mb1_DataArrival(f, values):
 ```
 
 **PollInterval** sets how often, in milliseconds (Modbus 1000, SNMP 5000 by default).
-**Connected** / **Disconnected** fire when the device starts or stops answering. The control
+**Connected** / **Disconnected** fire when the device starts or stops answering, and
+Disconnected also fires once if the device can't be reached at all when the panel starts,
+so a lamp driven by these two events is right from the first second. The control
 keeps retrying by itself, so a panel left running recovers after a power cut or a
 cable swap. **Error(message)** says what went wrong; **LastError** keeps the last one.
 `f.mb1.Values` holds the latest values at any time.
@@ -181,10 +183,12 @@ PanelWorks knows:
 | Name | What it is |
 |---|---|
 | `sysDescr`, `sysName`, `sysLocation`, `sysContact` | the device's description and labels |
+| `sysObjectID` | the device's make and model as an OID, e.g. `1.3.6.1.4.1.318.1.3.27` (enterprise 318 is APC) |
 | `sysUpTime` | time since boot, in hundredths of a second (`sysUpTime /100` for seconds) |
 | `ifDescr.N`, `ifOperStatus.N`, `ifAdminStatus.N` | port N's name, and whether it's up (1) or down (2) |
 | `ifInOctets.N`, `ifOutOctets.N` (and `ifHC...` 64-bit) | port N's traffic counters |
 | `hrProcessorLoad.N`, `hrSystemUptime` | a server's CPU load and uptime |
+| `upsIdentManufacturer`, `upsIdentModel`, `upsIdentName` | which UPS it is: handy for telling models apart |
 | `upsBatteryStatus`, `upsEstimatedMinutesRemaining`, `upsEstimatedChargeRemaining` | a UPS's battery |
 | `upsBatteryVoltage`, `upsBatteryTemperature`, `upsSecondsOnBattery` | more battery |
 | `upsInputVoltage.1`, `upsOutputSource`, `upsOutputPercentLoad.1` | mains in, source (3 normal, 5 battery), load |
@@ -223,8 +227,8 @@ and numbers go as `i`, text as `s`.
 ### Traps
 
 Devices can tell you when something happens (on battery, a port down, overheating)
-instead of waiting to be polled. Set **TrapPort** and point the device's trap
-destination at the PC:
+instead of waiting to be polled. Set **TrapPort** (a number, or `${TRAP_PORT:-1162}` like
+Port) and point the device's trap destination at the PC:
 
 ```python
 def snmp1_Trap(f, source, values):
