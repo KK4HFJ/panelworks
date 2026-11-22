@@ -281,6 +281,7 @@ The same thing from a Command Prompt:
 ## Files: New, Open, Save
 
 - **New** (Ctrl+N) starts an empty form.
+- **New from Template** (Ctrl+Shift+N) starts from a ready-made panel (below).
 - **Open** (Ctrl+O) opens a `.json` form.
 - **File → Panels** lists the forms in your **panels folder** (and its
   subfolders), with **Open panels folder** to show it in Explorer.
@@ -315,6 +316,30 @@ same for the `.py` file.
 So you can rough out a panel by talking to Claude, then polish it by hand, or the
 other way round.
 
+## New from Template
+
+![The four templates as they first run: MQTT monitor, Serial bench, Gauge panel and Tabbed panel](img/templates.png)
+
+**File → New from Template** offers starting points that already work, so you
+change things instead of starting from an empty form:
+
+| Template | What you get |
+|---|---|
+| Blank form | The same as File → New |
+| MQTT monitor | Watch any topic (`#` for all), a log of every message, and a box to publish test messages. The broker comes from the `MQTT_HOST` and `MQTT_PORT` environment variables, `localhost:1883` if they aren't set |
+| Serial bench | An Arduino or ESP32 on USB: finds the port by itself, logs every line, sends a command with Send or Enter, and fills an LED readout and a bar from `{"value": 512}` lines with no code. The matching Arduino sketch is in the code's comments |
+| Gauge panel | Three gauges with warning zones, a power readout and a trend chart. A Timer makes up values so it moves; the code says how to replace it with a real source |
+| Tabbed panel | A TabStrip with Status, Settings and Log pages and a little start/stop logic |
+
+Pick one and press **Create**. You're asked where to save it: the form and its
+code are written side by side (`Pump Room.json` and `Pump Room.py`) and the
+form's name comes from the file name (`PumpRoom`). From then on it's your panel,
+like any other. A template whose control needs a library you haven't installed
+(MQTT, Serial) is greyed out, with the install command.
+
+From the command line, `panelworks --new` lists them and
+`panelworks --new gauge_panel "Pump Room.json"` makes one and opens it in the designer.
+
 ## Preferences
 
 ![Preferences](img/preferences.png)
@@ -345,6 +370,7 @@ variable, if set, still overrides the editor setting.
 | F7 | Code window |
 | Ctrl+G | Immediate window |
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
+| Ctrl+Shift+N | New from Template |
 | Ctrl+W | Close the form |
 | Ctrl+, | Preferences |
 | Ctrl+E | Menu Editor |

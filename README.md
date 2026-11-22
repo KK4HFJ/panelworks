@@ -119,6 +119,14 @@ python -m panelworks --simulator power_meter             # its pretend device, i
 From a PyPI install, `--example` copies the example to your panels folder (Documents\PanelWorks)
 the first time and runs that copy, so it can save its files and keep your changes.
 
+To start a panel of your own from a working one (MQTT monitor, serial bench, gauge panel, tabbed
+panel), use **File → New from Template** in the designer, or:
+
+```
+python -m panelworks --new                                  # list the templates
+python -m panelworks --new serial_bench "Bench.json"        # make one and open it in the designer
+```
+
 ### Hook it to Claude Desktop
 
 Add a server to `claude_desktop_config.json`. Let the app find the file for you,

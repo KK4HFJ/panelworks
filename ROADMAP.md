@@ -18,7 +18,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 - **Tab order** editor.
 - **Alignment guides** while dragging.
-- **New from template**: blank, MQTT monitor, serial bench, gauge panel.
 - **Dark theme** for the designer and panels.
 
 ## Runtime and MCP

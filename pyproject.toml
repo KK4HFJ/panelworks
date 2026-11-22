@@ -44,4 +44,4 @@ panelworks-make-exe = "panelworks.make_exe:main"
 include = ["panelworks*"]                  # panelworks/_examples/* too (staged for PyPI builds)
 
 [tool.setuptools.package-data]
-panelworks = ["assets/*.ico", "assets/*.png", "_examples/**/*"]
+panelworks = ["assets/*.ico", "assets/*.png", "templates/*", "_examples/**/*"]

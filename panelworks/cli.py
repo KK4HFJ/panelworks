@@ -108,6 +108,9 @@ def main():
     ap.add_argument("--readonly", action="store_true", help="phone view can look but not touch")
     ap.add_argument("--example", nargs="?", const="", metavar="NAME",
                     help="run a bundled example by name (no NAME: list them)")
+    ap.add_argument("--new", nargs="?", const="", metavar="TEMPLATE",
+                    help="make a new panel from a template and open it in the designer, e.g. "
+                         "--new mqtt_monitor MyPanel.json (no TEMPLATE: list them)")
     ap.add_argument("--simulator", nargs=argparse.REMAINDER, metavar="NAME",
                     help="start an example's pretend device, e.g. --simulator solar_battery")
     a = ap.parse_args()
@@ -118,6 +121,19 @@ def main():
             return
         run_simulator(a.simulator)
         return
+    if a.new is not None:
+        from panelworks import newform
+        if not a.new:
+            print(newform.describe())
+            return
+        if not a.form:
+            ap.error("give the new form's file name too, e.g. --new mqtt_monitor MyPanel.json")
+        try:
+            path = newform.create(a.new, a.form)
+        except (ValueError, FileExistsError) as e:
+            sys.exit(str(e))
+        print(f"Made {path}" + ("" if a.new == "blank" else f" and {os.path.splitext(path)[0]}.py"))
+        a.form, a.design = path, True
     if a.example is not None:
         if not a.example:
             print(list_examples_text())

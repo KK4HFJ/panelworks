@@ -1,0 +1,21 @@
+{
+  "name": "SerialBench",
+  "caption": "Serial bench",
+  "width": 500,
+  "height": 360,
+  "objects": {
+    "shpLink":  {"type": "Shape", "FillColor": "red", "Left": 15, "Top": 17, "Width": 14, "Height": 14},
+    "lblLink":  {"type": "Label", "Caption": "Looking for the board...", "Left": 35, "Top": 13, "Width": 450, "Height": 22},
+    "lblV":     {"type": "Label", "Caption": "Value", "Left": 15, "Top": 50, "Width": 60, "Height": 24},
+    "segValue": {"type": "SegmentDisplay", "Style": "LED", "Digits": 6, "Decimals": -1, "Value": "", "Left": 80, "Top": 44, "Width": 200, "Height": 46},
+    "pbValue":  {"type": "ProgressBar", "Max": 1023, "Left": 295, "Top": 56, "Width": 190, "Height": 22},
+    "lstLog":   {"type": "ListBox", "Left": 15, "Top": 104, "Width": 470, "Height": 160, "FontName": "Consolas", "FontSize": 9},
+    "txtSend":  {"type": "TextBox", "Text": "LED ON", "Left": 15, "Top": 278, "Width": 300, "Height": 26},
+    "cmdSend":  {"type": "CommandButton", "Caption": "Send", "Left": 325, "Top": 276, "Width": 75, "Height": 30},
+    "cmdClear": {"type": "CommandButton", "Caption": "Clear", "Left": 410, "Top": 276, "Width": 75, "Height": 30},
+    "lblHelp":  {"type": "Label", "Caption": "Board prints one line per reading, e.g. {\"value\": 512}", "ForeColor": "#555555",
+                 "Left": 15, "Top": 318, "Width": 470, "Height": 22},
+    "Serial1":  {"type": "Serial", "Port": "auto", "Settings": "115200,n,8,1",
+                 "Fill": ["value -> segValue.Value", "value -> pbValue.Value"]}
+  }
+}

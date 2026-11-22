@@ -11,7 +11,13 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
   `tabMain_Click(f, previous_tab)` fires when the user picks a tab. On the phone view it's a card with tab
   buttons, and Frames inside it nest as cards.
 
+**Designer**
+- **New from Template** (File menu, Ctrl+Shift+N): MQTT monitor, Serial bench, Gauge panel and Tabbed
+  panel, each a working form plus code saved under your own file name. `panelworks --new` lists them;
+  `panelworks --new gauge_panel MyPanel.json` makes one and opens it in the designer.
+
 **Fixes**
+- A Gauge or SegmentDisplay removed while a redraw was queued printed a Tcl "invalid command name" error.
 - Phone view: a Frame inside another Frame now shows as a card inside it, not as a separate card plus an
   empty row.
 - Frames now always sit above any larger container they're drawn on.

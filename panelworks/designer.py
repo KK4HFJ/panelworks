@@ -284,6 +284,7 @@ class Designer:
         m = tk.Menu(self.root)
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="New", accelerator="Ctrl+N", command=lambda: self.new_form() if self._ok_to_discard() else None)
+        f.add_command(label="New from Template...", accelerator="Ctrl+Shift+N", command=self.template_dialog)
         f.add_command(label="Open...", accelerator="Ctrl+O", command=self.open_dialog)
         self.recent_menu = tk.Menu(f, tearoff=0, postcommand=self._fill_recent)
         f.add_cascade(label="Open Recent", menu=self.recent_menu)
@@ -559,6 +560,7 @@ class Designer:
         r.bind("<Control-s>", lambda e: self.save())
         r.bind("<Control-o>", lambda e: self.open_dialog())
         r.bind("<Control-n>", lambda e: self.new_form() if self._ok_to_discard() else None)
+        r.bind("<Control-N>", lambda e: self.template_dialog())       # Ctrl+Shift+N
         r.bind("<Control-w>", lambda e: self.close_form())
         r.bind("<Control-g>", lambda e: self.immediate())
         r.bind("<Control-e>", lambda e: self.menu_editor())
@@ -588,6 +590,86 @@ class Designer:
         self._set_dirty(False)
         self._mtime = None
         self.say("New form. Pick a tool on the left and drag on the form to draw a control.")
+
+    def template_dialog(self):
+        """File > New from Template: pick a starting point, name the file, open it."""
+        if not self._ok_to_discard():
+            return
+        from . import newform
+        top = tk.Toplevel(self.root)
+        top.title("New from Template")
+        top.transient(self.root)
+        top.resizable(False, False)
+        body = tk.Frame(top, padx=12, pady=10)
+        body.pack(fill="both", expand=True)
+        keys = list(newform.TEMPLATES)
+        lb = tk.Listbox(body, height=len(keys) + 1, width=20, exportselection=False, activestyle="none")
+        for k in keys:
+            lb.insert("end", newform.TEMPLATES[k][0])
+            if newform.missing_library(k):
+                lb.itemconfigure("end", fg="gray55")
+        lb.grid(row=0, column=0, sticky="ns", padx=(0, 10))
+        info = tk.Label(body, width=40, height=7, justify="left", anchor="nw", wraplength=300)
+        info.grid(row=0, column=1, sticky="nw")
+        bar = tk.Frame(top, padx=12, pady=8)
+        bar.pack(fill="x")
+
+        def pick(_e=None):
+            k = keys[lb.curselection()[0]] if lb.curselection() else keys[0]
+            miss = newform.missing_library(k)
+            text = newform.TEMPLATES[k][1]
+            if miss:
+                text += "\n\n" + (missing_type_message(miss) or f"The {miss} control isn't available.")
+            info.configure(text=text)
+            ok.configure(state="disabled" if miss else "normal")
+
+        def go(_e=None):
+            k = keys[lb.curselection()[0]] if lb.curselection() else keys[0]
+            if newform.missing_library(k):
+                return
+            top.destroy()
+            self.new_from_template(k)
+
+        ok = tk.Button(bar, text="Create...", width=10, command=go, default="active")
+        ok.pack(side="right")
+        tk.Button(bar, text="Cancel", width=10, command=top.destroy).pack(side="right", padx=6)
+        lb.bind("<<ListboxSelect>>", pick)
+        lb.bind("<Double-Button-1>", go)
+        top.bind("<Return>", go)
+        top.bind("<Escape>", lambda e: top.destroy())
+        lb.selection_set(1 if len(keys) > 1 else 0)
+        pick()
+        lb.focus_set()
+        self._template_win = top
+        return top
+
+    def new_from_template(self, key, path=None):
+        """Make the template's files (asking where, unless path is given) and open them."""
+        from . import newform
+        if key == "blank":
+            self.new_form()
+            return None
+        if path is None:
+            path = filedialog.asksaveasfilename(
+                parent=self.root, title="Save the new panel as", defaultextension=".json",
+                initialdir=self._start_dir(), initialfile=newform.form_name(key) + ".json",
+                filetypes=[("PanelWorks form", "*.json")])
+            if not path:
+                return None
+        code = os.path.splitext(path)[0] + ".py"
+        if os.path.exists(code) and not messagebox.askyesno(
+                "New from Template", f"{os.path.basename(code)} already exists.\nReplace it with the "
+                "template's code?", parent=self.root):
+            return None
+        try:
+            path = newform.create(key, path, overwrite=True)
+        except OSError as e:
+            messagebox.showerror("New from Template", f"Could not create it:\n{e}", parent=self.root)
+            return None
+        self.open_form(path)
+        self.say(f"New {newform.TEMPLATES[key][0].lower()}: {os.path.basename(path)}. "
+                 "Press F5 to run it, double-click a control for its code.")
+        return path
 
     def open_dialog(self):
         if not self._ok_to_discard():

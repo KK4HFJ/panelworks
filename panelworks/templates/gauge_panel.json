@@ -1,0 +1,22 @@
+{
+  "name": "GaugePanel",
+  "caption": "Gauge panel",
+  "width": 600,
+  "height": 430,
+  "objects": {
+    "gauVolts": {"type": "Gauge", "Title": "Battery", "Units": "V", "Min": 40, "Max": 60, "Decimals": 1, "Value": 52,
+                 "Zones": ["40 46 red", "46 48 gold", "57 60 gold"], "Left": 15, "Top": 15, "Width": 180, "Height": 170},
+    "gauAmps":  {"type": "Gauge", "Title": "Load", "Units": "A", "Min": 0, "Max": 100, "Value": 20,
+                 "Zones": ["80 90 gold", "90 100 red"], "Left": 210, "Top": 15, "Width": 180, "Height": 170},
+    "gauTemp":  {"type": "Gauge", "Title": "Temperature", "Units": "°F", "Min": 0, "Max": 150, "Value": 70,
+                 "Zones": ["110 130 gold", "130 150 red"], "Left": 405, "Top": 15, "Width": 180, "Height": 170},
+    "lblPower": {"type": "Label", "Caption": "Power", "Left": 15, "Top": 202, "Width": 60, "Height": 24},
+    "segWatts": {"type": "SegmentDisplay", "Style": "LCD", "Digits": 5, "Decimals": 0, "Value": 0, "Left": 80, "Top": 194, "Width": 170, "Height": 42},
+    "lblWatts": {"type": "Label", "Caption": "W", "FontSize": 14, "Left": 256, "Top": 204, "Width": 30, "Height": 26},
+    "lblSource": {"type": "Label", "Caption": "Demo values (tmrDemo): see the code",
+                  "ForeColor": "#555555", "Left": 310, "Top": 204, "Width": 275, "Height": 24},
+    "chtTrend": {"type": "Chart", "Title": "Last 5 minutes", "Series": ["Volts", "Amps"], "Window": 300,
+                 "Left": 15, "Top": 250, "Width": 570, "Height": 165},
+    "tmrDemo":  {"type": "Timer", "Interval": 1000, "Enabled": true}
+  }
+}

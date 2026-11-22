@@ -57,6 +57,15 @@ class Gauge(Control):
         super()._place()
         self._schedule()
 
+    def destroy(self):
+        if getattr(self, "_redraw", None):            # a redraw still queued would hit a dead widget
+            try:
+                self.widget.after_cancel(self._redraw)
+            except tk.TclError:
+                pass
+            object.__setattr__(self, "_redraw", None)
+        super().destroy()
+
     # ---- geometry ---------------------------------------------------------------------
     def geometry(self):
         """(cx, cy, r) of the dial in pixels."""

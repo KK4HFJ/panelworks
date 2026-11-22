@@ -1,0 +1,24 @@
+{
+  "name": "TabbedPanel",
+  "caption": "Tabbed panel",
+  "width": 480,
+  "height": 360,
+  "objects": {
+    "tabMain":   {"type": "TabStrip", "Tabs": ["Status", "Settings", "Log"], "Left": 10, "Top": 10, "Width": 460, "Height": 300},
+    "shpRun":    {"type": "Shape", "FillColor": "gray", "Left": 30, "Top": 52, "Width": 28, "Height": 28},
+    "lblRun":    {"type": "Label", "Caption": "Stopped", "FontSize": 14, "FontBold": true, "Left": 70, "Top": 53, "Width": 200, "Height": 28},
+    "gauLevel":  {"type": "Gauge", "Title": "Level", "Units": "%", "Min": 0, "Max": 100, "Value": 0,
+                  "Left": 280, "Top": 45, "Width": 170, "Height": 160},
+    "cmdStart":  {"type": "CommandButton", "Caption": "Start", "Left": 30, "Top": 100, "Width": 100, "Height": 34},
+    "cmdStop":   {"type": "CommandButton", "Caption": "Stop", "Left": 140, "Top": 100, "Width": 100, "Height": 34},
+    "lblSet":    {"type": "Label", "Caption": "Stop at %", "Left": 30, "Top": 55, "Width": 90, "Height": 24, "TabPage": 1},
+    "txtSet":    {"type": "TextBox", "Text": "90", "Left": 125, "Top": 55, "Width": 60, "Height": 24, "TabPage": 1},
+    "fraMode":   {"type": "Frame", "Caption": "Mode", "Left": 30, "Top": 95, "Width": 200, "Height": 95, "TabPage": 1},
+    "optAuto":   {"type": "OptionButton", "Caption": "Automatic", "Value": true, "Left": 45, "Top": 118, "Width": 150, "Height": 24, "TabPage": 1},
+    "optHand":   {"type": "OptionButton", "Caption": "Manual", "Left": 45, "Top": 150, "Width": 150, "Height": 24, "TabPage": 1},
+    "lstLog":    {"type": "ListBox", "Left": 25, "Top": 50, "Width": 430, "Height": 200, "TabPage": 2},
+    "cmdClear":  {"type": "CommandButton", "Caption": "Clear log", "Left": 25, "Top": 258, "Width": 100, "Height": 30, "TabPage": 2},
+    "lblStatus": {"type": "Label", "Caption": "Ready", "ForeColor": "#555555", "Left": 10, "Top": 322, "Width": 460, "Height": 24},
+    "tmrRun":    {"type": "Timer", "Interval": 500, "Enabled": false}
+  }
+}

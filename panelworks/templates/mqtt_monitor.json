@@ -1,0 +1,23 @@
+{
+  "name": "MqttMonitor",
+  "caption": "MQTT monitor",
+  "width": 520,
+  "height": 380,
+  "objects": {
+    "shpLink":    {"type": "Shape", "FillColor": "red", "Left": 15, "Top": 17, "Width": 14, "Height": 14},
+    "lblLink":    {"type": "Label", "Caption": "Connecting to the broker...", "Left": 35, "Top": 13, "Width": 470, "Height": 22},
+    "lblTopic":   {"type": "Label", "Caption": "Watch topic", "Left": 15, "Top": 48, "Width": 85, "Height": 24},
+    "txtTopic":   {"type": "TextBox", "Text": "#", "Left": 105, "Top": 48, "Width": 290, "Height": 24},
+    "cmdWatch":   {"type": "CommandButton", "Caption": "Subscribe", "Left": 405, "Top": 46, "Width": 100, "Height": 28},
+    "lstLog":     {"type": "ListBox", "Left": 15, "Top": 84, "Width": 490, "Height": 200, "FontName": "Consolas", "FontSize": 9},
+    "lblPub":     {"type": "Label", "Caption": "Publish to", "Left": 15, "Top": 298, "Width": 85, "Height": 24},
+    "txtPubTopic": {"type": "TextBox", "Text": "panelworks/test", "Left": 105, "Top": 298, "Width": 400, "Height": 24},
+    "lblPayload": {"type": "Label", "Caption": "Payload", "Left": 15, "Top": 332, "Width": 85, "Height": 24},
+    "txtPayload": {"type": "TextBox", "Text": "hello", "Left": 105, "Top": 332, "Width": 180, "Height": 24},
+    "chkRetain":  {"type": "CheckBox", "Caption": "Retain", "Left": 295, "Top": 332, "Width": 70, "Height": 24},
+    "cmdPublish": {"type": "CommandButton", "Caption": "Publish", "Left": 375, "Top": 330, "Width": 60, "Height": 28},
+    "cmdClear":   {"type": "CommandButton", "Caption": "Clear", "Left": 445, "Top": 330, "Width": 60, "Height": 28},
+    "mqtt1":      {"type": "MQTT", "Broker": "${MQTT_HOST:-localhost}", "Port": "${MQTT_PORT:-1883}",
+                   "Username": "${MQTT_USER}", "Password": "${MQTT_PASS}", "Subscriptions": ["#"]}
+  }
+}
