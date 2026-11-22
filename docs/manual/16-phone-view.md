@@ -59,6 +59,7 @@ The phone shows the same controls, rearranged into one column in reading order
 | A Label just left of a TextBox or ComboBox | Label and field on one line |
 | A Label just above a list, grid, chart or field | Kept together as its caption |
 | A Frame | A card with its title, holding its contents |
+| A TabStrip | A card with a row of tab buttons and the current page; a Frame on the page is a card inside it |
 | Labels with a big font (16 pt and up) | Big, bold readouts |
 | CommandButton | A full-width button |
 | Chart | Redrawn full width, live |
@@ -73,7 +74,10 @@ KeyPress 13). Disabled and hidden controls are greyed out or left out, as on the
 
 **Laying out for both:** design for the PC as usual; the phone follows. Two
 habits help: put a field's label to its left on the same line, and group related
-controls in a Frame (each becomes a card).
+controls in a Frame (each becomes a card). A busy panel splits well onto a
+TabStrip: each page is short enough for a phone screen.
+
+![The TabStrip from chapter 4 on a phone: Status page, then Settings](img/tabstrip-phone.png)
 
 ## Keeping it safe
 

@@ -52,6 +52,7 @@ chapter translates the rest.
 | Inet (`OpenURL`) | **WebRequest**: reads a web API on a timer into your controls; `Fetch(url)` for one-off calls (chapter 19) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |
 | OptionButtons grouped by Frame | The same: each Frame is its own group (or set **Group** yourself) |
+| SSTab / TabStrip, `SSTab1.Tab = 2` | **TabStrip**: draw on each page; `f.tabMain.Tab = 2`; each control's **TabPage** says its page (chapter 4) |
 | Control arrays: `Lamp(3).FillColor`, `Sub Lamp_Click(Index As Integer)` | The same: `f.Lamp(3).FillColor`, `def Lamp_Click(f, index):` (chapter 6) |
 | `Load Lamp(8)` / `Unload Lamp(8)` | `f.Lamp.Load(8)` / `f.Lamp.Unload(8)` |
 | `Lamp.UBound`, `Lamp.Count` | `f.Lamp.UBound`, `f.Lamp.Count`, `len(f.Lamp)` |

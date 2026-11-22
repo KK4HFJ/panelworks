@@ -30,6 +30,7 @@ COMMON = {
     "Type": "The control type, e.g. `Label`. Read-only.",
     "SetFocus": "Move the keyboard focus to this control.",
     "Refresh": "Redraw now, inside a long-running procedure.",
+    "TabPage": "Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0.",
 }
 
 DOC = {
@@ -103,6 +104,16 @@ DOC = {
         "Enabled": "False disables the frame and everything inside it (run time).",
         "Visible": "False hides the frame and everything inside it (run time).",
         "Click": "The frame (not a control on it) is clicked.",
+    },
+    "TabStrip": {
+        "_": "A row of tabs over a panel, each tab a page of controls (VB's SSTab). Like a Frame, anything drawn inside its rectangle belongs to it; each control's TabPage says which page it is on, and only the current page's controls show. A Frame on a page carries its contents. OptionButtons on each page form their own group. On the phone view it is a card with tab buttons.",
+        "Tabs": "The tab captions, one per line (one per page).",
+        "Tab": "The page showing, counted from 0. Set it to switch pages; that doesn't fire Click.",
+        "TabCount": "How many tabs there are. Read-only.",
+        "Enabled": "False disables the strip and everything on it (run time).",
+        "Visible": "False hides the strip and everything on it (run time).",
+        "ForeColor": "Colour of the tab captions.",
+        "Click": "The user picked another tab; Tab is already the new page and previous_tab is the one before.",
     },
     "Shape": {
         "_": "A rectangle or circle. Most often an indicator lamp.",
@@ -473,7 +484,7 @@ ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retain
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
-         "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
+         "Frame", "TabStrip", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
          "Modbus", "SNMP", "WebRequest", "Data", "Alarms", "AlarmPanel"]
 
 missing = []
@@ -531,8 +542,8 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 **Every control** has **Index**, its number in a control array (chapter 6).
 
 **All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
-Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
-and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
+Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag,
+TabPage (chapter 4) and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
 each table so every table is complete.
 """]

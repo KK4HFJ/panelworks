@@ -99,6 +99,41 @@ Deleting a frame leaves its contents where they are (VB deleted them too; this
 way nothing is lost by accident, and Ctrl+Z still works either way). To start a
 selection box inside a frame, start the drag just outside it.
 
+## TabStrips
+
+![A TabStrip on its Settings page, with a Frame on that page](img/tabstrip.png)
+
+A **TabStrip** puts several pages on one form, like VB's SSTab: Status on one
+tab, Settings on the next, Alarms on a third. It works like a Frame with pages:
+
+1. Draw the TabStrip, then set **Tabs** in the Properties window, one caption
+   per line (`Status`, `Settings`, `Alarms`).
+2. Click a tab in the designer to show that page.
+3. Draw controls on it, or drag them in. Each one takes that page's number in its
+   **TabPage** property (0 for the first tab). Click another tab and they hide;
+   the new page is empty and ready.
+
+Pages overlap, so a control on one page can sit exactly where another page has
+something else. A Frame on a page carries its contents: they share its page, and
+setting the Frame's TabPage moves the whole group. OptionButtons on each page
+form their own group, as they do in a frame. To move a control to another page,
+change its TabPage; the strip switches to that page so you can see it. Moving the
+strip carries every page with it.
+
+At run time the user clicks a tab; the strip shows that page and fires
+`tabMain_Click(f, previous_tab)`, with `f.tabMain.Tab` already the new page.
+Code can switch pages too, without firing Click:
+
+```python
+def cmdAlarms_Click(f):
+    f.tabMain.Tab = 2            # show the Alarms page
+```
+
+A control on a page that isn't showing keeps `Visible = True` (as in VB): it is
+just out of view, and its values, timers and Fill updates keep working. On the
+phone view the strip is a card with a row of tab buttons (chapter 16). Don't put a
+TabStrip on another TabStrip's page; use a Frame inside a page instead.
+
 ## Selecting several controls
 
 ![Three labels selected](img/multiselect.png)

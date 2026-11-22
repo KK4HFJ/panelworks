@@ -300,6 +300,7 @@ a traceback and logs the error in the event log; the app keeps running.
 | ListBox | List, ListIndex, ListCount, Text | AddItem, RemoveItem, Clear | Click, DblClick |
 | ComboBox | List, ListIndex, ListCount, Text | AddItem, Clear | Click, Change |
 | Frame | Caption; contents move, hide and disable with it; its OptionButtons form their own group | | Click |
+| TabStrip | Tabs, Tab, TabCount; pages of controls (each control's TabPage), like VB's SSTab | | Click(previous_tab) |
 | Shape | Shape (Oval/Rectangle), FillColor, BorderColor | | Click |
 | ProgressBar | Value, Max | | |
 | Slider | Min, Max, Value, SmallChange, LargeChange, TickFrequency, Orientation | | Change, Scroll |

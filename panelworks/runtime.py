@@ -183,7 +183,7 @@ class ControlArray:
         object.__setattr__(o, "_loaded_at_run_time", True)
         if hasattr(o, "widget") and hasattr(src, "widget"):
             try:
-                o.widget.lift(src.widget)
+                tk.Misc.lift(o.widget, src.widget)
             except Exception:
                 pass
         return o
@@ -326,7 +326,7 @@ class Control(VBObject):
         self.widget.destroy()
 
     def _place(self):
-        if self._visible:
+        if self._visible and not getattr(self, "_tab_hidden", False):
             g = self._geom
             self.widget.place(x=g["x"], y=g["y"], width=g["width"], height=g["height"])
         else:
@@ -354,6 +354,23 @@ class Control(VBObject):
     def get_Visible(self): return self._visible
     def set_Visible(self, v):
         object.__setattr__(self, "_visible", bool(v)); self._place()
+
+    # TabPage: which page of a TabStrip the control sits on (only matters inside one)
+    def get_TabPage(self): return getattr(self, "_tabpage", 0)
+    def set_TabPage(self, v):
+        object.__setattr__(self, "_tabpage", max(0, int(v)))
+        if getattr(self._form, "_loaded", False):
+            apply_tabs(self._form)
+
+    def on_screen(self):
+        """Visible and not on a hidden TabStrip page."""
+        return self._visible and not getattr(self, "_tab_hidden", False)
+
+    def persist(self):
+        props = super().persist()
+        if props.get("TabPage") == 0:                 # only saved for controls on a page
+            del props["TabPage"]
+        return props
 
     def get_Enabled(self):
         return str(self.widget.cget("state")) != "disabled"
@@ -679,40 +696,50 @@ class ProgressBar(Control):
     def set_Value(self, v): self.widget.configure(value=max(0.0, min(float(v), self.get_Max())))
 
 
-class Frame(ColourMixin, Control):
-    """A captioned box that groups controls, like VB's Frame. Controls drawn inside
-    its rectangle belong to it: they move with it in the designer, are hidden or
+class Container(ColourMixin, Control):
+    """Base for controls that hold others by geometry (Frame, TabStrip). Controls drawn
+    inside the rectangle belong to it: they move with it in the designer, are hidden or
     disabled with it at run time, and OptionButtons inside it form their own group."""
-    TYPE = "Frame"
-    EVENTS = ("Click",)
-    DEFAULT_SIZE = (200, 120)
-
-    def create(self, parent):
-        w = tk.LabelFrame(parent, text=self.Name, padx=4, pady=2)
-        w.bind("<Button-1>", lambda e: self.fire("Click"))
-        return w
+    TYPE = "Container"
 
     def _place(self):
         super()._place()
-        try:
-            self.widget.lower()                    # always behind what's drawn on it
-        except tk.TclError:
-            pass
-
-    def get_Caption(self): return self.widget.cget("text")
-    def set_Caption(self, v): self.widget.configure(text=str(v))
+        stack_containers(self._form)               # always behind what's drawn on it
 
     def contents(self, deep=True):
-        """Names of the visual controls inside this frame's rectangle (nested frames' too)."""
+        """Names of the visual controls inside this rectangle (nested containers' too).
+        TabStrip pages overlap, so a Frame only holds controls on its own TabPage."""
         x, y, w, h = self.get_Left(), self.get_Top(), self.get_Width(), self.get_Height()
+        page = None if self.TYPE == "TabStrip" else self.get_TabPage()
         out = []
         for n, o in self._form.objects.items():
             if o is self or not hasattr(o, "widget") or not hasattr(o, "get_Left"):
+                continue
+            if page is not None and o.get_TabPage() != page:
                 continue
             ox, oy = o.get_Left(), o.get_Top()
             if x <= ox and y <= oy and ox + o.get_Width() <= x + w and oy + o.get_Height() <= y + h:
                 out.append(n)
         return out
+
+    def set_TabPage(self, v):
+        if getattr(self._form, "_loaded", False) and getattr(self, "_built", False):
+            self.to_page(v)                                # run time: the contents come along
+        else:                                              # loading: each control has its own
+            object.__setattr__(self, "_tabpage", max(0, int(v)))
+
+    def to_page(self, v):
+        """Move to another TabStrip page, taking the contents along."""
+        inside = self.contents()
+        object.__setattr__(self, "_tabpage", max(0, int(v)))
+        for n in inside:
+            o = self._form.objects[n]
+            if isinstance(o, Container):
+                o.to_page(v)
+            else:
+                object.__setattr__(o, "_tabpage", max(0, int(v)))
+        if getattr(self._form, "_loaded", False):
+            apply_tabs(self._form)
 
     def set_Visible(self, v):
         Control.set_Visible(self, v)
@@ -722,12 +749,13 @@ class Frame(ColourMixin, Control):
 
     def get_Enabled(self): return getattr(self, "_enabled", True)
 
+    def _show_enabled(self, v):
+        pass
+
     def set_Enabled(self, v):
         v = bool(v)
-        if v != self.get_Enabled():                  # a LabelFrame has no state: grey the caption
-            if not v:
-                object.__setattr__(self, "_fg_was", self.widget.cget("fg"))
-            self.widget.configure(fg=getattr(self, "_fg_was", "black") if v else "gray55")
+        if v != self.get_Enabled():
+            self._show_enabled(v)
         object.__setattr__(self, "_enabled", v)
         if getattr(self._form, "_loaded", False):
             for n in self.contents():
@@ -737,11 +765,31 @@ class Frame(ColourMixin, Control):
                     pass
 
 
+class Frame(Container):
+    """A captioned box that groups controls, like VB's Frame."""
+    TYPE = "Frame"
+    EVENTS = ("Click",)
+    DEFAULT_SIZE = (200, 120)
+
+    def create(self, parent):
+        w = tk.LabelFrame(parent, text=self.Name, padx=4, pady=2)
+        w.bind("<Button-1>", lambda e: self.fire("Click"))
+        return w
+
+    def get_Caption(self): return self.widget.cget("text")
+    def set_Caption(self, v): self.widget.configure(text=str(v))
+
+    def _show_enabled(self, v):                  # a LabelFrame has no state: grey the caption
+        if not v:
+            object.__setattr__(self, "_fg_was", self.widget.cget("fg"))
+        self.widget.configure(fg=getattr(self, "_fg_was", "black") if v else "gray55")
+
+
 def frame_of(form, name):
-    """The innermost Frame containing control `name`, or None."""
+    """The innermost container (Frame or TabStrip) holding control `name`, or None."""
     best = None
     for o in form.objects.values():
-        if isinstance(o, Frame) and name in o.contents():
+        if isinstance(o, Container) and name in o.contents():
             if best is None or o.get_Width() * o.get_Height() < best.get_Width() * best.get_Height():
                 best = o
     return best
@@ -749,13 +797,55 @@ def frame_of(form, name):
 
 def auto_option_groups(form):
     """OptionButtons left in the 'default' group take their frame's name as group,
-    so each frame is its own set of choices (as in VB)."""
+    so each frame (or each page of a TabStrip) is its own set of choices, as in VB."""
     for n, o in form.objects.items():
-        if o.TYPE == "OptionButton" and o.get_Group() == "default":
+        if o.TYPE == "OptionButton" and (o.get_Group() == "default" or getattr(o, "_auto_group", False)):
             fr = frame_of(form, n)
             if fr is not None:
-                o.set_Group(fr.Name)
+                g = fr.Name if fr.TYPE != "TabStrip" else f"{fr.Name}.{o.get_TabPage()}"
+                o.set_Group(g)
                 object.__setattr__(o, "_auto_group", True)     # not saved back to the file
+            elif getattr(o, "_auto_group", False):            # moved out of its frame
+                o.set_Group("default")
+
+
+def apply_tabs(form):
+    """Show only the controls on each TabStrip's current page. A control's page is
+    decided by its innermost container: on a TabStrip it is its own TabPage; inside a
+    Frame it follows the Frame. Cheap enough to run after any layout change."""
+    memo = {}
+
+    def hidden(n, depth=0):
+        if n in memo:
+            return memo[n]
+        memo[n] = False                                  # guards against cycles
+        c = frame_of(form, n)
+        h = False
+        if c is not None and depth < 20:
+            if c.TYPE == "TabStrip":
+                h = form.objects[n].get_TabPage() != c.get_Tab()
+            h = h or hidden(c.Name, depth + 1)
+        memo[n] = h
+        return h
+
+    for n, o in list(form.objects.items()):
+        if not hasattr(o, "widget") or not hasattr(o, "get_Left"):
+            continue
+        h = hidden(n)
+        if h != getattr(o, "_tab_hidden", False):
+            object.__setattr__(o, "_tab_hidden", h)
+            o._place()
+
+
+def stack_containers(form):
+    """Containers go behind everything, bigger ones further back, so a Frame on a
+    TabStrip sits above the strip and below its own contents."""
+    conts = [o for o in form.objects.values() if isinstance(o, Container) and hasattr(o, "widget")]
+    for o in sorted(conts, key=lambda c: c.get_Width() * c.get_Height()):
+        try:
+            tk.Misc.lower(o.widget)                # Misc: a Canvas's own lower() is tag_lower
+        except tk.TclError:
+            pass
 
 
 class Timer(VBObject):
@@ -868,9 +958,8 @@ class Form:
         if spec.get("menu"):
             from . import menus
             menus.install(self, spec["menu"])
-        for o in self.objects.values():            # frames stay behind their contents
-            if isinstance(o, Frame):
-                o.widget.lower()
+        apply_tabs(self)
+        stack_containers(self)                     # frames stay behind their contents
 
         self._pump_after = self.root.after(20, self._pump)
         self._load_after = self.root.after(0, self._load)
@@ -1118,6 +1207,10 @@ class Form:
         order = list(cls.PERSIST_ORDER)
         for k in sorted(props, key=lambda p: (p not in order, order.index(p) if p in order else 0)):
             o.set(k, props[k])
+        object.__setattr__(o, "_built", True)
+        if self._loaded and hasattr(o, "widget"):     # added at run time: page and stacking
+            apply_tabs(self)
+            stack_containers(self)
         if self.bus and o._bind:
             self.bus.register(o)
         if o._webhook and self.hooks is None:
@@ -1349,6 +1442,7 @@ from . import gauge as _gauge  # noqa: F401,E402  (Gauge control)
 from . import alarms as _alarms  # noqa: F401,E402  (Alarms + AlarmPanel)
 from . import segdisplay as _segdisplay  # noqa: F401,E402  (SegmentDisplay)
 from . import webrequest as _webrequest  # noqa: F401,E402  (WebRequest: web APIs, stdlib only)
+from . import tabstrip as _tabstrip  # noqa: F401,E402  (TabStrip: pages of controls)
 
 def _load_modbus():
     from . import modbus as _modbus  # noqa: F401

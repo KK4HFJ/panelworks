@@ -16,8 +16,8 @@ and `def Serial1_DataArrival(f, line):` are both fine, and so is leaving off `f`
 **Every control** has **Index**, its number in a control array (chapter 6).
 
 **All visible controls** (everything except Timer, MQTT, Serial, Modbus, SNMP, WebRequest, Data and Alarms) also have
-Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag
-and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
+Left, Top, Width, Height, Visible, Enabled, FontName, FontSize, FontBold, Tag,
+TabPage (chapter 4) and the methods SetFocus and Refresh. Label, CommandButton, TextBox, CheckBox,
 OptionButton and ListBox also have BackColor and ForeColor. They are repeated in
 each table so every table is complete.
 
@@ -74,6 +74,7 @@ Text the user can't edit: captions, readings, status lines.
 | Height | read/write | Height in pixels. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Visible | read/write | False hides the control (it keeps its place and properties). |
@@ -111,6 +112,7 @@ A push button.
 | Height | read/write | Height in pixels. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Visible | read/write | False hides the control (it keeps its place and properties). |
@@ -152,6 +154,7 @@ A one-line text entry box.
 | Locked | read/write | True: read-only, but the text can still be selected and copied. |
 | PasswordChar | read/write | Show this character instead of what's typed, e.g. `*`. Empty for normal text. |
 | SelText | read-only | The currently selected text. Read-only. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Text | read/write | The contents. Setting it fires Change, as in VB. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -193,6 +196,7 @@ An on/off box with a caption.
 | Height | read/write | Height in pixels. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Value | read/write | 0 unchecked, 1 checked. Setting it from code fires Click, as in VB. |
@@ -231,6 +235,7 @@ A radio button. Buttons with the same Group are mutually exclusive.
 | Height | read/write | Height in pixels. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Value | read/write | True when this button is the selected one in its group. Set True to select it (fires Click). |
@@ -270,6 +275,7 @@ A scrolling list; the user picks one item.
 | List | read/write | All items, as a list of strings. Setting it replaces them. |
 | ListCount | read-only | Number of items. Read-only. |
 | ListIndex | read/write | Index of the selected item (0 is the first), or -1 for none. Setting it selects and scrolls to the item and fires Click. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Text | read-only | The selected item's text, or empty. Read-only. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -311,6 +317,7 @@ A drop-down list the user can also type into.
 | List | read/write | The drop-down items. |
 | ListCount | read-only | Number of items. Read-only. |
 | ListIndex | read/write | Index of the chosen item, or -1 if the text was typed. Setting it chooses that item and fires Click. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Text | read/write | The text in the box. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -351,6 +358,7 @@ A captioned box that groups controls, like VB's Frame. Anything drawn inside its
 | Height | read/write | Height in pixels. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Visible | read/write | False hides the frame and everything inside it (run time). |
@@ -368,6 +376,45 @@ A captioned box that groups controls, like VB's Frame. Anything drawn inside its
 | Event procedure | Fires when |
 |---|---|
 | `Name_Click(f)` | The frame (not a control on it) is clicked. |
+
+## TabStrip
+
+A row of tabs over a panel, each tab a page of controls (VB's SSTab). Like a Frame, anything drawn inside its rectangle belongs to it; each control's TabPage says which page it is on, and only the current page's controls show. A Frame on a page carries its contents. OptionButtons on each page form their own group. On the phone view it is a card with tab buttons.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| BackColor | read/write | Background colour: a name (`light yellow`) or `#rrggbb`. |
+| Enabled | read/write | False disables the strip and everything on it (run time). |
+| FontBold | read/write | True for bold. |
+| FontName | read/write | Font family, e.g. `Helvetica`, `Arial`, `Consolas`. |
+| FontSize | read/write | Font size in points. |
+| ForeColor | read/write | Colour of the tab captions. |
+| Height | read/write | Height in pixels. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| Left | read/write | Distance from the form's left edge, in pixels. |
+| Tab | read/write | The page showing, counted from 0. Set it to switch pages; that doesn't fire Click. |
+| TabCount | read-only | How many tabs there are. Read-only. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
+| Tabs | read/write | The tab captions, one per line (one per page). |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Top | read/write | Distance from the form's top edge, in pixels. |
+| Visible | read/write | False hides the strip and everything on it (run time). |
+| Width | read/write | Width in pixels. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Refresh | Redraw now, inside a long-running procedure. |
+| SetFocus | Move the keyboard focus to this control. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_Click(f, previous_tab)` | The user picked another tab; Tab is already the new page and previous_tab is the one before. |
 
 ## Shape
 
@@ -387,6 +434,7 @@ A rectangle or circle. Most often an indicator lamp.
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Shape | read/write | `Oval` or `Rectangle`. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Visible | read/write | False hides the control (it keeps its place and properties). |
@@ -421,6 +469,7 @@ A horizontal bar showing a value from 0 to Max. Good for tank levels and progres
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Max | read/write | The value that fills the bar. Default 100. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Value | read/write | The current value, 0 to Max. Values outside the range are clamped. |
@@ -457,6 +506,7 @@ Drag to set a value, like VB's Slider: a setpoint, a speed, a dimmer. Value is a
 | Orientation | read/write | Horizontal or Vertical. |
 | ShowValue | read/write | Show the value above the handle. |
 | SmallChange | read/write | The step: 1 for whole numbers, 0.5 for halves. Arrow keys move by this much. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | TickFrequency | read/write | Numbers along the scale every this many units (0 = none). |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -501,6 +551,7 @@ A ready-made dial: set Value and the needle moves. Coloured Zones mark warning a
 | Max | read/write | The value at the end of the scale (bottom right). |
 | Min | read/write | The value at the start of the scale (bottom left). |
 | NeedleColor | read/write | Colour of the needle. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Title | read/write | Shown under the value. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -550,6 +601,7 @@ A seven-segment readout, like a scale head, meter or clock: LED (lit segments on
 | ShowOff | read/write | True: draw the unlit segments faintly, as real displays show them. |
 | Slant | read/write | Lean of the digits in degrees, 0 to 15 (default 6). |
 | Style | read/write | LED, LCD or LCD Reverse. Choosing one sets OnColor, OffColor and BackColor; change those afterwards for your own colours. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Text | read-only | What the display shows now, position by position (spaces for blanks). Read-only. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -600,6 +652,7 @@ A picture and a drawing surface, as in VB. Show a PNG/GIF (JPEG with Pillow) wit
 | ScaleTop | read/write | y at the top edge, when ScaleHeight is set. |
 | ScaleWidth | read/write | Your units across the box. 0 (the default): pixels. Example: ScaleLeft -100, ScaleWidth 200 puts x = 0 in the middle. |
 | Stretch | read/write | True: the Picture is scaled to fill the box (smoothly with Pillow, roughly without). |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
 | Visible | read/write | False hides the control (it keeps its place and properties). |
@@ -655,6 +708,7 @@ A scrolling trend chart of up to four lines. Setting Value (or Value2..Value4) a
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | LineWidth | read/write | Line thickness in pixels. |
 | Series | read/write | Line names, one per line in the designer (also the legend). Default `Value`. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Title | read/write | Text at the top left. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -704,6 +758,7 @@ A table of rows and columns (VB's DBGrid). Set DataSource to a Data control to s
 | Row | read/write | Index of the selected row (0 = first), or -1. Setting it selects and scrolls to that row. |
 | RowCount | read-only | Number of rows. Read-only. |
 | Rows | read/write | All rows, as a list of lists. Setting it replaces them. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Text | read-only | The selected row's values separated by tabs. Read-only. |
 | Top | read/write | Distance from the form's top edge, in pixels. |
@@ -1087,6 +1142,7 @@ The alarm list of an Alarms control: priority colour, time, name, message and va
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | Left | read/write | Distance from the form's left edge, in pixels. |
 | Source | read/write | The Alarms control to show. Empty = the form's only (or first) one. |
+| TabPage | read/write | Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Title | read/write | Text at the start of the header, before the summary. |
 | Top | read/write | Distance from the form's top edge, in pixels. |

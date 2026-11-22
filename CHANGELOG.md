@@ -2,6 +2,20 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+**New control**
+- **TabStrip**: several pages on one form, like VB's SSTab. Set Tabs (one caption per line), click a tab in
+  the designer and draw on that page; each control's TabPage says its page. A Frame on a page carries its
+  contents, and OptionButtons on each page form their own group. `f.tabMain.Tab = 2` switches pages;
+  `tabMain_Click(f, previous_tab)` fires when the user picks a tab. On the phone view it's a card with tab
+  buttons, and Frames inside it nest as cards.
+
+**Fixes**
+- Phone view: a Frame inside another Frame now shows as a card inside it, not as a separate card plus an
+  empty row.
+- Frames now always sit above any larger container they're drawn on.
+
 ## 0.7.0 (2026-11-22)
 
 **New control**

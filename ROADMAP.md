@@ -5,7 +5,6 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 ## Controls
 
-- **TabStrip**: several pages on one form for busy panels.
 - **Line**: VB's simple drawn line.
 
 ## Hardware and protocols

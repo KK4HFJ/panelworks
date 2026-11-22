@@ -219,13 +219,13 @@ def picture_file(form, name, index):
 
 def snapshot(form):
     """The visible panel, in reading order, as plain data. Runs on the GUI thread."""
-    from .runtime import Frame
+    from .runtime import Container
     items = []
     for name, o in form.objects.items():
         if o.TYPE in HIDDEN_TYPES or not hasattr(o, "get_Left"):
             continue
         try:
-            if not o.get_Visible():
+            if not o.get_Visible() or getattr(o, "_tab_hidden", False):   # off-page on a TabStrip too
                 continue
         except Exception:
             pass
@@ -248,6 +248,8 @@ def snapshot(form):
             d["value"] = g("Value")
         elif t == "OptionButton":
             d["value"] = bool(g("Value")); d["group"] = g("Group")
+        elif t == "TabStrip":
+            d["tabs"] = g("Tabs"); d["tab"] = g("Tab")
         elif t == "ComboBox":
             d["text"] = g("Text"); d["list"] = g("List")
         elif t == "ListBox":
@@ -297,7 +299,7 @@ def snapshot(form):
             d["bg"] = _hex(form, g("BackColor"))
         items.append(d)
     # frames become cards holding their contents
-    frames = {n: o for n, o in form.objects.items() if isinstance(o, Frame)}
+    frames = {n: o for n, o in form.objects.items() if isinstance(o, Container)}
     inside = {}
     for fname, fr in frames.items():
         for n in fr.contents():
@@ -329,7 +331,7 @@ def act(form, req):
         raise ValueError("not a control")
     if o.TYPE == "Menu" and not (o._phone and o._visible):
         raise ValueError("that menu item isn't available on the phone")
-    if o.TYPE != "Menu" and (not o.get_Visible() or not o.get_Enabled()):
+    if o.TYPE != "Menu" and (not o.get_Visible() or not o.get_Enabled() or getattr(o, "_tab_hidden", False)):
         raise ValueError(f"{name} is disabled")
     t = o.TYPE
     if what == "set" and t == "Slider":
@@ -339,6 +341,11 @@ def act(form, req):
         if o.get("Interactive"):
             o.turn_to(o.value_at(px, py))
         form.fire(name, "Click")
+    elif what == "set" and t == "TabStrip":
+        i, prev = int(req.get("value", 0)), o.get("Tab")
+        if i != prev:
+            o.set("Tab", i)
+            form.fire(name, "Click", prev)
     elif what == "click" and t == "SegmentDisplay":
         o.fire("Click")
     elif what == "click" and t == "AlarmPanel":
@@ -552,6 +559,10 @@ header h1{font-size:18px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 main{padding:10px;max-width:640px;margin:0 auto}
 .card{background:#fff;border-radius:12px;padding:10px 12px;margin:10px 0;box-shadow:0 1px 4px #0001}
 .card>h2{font-size:14px;color:#555;margin:0 0 6px;font-weight:600}
+.card .card{box-shadow:none;border:1px solid #dde3ea;margin:8px 0}
+.tabs{display:flex;gap:4px;margin:0 0 8px;overflow-x:auto;border-bottom:2px solid var(--blue)}
+.tabs button{flex:0 0 auto;border:0;background:#e4e9f0;color:#333;padding:9px 14px;border-radius:8px 8px 0 0;font-size:15px}
+.tabs button.on{background:var(--blue);color:#fff}
 .row{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
 .row>*{flex:1 1 auto}.lbl{min-width:0;overflow-wrap:anywhere}.lbl.big{font-weight:700}
 .row.pair>.lbl:first-child{flex:0 0 32%;color:#444}.row.pair>:nth-child(2){flex:1 1 60%}
@@ -645,13 +656,19 @@ function blocks(items){ // a label right above a control is its caption: keep th
       out.push({y:lb.y,x:lb.x,html:`<div class="block">${render(lb)}${rowHtml([below])}</div>`})}}
   for(const r of rows(items.filter(i=>!used.has(i.name))))out.push({y:r[0].y,x:r[0].x,html:rowHtml(r)});
   return out}
+const CONT=['Frame','TabStrip'];
+function card(s,f){ // a Frame or TabStrip, with any containers inside it nested as cards
+  const kids=s.items.filter(i=>i.frame==f.name);
+  const head=f.type=='TabStrip'?`<div class="tabs">${f.tabs.map((t,i)=>`<button class="${i==f.tab?'on':''}"${f.enabled?'':' disabled'} onclick="act('${f.name}','set',${i})">${esc(t)}</button>`).join('')}</div>`
+    :`<h2>${esc(f.caption)}</h2>`;
+  const parts=[...blocks(kids.filter(i=>!CONT.includes(i.type))),...kids.filter(i=>CONT.includes(i.type)).map(c=>({y:c.y,x:c.x,html:card(s,c)}))]
+    .sort((a,b)=>a.y-b.y||a.x-b.x);
+  return `<div class="card${f.enabled?'':' off'}">${head}${parts.map(b=>b.html).join('')}</div>`}
 function draw(s){
   if(editing)return;                       // don't replace a field while it's being typed in
   $('#title').textContent=s.caption;document.title=s.caption;document.body.classList.toggle('ro',s.readonly);
-  const top=s.items.filter(i=>!i.frame&&i.type!='Frame'),frames=s.items.filter(i=>i.type=='Frame');
-  const all=[...blocks(top),
-    ...frames.map(f=>({y:f.y,x:f.x,html:`<div class="card${f.enabled?'':' off'}"><h2>${esc(f.caption)}</h2>${blocks(s.items.filter(i=>i.frame==f.name)).sort((a,b)=>a.y-b.y||a.x-b.x).map(b=>b.html).join('')}</div>`}))]
-    .sort((a,b)=>a.y-b.y||a.x-b.x);
+  const top=s.items.filter(i=>!i.frame&&!CONT.includes(i.type)),frames=s.items.filter(i=>!i.frame&&CONT.includes(i.type));
+  const all=[...blocks(top),...frames.map(f=>({y:f.y,x:f.x,html:card(s,f)}))].sort((a,b)=>a.y-b.y||a.x-b.x);
   const html=`<div class="card">`+all.map(b=>b.html.startsWith('<div class="card')?'</div>'+b.html+'<div class="card">':b.html).join('')+`</div>`;
   $('#main').innerHTML=html.replace(/<div class="card"><\/div>/g,'');
   $('#menuBtn').style.display=s.menu.length?'':'none';

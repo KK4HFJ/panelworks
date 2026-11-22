@@ -33,8 +33,8 @@ import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, ttk
 
 from . import __version__
-from .runtime import (CONTROL_TYPES, OPTIONAL_TYPES, missing_type_message, reserved_name, split_name,
-                      valid_object_name)
+from .runtime import (CONTROL_TYPES, OPTIONAL_TYPES, Container, apply_tabs, frame_of, missing_type_message,
+                      reserved_name, split_name, valid_object_name)
 
 try:                                    # the MQTT control is optional (paho-mqtt)
     from . import mqtt as _mqtt  # noqa: F401
@@ -44,12 +44,12 @@ except ImportError:
 GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
-                "ListBox", "ComboBox", "Frame", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "AlarmPanel"]
+                "ListBox", "ComboBox", "Frame", "TabStrip", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "AlarmPanel"]
 NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "Alarms"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
           "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg", "WebRequest": "web"}
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg", "WebRequest": "web", "TabStrip": "tab"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
          "Orientation": ["Horizontal", "Vertical"], "Style": ["LED", "LCD", "LCD Reverse"],
          "Method": ["GET", "POST", "PUT"]}
@@ -180,6 +180,10 @@ class DesignHost:
 
     def post(self, *args, **kwargs):
         return None
+
+    def on_tab_changed(self, strip):      # TabStrip page switched (tab clicked or Tab set)
+        if self._d:
+            self._d._tab_changed(strip)
 
     def _option_group(self, group):
         if group not in self._groups:
@@ -1346,6 +1350,7 @@ class Designer:
                 self.say(f"Skipped {name}: {e}")
         self.grip.place(x=self.form["width"], y=self.form["height"], anchor="se")
         self.grip.lift()
+        apply_tabs(self.host)
         self.select(keep_selection if keep_selection in self.host.objects else "Form")
         self._update_scroll()
 
@@ -1449,6 +1454,7 @@ class Designer:
                          Width=int(width) if width else w, Height=int(height) if height else h)
         ospec.update(props or {})
         self._create(name, ospec)
+        self._settle_tabs([name])
         self.grip.lift()
         self.select(name)
         self._set_dirty(True)
@@ -1463,7 +1469,7 @@ class Designer:
             return None
         self._fmt_before = {f: (self.host.objects[f].get("Left"), self.host.objects[f].get("Top"),
                                 self.host.objects[f].contents())
-                            for f in names if self.host.objects[f].TYPE == "Frame"}
+                            for f in names if isinstance(self.host.objects[f], Container)}
         return [self.host.objects[n] for n in names]
 
     def _fmt_done(self, what):
@@ -1477,6 +1483,7 @@ class Designer:
                     om.set("Left", max(0, om.get("Left") + dx))
                     om.set("Top", max(0, om.get("Top") + dy))
         self._fmt_before = {}
+        self._settle_tabs(list(sel))
         self._draw_selection()
         self._refresh_values()
         self._set_dirty(True)
@@ -1682,7 +1689,7 @@ class Designer:
         out = list(names)
         for n in names:
             o = self.host.objects.get(n)
-            if o is not None and o.TYPE == "Frame":
+            if isinstance(o, Container):
                 out += [m for m in o.contents() if m not in out]
         return out
 
@@ -1715,7 +1722,67 @@ class Designer:
             self.select_many(cur + [n], primary=n)
 
     def select_all(self):
-        self.select_many([n for n in self.order if self._visual(n)])
+        self.select_many([n for n in self.order if self._visual(n) and self._shown(n)])
+
+    def _shown(self, n):
+        """Not on a TabStrip page that's out of view."""
+        return not getattr(self.host.objects.get(n), "_tab_hidden", False)
+
+    # ------------------------------------------------------------ TabStrip pages
+    def _settle_tabs(self, names):
+        """Controls just drawn, dropped or pasted onto a TabStrip go on the page showing.
+        Ones that travelled with their container (in `names` too) keep their page."""
+        moved = set(names)
+        for n in names:
+            o = self.host.objects.get(n)
+            if o is None or not hasattr(o, "get_TabPage"):
+                continue
+            c = frame_of(self.host, n)
+            if c is not None and c.Name in moved:
+                continue
+            strip = self._strip_around(n)
+            page = strip.get_Tab() if strip is not None else 0
+            if o.get_TabPage() != page:
+                if isinstance(o, Container):
+                    o.to_page(page)                      # a Frame takes its contents along
+                else:
+                    o.set_TabPage(page)
+        apply_tabs(self.host)
+
+    def _strip_around(self, n):
+        """The smallest TabStrip whose rectangle holds control n (any page), or None."""
+        o = self.host.objects[n]
+        x, y, w, h = o.get_Left(), o.get_Top(), o.get_Width(), o.get_Height()
+        best = None
+        for s in self.host.objects.values():
+            if s is o or s.TYPE != "TabStrip":
+                continue
+            sx, sy, sw, sh = s.get_Left(), s.get_Top(), s.get_Width(), s.get_Height()
+            if sx <= x and sy <= y and x + w <= sx + sw and y + h <= sy + sh:
+                if best is None or sw * sh < best.get_Width() * best.get_Height():
+                    best = s
+        return best
+
+    def _reveal(self, n):
+        """If control n is on a TabStrip page out of view, switch the strip to that page."""
+        o = self.host.objects.get(n)
+        if o is None or self._shown(n):
+            return
+        cur, c = n, frame_of(self.host, n)
+        while c is not None and c.TYPE != "TabStrip":     # in a Frame on the page: use the Frame's
+            cur, c = c.Name, frame_of(self.host, c.Name)
+        page = self.host.objects[cur].get_TabPage()
+        if c is not None and 0 <= page < c.get_TabCount():
+            c.set_Tab(page)
+
+    def _tab_changed(self, strip):
+        sel = [n for n in self.sel_names() if self._shown(n)]
+        if self.selected != "Form" and not self._shown(self.selected):
+            self.select(strip.Name)
+        elif len(self.multi) > 1 and len(sel) != len(self.multi):
+            self.select_many(sel or [strip.Name])
+        else:
+            self._draw_selection()
 
     def select(self, name):
         self.multi = []
@@ -1935,7 +2002,10 @@ class Designer:
             if prop in GEOMETRY:
                 value = max(1, value) if prop in ("Width", "Height") else max(0, value)
             self._checkpoint()
-            o.set(prop, value)
+            if prop == "TabPage" and isinstance(o, Container):
+                o.to_page(value)                       # a Frame takes its contents along
+            else:
+                o.set(prop, value)
             others = [m for m in self.sel_names() if m != n]
             for m in others:                       # several selected: same change to each
                 om = self.host.objects[m]
@@ -1947,6 +2017,8 @@ class Designer:
             messagebox.showerror("Property", f"{prop}: {e}", parent=self.root)
             return
         self._set_dirty(True)
+        apply_tabs(self.host)
+        self._reveal(o.Name)
         self._draw_selection()
         self._refresh_values()
         self.say(f"{n}.{prop} = {show(o.get(prop))}")
@@ -2234,6 +2306,13 @@ class Designer:
     def _obj_press(self, e, n):
         if self.tool.get() != "Pointer":
             return self._canvas_press(e)               # drawing over an existing control
+        o = self.host.objects.get(n)
+        if o is not None and o.TYPE == "TabStrip" and e.widget is o.widget:
+            i = o.tab_at(e.x, e.y)
+            if i is not None and i != o.get_Tab():    # a tab header: show that page
+                o.set_Tab(i)
+                self._set_dirty(True)
+                self.say(f"{n}: page {i} ({o.get_Tabs()[i]}). Controls you draw here go on this page.")
         if e.state & 0x0005:                           # Ctrl or Shift: add/remove
             self.toggle_select(n)
             return "break"
@@ -2302,6 +2381,8 @@ class Designer:
             return self._canvas_release(e)
         d, self._drag = self._drag, None
         if d and d["moved"]:
+            self._settle_tabs(list(d["orig"]) if d["mode"] == "move" else [])
+            self._draw_selection()
             self._set_dirty(True)
             self._refresh_values()
         return "break"
@@ -2345,7 +2426,7 @@ class Designer:
             l, t, r, b = min(x, x0), min(y, y0), max(x, x0), max(y, y0)
             hits = []
             for n in self.order:                              # touched by the box, as in VB
-                if not self._visual(n):
+                if not self._visual(n) or not self._shown(n):
                     continue
                 o = self.host.objects[n]
                 ox, oy = o.get("Left"), o.get("Top")
@@ -2413,6 +2494,7 @@ class Designer:
         for o in objs:
             o.set("Left", o.get("Left") + dx)
             o.set("Top", o.get("Top") + dy)
+        self._settle_tabs(names)
         self._draw_selection()
         self._refresh_values()
         self._set_dirty(True)
