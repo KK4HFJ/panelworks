@@ -1,0 +1,13 @@
+# Who may do what. Change it, then: docker compose restart mosquitto
+# panel:  PanelWorks panels and n8n, everything
+# device: ESP32s and Arduinos, everything (narrow it per project if you like)
+# viewer: read only; its publishes are silently dropped (handy for phones and Grafana)
+
+user panel
+topic readwrite #
+
+user device
+topic readwrite #
+
+user viewer
+topic read #

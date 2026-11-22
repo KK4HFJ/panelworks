@@ -1,0 +1,86 @@
+# PanelWorks test server: Mosquitto, InfluxDB 2, Grafana and (optionally) n8n.
+# Made for a Raspberry Pi 4/5 running a 64-bit OS, but any 64-bit Linux with Docker works.
+#   ./setup.sh                      first time: makes .env, users and tokens, then starts it all
+#   docker compose up -d            start     docker compose down     stop (data is kept)
+#   docker compose --profile n8n up -d     also start n8n
+# Settings and secrets come from .env, which setup.sh writes. Don't commit .env.
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "1883:1883"            # MQTT
+      - "9001:9001"            # MQTT over WebSockets
+    volumes:
+      - ./mosquitto:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
+    environment:
+      TZ: ${TZ:-UTC}
+
+  influxdb:
+    image: influxdb:2          # stays on 2.x; "latest" is InfluxDB 3, which has no Flux
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    environment:
+      TZ: ${TZ:-UTC}
+      # first start only: create the admin user, org, bucket and admin token
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_ADMIN_USER:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_ADMIN_PASSWORD:?run ./setup.sh first}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-home}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-panelworks}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUX_RETENTION:-0}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_ADMIN_TOKEN:?run ./setup.sh first}
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      TZ: ${TZ:-UTC}
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?run ./setup.sh first}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      # read by provisioning/datasources/influxdb.yml
+      INFLUX_ORG: ${INFLUX_ORG:-home}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-panelworks}
+      GRAFANA_INFLUX_TOKEN: ${GRAFANA_INFLUX_TOKEN:-}
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    profiles: ["n8n"]          # only with: docker compose --profile n8n up -d
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    environment:
+      TZ: ${TZ:-UTC}
+      GENERIC_TIMEZONE: ${TZ:-UTC}
+      N8N_SECURE_COOKIE: "false"   # lets you log in over plain http on your LAN
+
+volumes:
+  mosquitto-data:
+  influxdb-data:
+  influxdb-config:
+  grafana-data:
+  n8n-data:

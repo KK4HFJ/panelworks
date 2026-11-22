@@ -1,0 +1,26 @@
+{
+  "name": "ServerCheck",
+  "code": "ServerCheck.py",
+  "caption": "PanelWorks test server check",
+  "width": 470,
+  "height": 300,
+  "objects": {
+    "lblTitle": {"type": "Label", "Caption": "Server: ...", "FontBold": true, "Left": 15, "Top": 12, "Width": 440, "Height": 22},
+    "shpMqtt": {"type": "Shape", "FillColor": "gray", "Left": 15, "Top": 50, "Width": 18, "Height": 18},
+    "lblMqtt": {"type": "Label", "Caption": "MQTT: connecting...", "Left": 42, "Top": 47, "Width": 410, "Height": 24},
+    "shpInflux": {"type": "Shape", "FillColor": "gray", "Left": 15, "Top": 84, "Width": 18, "Height": 18},
+    "lblInflux": {"type": "Label", "Caption": "InfluxDB: first write in a few seconds...", "Left": 42, "Top": 81, "Width": 410, "Height": 24},
+    "lblLevel": {"type": "Label", "Caption": "Move me:", "Left": 15, "Top": 128, "Width": 80, "Height": 24},
+    "sldLevel": {"type": "Slider", "Min": 0, "Max": 100, "Value": 50, "Left": 100, "Top": 122, "Width": 250, "Height": 40},
+    "lblSent": {"type": "Label", "Caption": "", "Left": 360, "Top": 128, "Width": 95, "Height": 24},
+    "lblEcho": {"type": "Label", "Caption": "Back from the broker: -", "Left": 15, "Top": 170, "Width": 440, "Height": 24},
+    "cmdQuery": {"type": "CommandButton", "Caption": "Count what's in InfluxDB", "Left": 15, "Top": 210, "Width": 200, "Height": 32},
+    "lblCount": {"type": "Label", "Caption": "", "Left": 225, "Top": 214, "Width": 230, "Height": 24},
+    "lblHelp": {"type": "Label", "Caption": "Graph it: Grafana > PanelWorks panels > ServerCheck",
+                "ForeColor": "#555555", "Left": 15, "Top": 262, "Width": 440, "Height": 24},
+    "mqtt1": {"type": "MQTT", "Broker": "${MQTT_HOST:-localhost}", "Port": "${MQTT_PORT:-1883}",
+              "Username": "${MQTT_USER}", "Password": "${MQTT_PASS}", "Subscriptions": ["panelworks/check/#"]},
+    "Influx1": {"type": "InfluxDB", "LogFields": ["level = sldLevel.Value"], "Tags": ["source = servercheck"],
+                "LogEvery": 5, "FlushEvery": 5}
+  }
+}

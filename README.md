@@ -705,6 +705,9 @@ Tags:       site = barn
 LogEvery:   10
 ```
 
+No server yet? [`server/`](server/README.md) sets up Mosquitto, InfluxDB 2 and Grafana on a Raspberry Pi
+with one script, plus a check panel that turns two lamps green when it all works.
+
 Points are batched and written on a background thread; while InfluxDB is away they wait in memory
 (up to MaxBuffer) and go when it's back, so graphs have no gaps. `Log({...}, measurement=, tags=)`
 logs your own series and `Query(flux)` reads history back. Standard library only. See chapter 20.

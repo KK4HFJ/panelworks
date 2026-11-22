@@ -1,0 +1,16 @@
+# The InfluxDB data source, set up when Grafana starts. setup.sh creates the read
+# token and puts it in .env as GRAFANA_INFLUX_TOKEN.
+apiVersion: 1
+datasources:
+  - name: InfluxDB
+    uid: influxdb-panelworks
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    jsonData:
+      version: Flux
+      organization: ${INFLUX_ORG}
+      defaultBucket: ${INFLUX_BUCKET}
+    secureJsonData:
+      token: ${GRAFANA_INFLUX_TOKEN}

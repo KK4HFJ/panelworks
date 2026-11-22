@@ -10,6 +10,12 @@ It works with InfluxDB 2.x (self-hosted or InfluxDB Cloud), needs nothing extra
 installed, and copes with InfluxDB being away: points wait in memory and go when
 it comes back.
 
+No InfluxDB yet? The `server` folder on GitHub sets up Mosquitto, InfluxDB 2 and
+Grafana (and optionally n8n) on a Raspberry Pi or any 64-bit Linux box with one script,
+including the bucket, the tokens and a ready-made Grafana dashboard, and writes a file
+that sets the variables below on your PC. See `server/README.md`, then skip to
+"Logging with no code".
+
 ## Before you start: a bucket and a token
 
 In the InfluxDB web page (usually `http://yourserver:8086`):

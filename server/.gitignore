@@ -1,0 +1,4 @@
+.env
+panelworks.env
+panelworks-setx.cmd
+mosquitto/passwd
