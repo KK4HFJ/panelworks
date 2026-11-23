@@ -8,6 +8,7 @@ PanelWorks command line.
   panelworks --example                               # list the examples
   panelworks --example solar_battery --mcp none      # run one, from any folder
   panelworks --simulator solar_battery               # start its pretend device
+  panelworks MyPanel.json --kiosk --mcp none         # full screen console, restarts if it crashes
 
 (also: python -m panelworks ...)
 
@@ -111,6 +112,8 @@ def main():
     ap.add_argument("--new", nargs="?", const="", metavar="TEMPLATE",
                     help="make a new panel from a template and open it in the designer, e.g. "
                          "--new mqtt_monitor MyPanel.json (no TEMPLATE: list them)")
+    ap.add_argument("--kiosk", action="store_true",
+                    help="full screen console: Ctrl+Shift+Q closes it, and it starts again if it crashes")
     ap.add_argument("--simulator", nargs=argparse.REMAINDER, metavar="NAME",
                     help="start an example's pretend device, e.g. --simulator solar_battery")
     a = ap.parse_args()
@@ -142,6 +145,12 @@ def main():
             ap.error("give either a form file or --example NAME, not both")
         a.form = example_form(a.example)
 
+    if a.kiosk:
+        from panelworks import kiosk
+        if a.design or a.new is not None:
+            ap.error("--kiosk runs a panel; it can't be used with --design or --new")
+        if not kiosk.is_child():
+            sys.exit(kiosk.supervise(sys.argv[1:]))
     if a.design:
         from panelworks.designer import run_designer
         run_designer(a.form)
@@ -173,6 +182,8 @@ def main():
         if a.readonly:
             cfg["readonly"] = True
         form.web_cfg = cfg
+    if a.kiosk:
+        kiosk.apply(form)
     if ctl:
         mcp_bridge.serve_control(ctl, form)
     if a.mcp != "none":

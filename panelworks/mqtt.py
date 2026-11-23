@@ -19,6 +19,7 @@ import uuid
 
 import paho.mqtt.client as paho
 
+from .linkwatch import Watched
 from .runtime import VBObject, register_control
 from .util import expand
 
@@ -151,7 +152,7 @@ class MqttLink:
 # The MQTT control - for code-driven forms
 # --------------------------------------------------------------------------
 @register_control
-class MQTTControl(VBObject):
+class MQTTControl(Watched, VBObject):
     """Invisible MQTT client. Subscribe in Form_Load, react in Name_MessageArrived."""
     TYPE = "MQTT"
     EVENTS = ("MessageArrived", "Connected", "Disconnected", "Error")   # first = double-click default
@@ -180,6 +181,11 @@ class MQTTControl(VBObject):
     def on_form_loaded(self):
         if self._auto:
             self.m_Connect()
+
+    # link banner (linkwatch.py)
+    def link_open(self): return self._link is not None
+    def link_label(self): return f"MQTT {self._link.broker}:{self._link.port}"
+    def link_up(self): return self._link.connected
 
     def destroy(self):
         self.m_Disconnect()

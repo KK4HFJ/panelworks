@@ -38,6 +38,7 @@ import urllib.request
 
 from . import __version__
 from .data import parse_fields
+from .linkwatch import Watched
 from .runtime import VBObject, register_control
 from .util import expand
 
@@ -148,7 +149,7 @@ def http_hint(code, message):
 
 
 @register_control
-class InfluxDB(VBObject):
+class InfluxDB(Watched, VBObject):
     """Invisible InfluxDB 2.x logger."""
     TYPE = "InfluxDB"
     EVENTS = ("Written", "Error", "Connected", "Disconnected")
@@ -422,6 +423,13 @@ class InfluxDB(VBObject):
                 return r.status == 200
         except Exception:
             return False
+
+    # link banner (linkwatch.py): known only once a write has been tried
+    def link_open(self): return True
+    def link_up(self): return self._ok
+    def link_label(self):
+        u = urllib.parse.urlsplit(expand(self._url))
+        return f"InfluxDB {u.netloc or self._url}"
 
     def describe(self):
         try:

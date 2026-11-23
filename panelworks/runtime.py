@@ -96,8 +96,8 @@ def split_name(name):
 
 # The form's own attributes: a control with one of these names can't be reached as f.name
 # (f.web would be the form's phone-view server, not your control).
-_FORM_ATTRS = {"bus", "code", "code_file", "forms", "hooks", "main", "mqtt_cfg", "objects", "owner",
-               "path", "root", "spec_caption", "spec_name", "web", "web_cfg", "webhooks_cfg"}
+_FORM_ATTRS = {"bus", "code", "code_file", "forms", "hooks", "linkwatch", "main", "mqtt_cfg", "objects",
+               "owner", "path", "root", "spec_caption", "spec_name", "web", "web_cfg", "webhooks_cfg"}
 
 
 def reserved_name(name):
@@ -288,6 +288,11 @@ class VBObject:
 
     def on_form_loaded(self):
         pass
+
+    def link_state(self):
+        """(label, up) if this control talks to something the link banner should watch, else None.
+        See linkwatch.Watched."""
+        return None
 
     # common
     def get_Tag(self):
@@ -899,7 +904,7 @@ def register_control(cls):
 class Form:
     """A window built from a JSON spec. Objects are reachable as form.Name."""
 
-    EVENTS = ("Load", "Unload")
+    EVENTS = ("Load", "Unload", "LinkDown", "LinkUp")
 
     def __init__(self, spec, path=None, code=None, owner=None):
         self.__dict__["objects"] = {}
@@ -930,6 +935,8 @@ class Form:
         self.web_cfg = spec.get("web")
         self.web = None
         self.webhooks_cfg = spec.get("webhooks")
+        from .linkwatch import LinkWatch
+        self.linkwatch = LinkWatch(self, show=spec.get("linkBanner", True))
         self.hooks = None
         if self.webhooks_cfg is not None or any(
                 "webhook" in o for o in spec.get("objects", {}).values()):
@@ -990,6 +997,7 @@ class Form:
         for o in list(self.objects.values()):
             o.on_form_loaded()
         self.fire("Form", "Load")
+        self.linkwatch.start()
 
     # ---- form.Label1 style access -------------------------------------------
     def __getattr__(self, name):
@@ -1052,6 +1060,11 @@ class Form:
     def set_Height(self, v): self.root.geometry(f"{self.root.winfo_width()}x{int(v)}")
     def get_BackColor(self): return str(self.root.cget("bg"))
     def set_BackColor(self, v): self.root.configure(bg=v)
+    def get_LinkBanner(self): return self.linkwatch.show
+    def set_LinkBanner(self, v):
+        self.linkwatch.show = bool(v)
+        self.linkwatch.draw()
+    def get_LinksDown(self): return self.linkwatch.links_down()
 
     # ---- several forms (VB's Show / Hide / Forms) ------------------------------------
     def get_Forms(self):
@@ -1149,6 +1162,7 @@ class Form:
                 if other is not self:
                     other.m_Unload()
         self._closing = True
+        self.linkwatch.stop()
         self.fire("Form", "Unload")
         if self.web:
             threading.Thread(target=self.web.stop, daemon=True).start()
@@ -1244,6 +1258,7 @@ class Form:
             **({"mqtt": self.mqtt_cfg} if self.mqtt_cfg else {}),
             **({"webhooks": self.webhooks_cfg} if self.webhooks_cfg is not None else {}),
             **({"web": self.web_cfg} if self.web_cfg is not None else {}),
+            **({"linkBanner": False} if not self.linkwatch.show else {}),
             **({"menu": self._menu_spec()} if getattr(self, "_menu_top", None) else {}),
             "objects": {n: {"type": o.TYPE, **o.persist(),
                             **({o._bind_key: o._bind} if o._bind else {}),

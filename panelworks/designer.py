@@ -57,7 +57,8 @@ GEOMETRY = ("Left", "Top", "Width", "Height")
 HIDDEN_PROPS = {"Type"}
 EVENT_ARGS = {"KeyPress": "key_ascii", "MessageArrived": "topic, payload, retained",
               "WebhookResponse": "data", "WebhookError": "message", "Error": "message",
-              "MqttError": "message", "DataArrival": "line", "Logged": "row"}
+              "MqttError": "message", "DataArrival": "line", "Logged": "row",
+              "LinkDown": "name, label", "LinkUp": "name, label, seconds_down"}
 EVENT_HELP = {"Scroll": "is being moved (dragged)",
               "MouseDown": "is pressed (x, y in its Scale units)",
               "MouseUp": "is released", "MouseMove": "is dragged (mouse button held)",
@@ -69,7 +70,8 @@ EVENT_HELP = {"Scroll": "is being moved (dragged)",
               "WebhookResponse": "gets a webhook reply", "WebhookError": "webhook call fails",
               "MqttError": "MQTT link has an error",
               "DataArrival": "receives a line", "Logged": "logs a row",
-              "Alarm": "raises an alarm", "Clear": "sees an alarm clear", "Ack": "has an alarm acknowledged"}
+              "Alarm": "raises an alarm", "Clear": "sees an alarm clear", "Ack": "has an alarm acknowledged",
+              "LinkDown": "loses a link (MQTT, Modbus, Serial...) for 5 s", "LinkUp": "gets a lost link back"}
 
 
 def rename_in_code(text, old, new, events):
@@ -1946,7 +1948,8 @@ class Designer:
             return [("Name", self.form["name"], False), ("Caption", self.form["caption"], False),
                     ("Width", self.form["width"], False), ("Height", self.form["height"], False),
                     ("BackColor", self.extras.get("backColor", ""), False),
-                    ("Code", self.form.get("code", ""), False)]
+                    ("Code", self.form.get("code", ""), False),
+                    ("LinkBanner", self.extras.get("linkBanner", True) is not False, False)]
         o = self.host.objects[n]
         rows = [("Name", n, False)]
         snap_ = o.snapshot()
@@ -2126,6 +2129,11 @@ class Designer:
                 self.extras.pop("backColor", None)
         elif prop == "Code":
             self.form["code"] = raw
+        elif prop == "LinkBanner":
+            if raw.lower() in ("false", "0", "no"):
+                self.extras["linkBanner"] = False
+            else:
+                self.extras.pop("linkBanner", None)
         self.load_spec(self.build_spec(), keep_selection="Form")
         self._set_dirty(True)
         self.say(f"Form.{prop} = {raw}")
@@ -2246,7 +2254,7 @@ class Designer:
     # ------------------------------------------------------------------ events
     def _events_for(self, n):
         if n == "Form":
-            ev = ["Load", "Unload"]
+            ev = ["Load", "Unload", "LinkDown", "LinkUp"]
             if "mqtt" in self.extras:
                 ev.append("MqttError")
             if "webhooks" in self.extras:

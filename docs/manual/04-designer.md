@@ -278,6 +278,52 @@ Things to know:
 The same thing from a Command Prompt:
 `python -m panelworks.make_exe MyPanel.json --name MyPanel`.
 
+## Kiosk mode: a panel as a fixed console
+
+For a panel that lives on its own screen (an alarm keypad by the door, a pump
+house display, a NOC screen), run it in kiosk mode:
+
+```
+panelworks MyPanel.json --kiosk --mcp none
+```
+
+- It fills the screen, with no title bar.
+- Alt+F4 and the window's close button do nothing, so a passer-by can't close
+  it. **Ctrl+Shift+Q** closes it, and so does `f.Unload()` in your own code.
+- If it crashes, it starts again after 5 seconds. If it keeps crashing straight
+  away, it waits longer each time, up to a minute. Closed with Ctrl+Shift+Q, it
+  stays closed.
+- It never checks GitHub for updates.
+
+The form isn't stretched to fit: it sits at the top left of the screen. So design
+a kiosk panel at the screen's size, 800 × 480 for the Raspberry Pi touch display.
+The link banner (chapter 8) matters most here, because nobody is sitting at a
+console to notice it has gone quiet.
+
+**Starting at login on a Raspberry Pi** (the desktop version of Raspberry Pi OS,
+set to log in automatically). Make the file `~/.config/autostart/panelworks.desktop`:
+
+```
+[Desktop Entry]
+Type=Application
+Name=PanelWorks kiosk
+Exec=/home/pi/panelworks/.venv/bin/panelworks /home/pi/panels/Door.json --kiosk --mcp none
+```
+
+Use your own user name, venv and panel paths, all in full. `~` doesn't work in
+`Exec`. If the panel needs environment variables (`${MQTT_PASS}` and so on), put
+them in a short script that exports them and then runs the same command, and
+point `Exec` at the script. Turn off screen blanking in **Raspberry Pi
+Configuration → Display**.
+
+The desktop's own autostart file, `~/.config/labwc/autostart`, works too. But
+labwc reads only the first autostart file it finds, so making one of your own
+can stop the system's from running, and the taskbar with it.
+
+**Starting at login on Windows.** Press Win+R, type `shell:startup`, and put a
+shortcut there. Its target is
+`C:\path\to\.venv\Scripts\panelworks.exe C:\Panels\Door.json --kiosk --mcp none`.
+
 ## Files: New, Open, Save
 
 - **New** (Ctrl+N) starts an empty form.

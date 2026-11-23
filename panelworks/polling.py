@@ -16,6 +16,7 @@ import json
 import re
 import threading
 
+from .linkwatch import Watched
 from .runtime import VBObject
 from .serialport import parse_fill, pick
 
@@ -63,7 +64,7 @@ def parse_poll(lines, parse_what):
     return out
 
 
-class PollingControl(VBObject):
+class PollingControl(Watched, VBObject):
     EVENTS = ("DataArrival", "Connected", "Disconnected", "Error")
     EVENT_ARGS = {"DataArrival": "values", "Error": "message"}
     RUNTIME_ONLY = ("Connected",)
@@ -96,6 +97,11 @@ class PollingControl(VBObject):
 
     def retry_delay(self):                      # seconds to wait before trying again after a failure
         return 3.0
+
+    # link banner (linkwatch.py)
+    def link_open(self): return self._want_open
+    def link_label(self): return f"{self.TYPE} {self.describe()}"
+    def link_up(self): return self._connected
 
     # ---- lifecycle --------------------------------------------------------------------
     def on_form_loaded(self):

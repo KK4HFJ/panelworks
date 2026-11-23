@@ -15,10 +15,6 @@ arms and acknowledges, and the rules run in Node-RED. Order depends on the book 
   bypassed) from MQTT, a zone list beside it, click a zone for its history.
 - **Alarm acknowledge**: Acknowledge and Silence on the Alarms control publish back over MQTT, so
   a rule can stop escalating, with who and when.
-- **Broker-down banner**: a bar across any panel when its MQTT link drops, and a Disconnected
-  time, so a dead console can't look like a quiet house.
-- **Kiosk mode**: `panelworks run --kiosk`: full screen, no designer or Immediate window, no
-  update check, starts at login, restarts if it crashes.
 - **Supervised input display**: show a smoke detector loop as Normal / Alarm / Open / Short from
   an end-of-line resistor reading.
 
@@ -55,6 +51,7 @@ arms and acknowledges, and the rules run in Node-RED. Order depends on the book 
 
 ## Done
 
+- 0.9.0: link banner (a red bar when a link is down) and kiosk mode; test server profiles for the automation and security books.
 - 0.8.2: SegmentDisplay upright by default, segments shaped like real display glass.
 - 0.8.1: fixes from the book (SNMP OID values, TrapPort ${VAR}, Telegram title, Disconnected at start); test server.
 - 0.8.0: TabStrip, New from Template, InfluxDB logging for Grafana.

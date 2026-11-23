@@ -2,7 +2,18 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
-## Unreleased
+## 0.9.0 (2026-11-23)
+
+- **Link banner.** When a panel loses a link for 5 s (its MQTT broker, a Modbus or SNMP device, a
+  serial port, InfluxDB, a web API), a red bar goes across the top. It names the link, says how long
+  it has been down and since when, and goes when the link is back. The phone view shows it too, so
+  a console that has gone quiet can't pass for a quiet house. New `Form_LinkDown(f, name, label)`
+  and `Form_LinkUp(f, name, label, seconds_down)` events, `f.LinksDown`, the form's `LinkBanner`
+  (False hides the bar), and `WatchLink` on each link control (False leaves it out).
+- **Kiosk mode:** `panelworks MyPanel.json --kiosk --mcp none`. The panel runs full screen and
+  ignores Alt+F4; Ctrl+Shift+Q closes it. If it crashes, it starts again after 5 s, waiting longer
+  each time it keeps crashing. No update check. The manual has the autostart recipes for a Pi and
+  for Windows.
 
 - **Test server: optional parts for the home automation and security books.** `server/` gains
   Node-RED (`nodered`) and Ollama (`ai`) beside n8n. Add one any time with

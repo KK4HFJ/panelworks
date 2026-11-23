@@ -33,6 +33,7 @@ import time
 import serial
 from serial.tools import list_ports
 
+from .linkwatch import Watched
 from .runtime import VBObject, register_control
 
 TERMINATORS = {"LF": "\n", "CR": "\r", "CRLF": "\r\n", "None": ""}
@@ -163,7 +164,7 @@ def pick(fields, path):
 
 
 @register_control
-class SerialControl(VBObject):
+class SerialControl(Watched, VBObject):
     """Invisible serial port, like VB's MSComm. Read lines in Name_DataArrival(f, line)."""
     TYPE = "Serial"
     EVENTS = ("DataArrival", "Connected", "Disconnected", "Error")
@@ -267,6 +268,11 @@ class SerialControl(VBObject):
     def get_DeviceName(self):
         ser = self._ser
         return ser.port if ser is not None else ""
+
+    # link banner (linkwatch.py)
+    def link_open(self): return self._want_open
+    def link_label(self): return f"Serial {self._port}"
+    def link_up(self): return self._ser is not None
 
     # ---- methods ------------------------------------------------------------------------
     def m_Open(self):

@@ -30,6 +30,7 @@ COMMON = {
     "Type": "The control type, e.g. `Label`. Read-only.",
     "SetFocus": "Move the keyboard focus to this control.",
     "Refresh": "Redraw now, inside a long-running procedure.",
+    "WatchLink": "True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8.",
     "TabPage": "Which page of a TabStrip the control is on (0, 1, 2 ...). Set for you when you draw it on a page; ignored outside a TabStrip, and saved only when it isn't 0.",
 }
 
@@ -503,9 +504,13 @@ FORM_DOC = {
     "Unload": "Close the form (fires Form_Unload first).",
     "Load!": "The form finished building. Do your start-up work here.",
     "Unload!": "The form is closing.",
+    "LinkBanner": "True (the default): a red bar across the top of the running panel while one of its links (MQTT, Modbus, SNMP, Serial, InfluxDB, WebRequest) has been down for 5 s, saying which and for how long. The phone view shows it too. False hides the bar; LinkDown and LinkUp still fire. Chapter 8.",
+    "LinksDown": "The links down right now (those the banner lists), e.g. `[\"MQTT 192.168.1.50:1883\"]`; empty when all is well. Read-only.",
+    "LinkDown!": "A link has been down for 5 s: `name` is the control's name (\"Form\" for the form's own MQTT settings), `label` says what, e.g. `MQTT 192.168.1.50:1883`.",
+    "LinkUp!": "A link that LinkDown reported is back; `seconds_down` says how long it was gone.",
 }
 
-ARGS = {"KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retained", "Logged": "f, row",
+ARGS = {"LinkDown": "f, name, label", "LinkUp": "f, name, label, seconds_down", "KeyPress": "f, key_ascii", "MessageArrived": "f, topic, payload, retained", "Logged": "f, row",
         "DataArrival": "f, line", "Error": "f, message"}
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",

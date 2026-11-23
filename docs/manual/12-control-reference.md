@@ -34,6 +34,8 @@ The window itself. In code it is `f`; in JSON connections and MCP it is the obje
 | Caption | read/write | Title bar text. |
 | Forms | read-only | The open forms, by name: `f.Forms["Settings"].txtValue.Text`. Read-only. |
 | Height | read/write | Window height in pixels. |
+| LinkBanner | read/write | True (the default): a red bar across the top of the running panel while one of its links (MQTT, Modbus, SNMP, Serial, InfluxDB, WebRequest) has been down for 5 s, saying which and for how long. The phone view shows it too. False hides the bar; LinkDown and LinkUp still fire. Chapter 8. |
+| LinksDown | read-only | The links down right now (those the banner lists), e.g. `["MQTT 192.168.1.50:1883"]`; empty when all is well. Read-only. |
 | Main | read-only | The program's first form. Read-only. |
 | Owner | read-only | The form that showed this one (None for the main form). Read-only. |
 | Width | read/write | Window width in pixels. |
@@ -53,6 +55,8 @@ The window itself. In code it is `f`; in JSON connections and MCP it is the obje
 |---|---|
 | `Form_Load(f)` | The form finished building. Do your start-up work here. |
 | `Form_Unload(f)` | The form is closing. |
+| `Form_LinkDown(f, name, label)` | A link has been down for 5 s: `name` is the control's name ("Form" for the form's own MQTT settings), `label` says what, e.g. `MQTT 192.168.1.50:1883`. |
+| `Form_LinkUp(f, name, label, seconds_down)` | A link that LinkDown reported is back; `seconds_down` says how long it was gone. |
 
 ## Label
 
@@ -822,6 +826,7 @@ Invisible MQTT client for code: subscribe in Form_Load or the Subscriptions prop
 | TLS | read/write | True for an encrypted connection. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Username | read/write | Broker login. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 
 **Methods**
 
@@ -868,6 +873,7 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | Settings | read/write | `baud,parity,databits,stopbits`, e.g. `9600,n,8,1` or `115200,n,8,1`. Can be changed while open. |
 | Tag | read/write | Free text for your own use. PanelWorks never reads it. |
 | Terminator | read/write | Line ending: `LF` (default; also accepts CR+LF), `CR`, `CRLF`, or `None` for raw chunks. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 
 **Methods**
 
@@ -916,6 +922,7 @@ A Modbus TCP or RTU master: poll registers and coils into named values, write th
 | UnitID | read/write | The device's unit (slave) id, usually 1. |
 | Values | read-only | The last polled values, as a dict. Read-only. |
 | ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 
 **Methods**
 
@@ -969,6 +976,7 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 | Values | read-only | The last polled values, as a dict. Read-only. |
 | ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
 | Version | read/write | 1, 2c (default) or 3. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 | WriteCommunity | read/write | Community for Set (v1/v2c), often `private`. |
 
 **Methods**
@@ -1019,6 +1027,7 @@ Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control.
 | URL | read/write | The address. `${VAR}` fills in keys from the environment. Messages and Target never show the part after `?`. |
 | Values | read-only | The latest values, by Poll name. Read-only. |
 | ValuesJson | read-only | Values as JSON (what MQTT publish sends). Read-only. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 
 **Methods**
 
@@ -1103,6 +1112,7 @@ Invisible: logs panel values to InfluxDB 2.x for Grafana, with no code. LogField
 | Tags | read/write | `name = value`, one per line, added to every point (`site = barn`, `host = ${COMPUTERNAME}`). |
 | Token | read/write | An API token that can write to the bucket, default `${INFLUX_TOKEN}`. Keep it in the environment, not the form file. |
 | URL | read/write | The server, default `${INFLUX_URL:-http://localhost:8086}`. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
 | Written | run time | Points written since the panel started. Read-only. (Event: Written(count) after each write.) |
 
 **Methods**

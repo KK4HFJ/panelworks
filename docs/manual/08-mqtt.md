@@ -192,6 +192,39 @@ The control connects when the form loads (`AutoConnect`), reconnects by
 itself, and re-subscribes after reconnecting. `Subscribe(topic)` and
 `Unsubscribe(topic)` change subscriptions at run time.
 
+## When the broker is down: the link banner
+
+A panel that has lost its broker still shows the last values it got, and they
+look exactly like fresh ones. So when a link has been down for 5 seconds, a red
+bar goes across the top of the running panel:
+
+![The link banner](img/link-banner.png)
+
+It names the link, says how long it has been gone and since when, and stays
+until the link is back. Several links down are listed together. The phone view
+(chapter 16) shows the same warning. It covers every control that talks to
+something: the form's own `mqtt` settings, MQTT, Modbus, SNMP, Serial, InfluxDB
+and WebRequest. A link you close on purpose (`Disconnect`, `Close`) isn't
+watched until you open it again. The 5 seconds cover connecting at start-up and
+short blips.
+
+Code can react too:
+
+```python
+def Form_LinkDown(f, name, label):          # name: the control, or "Form" for the form's mqtt
+    f.lblStatus.Caption = f"No contact: {label}"
+    f.shpLamp.FillColor = "grey"
+
+def Form_LinkUp(f, name, label, seconds_down):
+    f.lblStatus.Caption = f"{label} back after {seconds_down} s"
+```
+
+`f.LinksDown` lists what's down right now (empty when all is well).
+To leave one control out (an internet weather API you don't mind losing, say),
+set its **WatchLink** to False. To hide the bar but keep the events, set the
+form's **LinkBanner** to False in the designer (it's saved as
+`"linkBanner": false`).
+
 ## The device side
 
 An ESP32 publishing JSON that the panel above understands (Arduino, PubSubClient library):
