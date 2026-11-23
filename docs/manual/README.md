@@ -23,7 +23,7 @@ A printable A4 copy of this whole manual is
 14. [Troubleshooting](14-troubleshooting.md): problems and cures
 15. [Coming from Visual Basic](15-coming-from-vb.md): VB6 to PanelWorks, side by side
 16. [Phone view](16-phone-view.md): use any panel from a phone, safely
-17. [Modbus and SNMP](17-modbus-snmp.md): PLCs, drives, meters, UPSes, PDUs and switches
+17. [Modbus, SNMP and NUT](17-modbus-snmp.md): PLCs, drives, meters, UPSes, PDUs and switches
 18. [Alarms](18-alarms.md): limits, acknowledge, history, Telegram / n8n / MQTT notification
 19. [Web APIs](19-web-apis.md): weather, Home Assistant, n8n and any JSON service, with WebRequest
 20. [InfluxDB and Grafana](20-influxdb.md): long-term logging and dashboards, no code

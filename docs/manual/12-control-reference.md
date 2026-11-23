@@ -1000,6 +1000,62 @@ An SNMP manager: poll OIDs from UPSes, PDUs, switches and servers, Get/Walk/Set 
 | `Name_Error(f, message)` | Something failed: message says what (a bad address, a timeout, a refused write). |
 | `Name_Trap(f, source, values)` | A trap arrived: source is the sender's IP, values a dict of its contents with readable names where known. |
 
+## NUT
+
+A UPS through NUT (Network UPS Tools): a client of upsd, TCP 3493, which serves the readings of a UPS on a USB cable (Raspberry Pi, Linux) or behind a NAS. Poll its variables, StatusChange when it goes on battery and back. Standard library only. Chapter 17.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| AutoOpen | read/write | True: start polling when the form opens. False: call Open yourself. |
+| Charging | run time | True while charging (CHRG). Read-only. |
+| Connected | run time | True while upsd answers and its driver has the UPS. Set False/True to close/open. |
+| Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `charge -> gauCharge.Value`. |
+| Host | read/write | Where upsd runs: `127.0.0.1` on this machine, or another's address. `${NUT_HOST}` reads an environment variable. |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| LastError | read-only | The last problem, or empty. Read-only. |
+| LowBattery | run time | True when the UPS says its battery is low (LB). upsmon shuts the computer down on this. Read-only. |
+| OnBattery | run time | True on battery (OB). Read-only. |
+| OnLine | run time | True on mains (OL in ups.status). Read-only. |
+| Password | read/write | That user's password, only for Command. Use `${VARIABLE}` to keep it out of the file. |
+| Poll | read/write | What to read, one per line: `name = NUT variable [*scale] [/divisor]`, e.g. `charge = battery.charge`, `runtime = battery.runtime /60`. One LIST VAR per poll covers them all. |
+| PollInterval | read/write | Milliseconds between polls (default 5000; 0 = only when you call PollNow). |
+| Port | read/write | TCP port, 3493. Takes `${VAR:-3493}`. |
+| ReplaceBattery | run time | True when the UPS asks for a new battery (RB). Read-only. |
+| Status | run time | ups.status as it is, e.g. `OL CHRG` or `OB DISCHRG LB`. Read-only. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Target | read-only | The UPS in use, `ups@host:port`, with ${VARIABLES} filled in. Read-only. |
+| Timeout | read/write | Seconds to wait for upsd (default 3). |
+| UPS | read/write | The UPS's name in ups.conf (`pi-ups`). Empty: the first one upsd has. |
+| Username | read/write | A upsd.users user, only needed for Command. Use `${VARIABLE}`. |
+| Values | read-only | The last polled values, as a dict: numbers as numbers, the rest as text. Read-only. |
+| ValuesJson | read-only | Values as JSON text (what MQTT publish sends). Read-only. |
+| WatchLink | read/write | True (the default): the form's link banner warns when this control's link is down for 5 s, and Form_LinkDown fires. False leaves it out (an internet API you don't mind losing, say). Chapter 8. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Close | Stop polling and disconnect. |
+| Command | `Command(cmd)`: run an instant command, e.g. `Command("test.battery.start.quick")`. Needs Username and Password with instcmds in upsd.users. |
+| Get | `Get(what)`: a Poll name's last value, or any NUT variable read now, e.g. `Get("battery.voltage")`. |
+| ListCommands | `ListCommands()`: the instant commands this UPS supports. |
+| ListUPS | `ListUPS()`: the UPSes this upsd serves, {name: description}. |
+| ListVars | `ListVars()`: every variable the UPS reports, as a dict. The NUT version of an SNMP Walk. |
+| Open | Start polling (and reconnecting) in the background. |
+| PollNow | Read the Poll list now instead of waiting for the next interval. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_DataArrival(f, values)` | A poll finished; values is a dict of the Poll names, scaled. |
+| `Name_Connected(f)` | upsd answered and has the UPS (after starting or reconnecting). |
+| `Name_Disconnected(f)` | upsd stopped answering, or its driver lost the UPS (ERR DATA-STALE: the USB cable came out). Also once at start if it can't be reached. It keeps retrying. |
+| `Name_Error(f, message)` | Something failed: message says what (upsd not reachable, no such UPS, a variable this UPS doesn't report). |
+| `Name_StatusChange(f, old, new)` | ups.status changed, e.g. `OL` -> `OB DISCHRG` (on battery). Also once at start with old empty. |
+
 ## WebRequest
 
 Invisible: reads a web API (JSON) every PollInterval ms, like VB's Inet control. Poll lines are paths into the reply; Fill puts values on controls. See chapter 19.

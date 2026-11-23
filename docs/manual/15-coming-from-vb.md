@@ -47,7 +47,7 @@ chapter translates the rest.
 | MSChart | **Chart** (live trend lines) |
 | MSComm | **Serial**: whole lines, ports by name, auto-reconnect (chapter 9) |
 | Slider (Common Controls), HScroll/VScroll | **Slider** |
-| Third-party gauge and Modbus/SNMP OCXs | **Gauge**, **Modbus** and **SNMP**, built in (chapter 17) |
+| Third-party gauge and Modbus/SNMP OCXs | **Gauge**, **Modbus**, **SNMP** and **NUT**, built in (chapter 17) |
 | Winsock | **MQTT** for devices, **webhooks** for web services (chapters 8, 10) |
 | Inet (`OpenURL`) | **WebRequest**: reads a web API on a timer into your controls; `Fetch(url)` for one-off calls (chapter 19) |
 | Frame | **Frame**: controls drawn inside it move, hide and disable with it |

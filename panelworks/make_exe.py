@@ -118,7 +118,7 @@ def build(form, name=None, console=False, out_dir=None, log=print):
         shutil.copytree(d, os.path.join(app, os.path.basename(d)), dirs_exist_ok=True)
     launcher = os.path.join(work, f"{name}.py")
     open(launcher, "w", encoding="utf-8").write(LAUNCHER.format(main=os.path.basename(form)))
-    hidden = ["panelworks.chart", "panelworks.picture", "panelworks.slider", "panelworks.gauge", "panelworks.alarms", "panelworks.segdisplay", "panelworks.webrequest", "panelworks.tabstrip", "panelworks.influx",
+    hidden = ["panelworks.chart", "panelworks.picture", "panelworks.slider", "panelworks.gauge", "panelworks.alarms", "panelworks.segdisplay", "panelworks.webrequest", "panelworks.tabstrip", "panelworks.influx", "panelworks.nut", "panelworks.linkwatch", "panelworks.kiosk",
               "panelworks.polling", "panelworks.data", "panelworks.menus", "panelworks.webview"]
     for opt in ("paho.mqtt.client", "serial", "serial.tools.list_ports",
                 "PIL.Image", "PIL.ImageTk", "PIL._tkinter_finder"):     # Pillow: PictureBox JPEG/scaling

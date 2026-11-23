@@ -28,7 +28,7 @@ from urllib.parse import parse_qs
 
 from .util import json_default
 
-HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "InfluxDB", "Alarms", "Menu"}
+HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
 

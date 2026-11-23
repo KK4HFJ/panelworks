@@ -1,11 +1,13 @@
-# 17. Modbus and SNMP
+# 17. Modbus, SNMP and NUT
 
-Two tray controls connect PanelWorks to equipment that doesn't speak MQTT:
+Three tray controls connect PanelWorks to equipment that doesn't speak MQTT:
 
 - **Modbus** is how PLCs, motor drives (VFDs), energy meters, charge controllers and
   most industrial gear share numbers, over Ethernet (Modbus TCP) or RS-485 (Modbus RTU).
 - **SNMP** is how network and power equipment reports: UPSes, PDUs, switches, routers
   and servers.
+- **NUT** (Network UPS Tools) is how Linux reads a UPS, including the small ones with a
+  USB cable. It needs nothing installed in PanelWorks (see the end of this chapter).
 
 Install the one you need (or both) into the same environment as PanelWorks:
 
@@ -16,9 +18,9 @@ Install the one you need (or both) into the same environment as PanelWorks:
 
 or `pip install -e ".[all]"` from the project folder for everything.
 
-## How both controls work
+## How these controls work
 
-Both poll the device on a timer, in the background, and hand you the results. You
+All three poll the device on a timer, in the background, and hand you the results. You
 describe what to read in **Poll**, one line per value:
 
 ```
@@ -41,7 +43,7 @@ def mb1_DataArrival(f, values):
     f.shpAlarm.FillColor = "red" if values["volts"] < 207 else "lime green"
 ```
 
-**PollInterval** sets how often, in milliseconds (Modbus 1000, SNMP 5000 by default).
+**PollInterval** sets how often, in milliseconds (Modbus 1000, SNMP and NUT 5000 by default).
 **Connected** / **Disconnected** fire when the device starts or stops answering, and
 Disconnected also fires once if the device can't be reached at all when the panel starts,
 so a lamp driven by these two events is right from the first second. The control
@@ -262,3 +264,120 @@ python -m panelworks --simulator rack_status --trap    (in a third window: send 
 The example shows battery runtime and load on Gauges, mains or battery, input and
 battery voltage, uptime, three switch ports named from the switch itself (a Walk of
 `ifDescr`), four PDU outlets you can switch with Set, and a log of traps.
+
+## NUT: a UPS through Network UPS Tools
+
+A small UPS with a USB cable doesn't do SNMP or Modbus; it speaks USB HID. On Linux the
+standard way to read it is **NUT** (Network UPS Tools): a driver talks to the UPS
+(`usbhid-ups` for most USB ones), and a small server, **upsd**, hands out its readings on
+TCP port 3493. Synology, TrueNAS, pfSense and Home Assistant speak NUT too, so the UPS
+behind a NAS reads the same way. The **NUT** control is a upsd client: the same panel reads
+a UPS plugged into this computer (Host `127.0.0.1`) or one on another machine. It needs
+nothing installed in PanelWorks.
+
+![A UPS on NUT](../../examples/nut.png)
+
+### Setting up NUT where the UPS is plugged in
+
+On a Raspberry Pi (or any Debian/Ubuntu machine), with the UPS's USB cable plugged in:
+
+```
+sudo apt install nut
+sudo nut-scanner -U                 # finds the UPS and its driver (usually usbhid-ups)
+```
+
+Then, in `/etc/nut/`:
+
+| File | What to put in it |
+|---|---|
+| `nut.conf` | `MODE=netserver` (or `standalone` if only this machine reads it) |
+| `ups.conf` | `[pi-ups]` with `driver = usbhid-ups` and `port = auto`, plus the IDs nut-scanner printed |
+| `upsd.conf` | `LISTEN 127.0.0.1 3493`, and this machine's LAN address too if other PCs read it |
+| `upsd.users` | a user for upsmon (and one with `instcmds = ALL` if a panel should run commands) |
+| `upsmon.conf` | `MONITOR pi-ups@localhost 1 <user> <password> primary` |
+
+`sudo systemctl restart nut-server nut-monitor`, then `upsc pi-ups` lists what the UPS
+reports. **upsmon** is the part that shuts the computer down cleanly when the battery runs
+low. Keep it: a panel watches, upsmon decides.
+
+### The control
+
+| Property | |
+|---|---|
+| Host, Port | Where upsd is: `127.0.0.1` and `3493` on the same machine. `${VAR}` works. |
+| UPS | The name in brackets in `ups.conf` (`pi-ups`). Empty: the first UPS upsd has. |
+| Username, Password | From `upsd.users`, only for **Command**. Use `${VAR}` so they stay out of the form. |
+| Poll, Fill, PollInterval | As above. What to read is a NUT variable name. |
+
+```
+charge  = battery.charge
+runtime = battery.runtime /60         minutes (NUT gives seconds)
+status  = ups.status                  "OL", "OB DISCHRG", "OB DISCHRG LB"...
+volts   = input.voltage
+load    = ups.load
+```
+
+Every poll is one `LIST VAR`, so the whole list costs one round trip. Numbers arrive as
+numbers and everything else as text. Which variables exist depends on the UPS:
+`f.nut1.ListVars()` returns all of them, the NUT version of an SNMP Walk.
+
+**ups.status** is a few words: `OL` on line (mains), `OB` on battery, `LB` low battery,
+`CHRG` charging, `DISCHRG` discharging, `RB` replace battery, plus `BYPASS`, `OVER` (overload)
+and a few more. The control reads them for you, whatever your Poll list says:
+**OnLine**, **OnBattery**, **LowBattery**, **Charging**, **ReplaceBattery** and **Status**
+(the words themselves). When they change, **StatusChange(old, new)** fires. It also fires once
+at start-up with `old` empty, so a lamp is right from the first poll:
+
+```python
+def nut1_StatusChange(f, old, new):
+    if f.nut1.OnBattery:
+        f.shpMains.FillColor = "red" if f.nut1.LowBattery else "orange"
+    else:
+        f.shpMains.FillColor = "lime green"
+```
+
+Alarm rules (chapter 18) can use the values and the status properties:
+
+```
+OnBattery:  nut1.OnBattery == True   delay=10 priority=2 message=UPS on battery
+LowBattery: nut1.LowBattery == True  priority=1 message=UPS battery low
+LowCharge:  nut1.charge < 30         priority=2 message=UPS charge under 30 %
+UpsLost:    nut1.Connected == False  delay=30 priority=2 message=No word from the UPS
+```
+
+When the driver loses the UPS (the USB cable comes out, the driver stops), upsd answers
+`ERR DATA-STALE` or `ERR DRIVER-NOT-CONNECTED`. The control counts that as the link being
+down: **Disconnected** fires, the link banner (chapter 8) says so, and it reconnects by itself
+when the UPS is back.
+
+| Method | |
+|---|---|
+| `ListVars()` | Everything the UPS reports, as a dict. |
+| `Get("battery.voltage")` | One variable, read now (or a Poll name's last value). |
+| `ListUPS()` | The UPSes this upsd serves. |
+| `ListCommands()` | The instant commands the UPS supports. |
+| `Command("test.battery.start.quick")` | Run one. Needs Username and Password. |
+
+ListVars, Get and the others ask upsd while you wait (up to **Timeout**, 3 s), so call them
+from a button or Form_Load, not from a Timer that ticks every second.
+
+### When it doesn't work
+
+| Symptom | Likely cause |
+|---|---|
+| "can't reach upsd" | NUT isn't running there, or `upsd.conf` doesn't LISTEN on the address you're using (only `127.0.0.1` by default). A firewall can block 3493 too. |
+| "no UPS called ..." | The UPS name doesn't match `ups.conf`; the message lists the ones upsd has. |
+| "lost the UPS" (DATA-STALE) | The driver can't reach the UPS: check the USB cable, then `upsc pi-ups` on that machine. |
+| A Poll variable "isn't reported" | Not every UPS has every variable. `ListVars()` shows what yours has. |
+| Command says it needs a Username | Set Username and Password to a `upsd.users` user with `instcmds`. |
+
+### Try it without a UPS
+
+```
+python -m panelworks --simulator nut                    (a pretend upsd on TCP 13493)
+python -m panelworks --example nut --mcp none
+```
+
+The pretend UPS cuts its mains every minute or so, runs down to low battery and recovers.
+In the simulator's window, type `cut`, `back`, `stale` (as if the USB cable came out) or `ok`.
+For a real UPS, set `NUT_HOST`, `NUT_PORT=3493` and `NUT_UPS` in the environment.

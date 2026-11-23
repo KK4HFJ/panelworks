@@ -218,6 +218,22 @@ python -m panelworks --example rack_status --mcp none
 python -m panelworks --simulator rack_status --trap
 ```
 
+## A UPS on NUT
+
+![A UPS on NUT](../../examples/nut.png)
+
+`examples/nut.json` + `nut.py`, pretend upsd in `examples/nut/nut_sim.py` (standard library only)
+
+The small USB UPS behind a Raspberry Pi, read through NUT (chapter 17). Gauges show battery
+charge and runtime; a lamp shows mains, on battery (orange) or low battery (red) from
+StatusChange; "What does it report?" lists every variable the UPS has. The pretend UPS cuts
+its mains every minute or so:
+
+```
+python -m panelworks --simulator nut
+python -m panelworks --example nut --mcp none
+```
+
 ## Solar and battery: a Victron GX over Modbus, with alarms
 
 ![Solar and battery](../../examples/solar_battery.png)

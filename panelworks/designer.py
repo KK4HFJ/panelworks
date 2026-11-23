@@ -45,11 +45,11 @@ GRID = 10           # dot spacing
 SNAP = 5            # move/resize snap
 VISUAL_ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton",
                 "ListBox", "ComboBox", "Frame", "TabStrip", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "AlarmPanel"]
-NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "InfluxDB", "Alarms"]
+NONVISUAL_ORDER = ["Timer", "MQTT", "Serial", "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms"]
 PREFIX = {"Label": "Label", "CommandButton": "Command", "TextBox": "Text", "CheckBox": "Check",
           "OptionButton": "Option", "ListBox": "List", "ComboBox": "Combo", "Shape": "Shape",
           "ProgressBar": "Progress", "Slider": "Slider", "Gauge": "Gauge", "PictureBox": "Picture", "Chart": "Chart", "Frame": "Frame", "Grid": "Grid", "Data": "Data", "Timer": "Timer", "MQTT": "MQTT",
-          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg", "WebRequest": "web", "TabStrip": "tab", "InfluxDB": "Influx"}
+          "Serial": "Serial", "Modbus": "Modbus", "SNMP": "SNMP", "Alarms": "Alarms", "AlarmPanel": "AlarmPanel", "SegmentDisplay": "seg", "WebRequest": "web", "TabStrip": "tab", "InfluxDB": "Influx", "NUT": "nut"}
 ENUMS = {"Alignment": ["Left", "Center", "Right"], "Shape": ["Oval", "Rectangle"],
          "Orientation": ["Horizontal", "Vertical"], "Style": ["LED", "LCD", "LCD Reverse"],
          "Method": ["GET", "POST", "PUT"]}

@@ -2,6 +2,23 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## 0.10.0 (2026-11-23)
+
+- **NUT control**: read a UPS through NUT (Network UPS Tools), the standard way Linux reads UPSes,
+  including the small ones on a USB cable. It's a client of upsd (TCP 3493), so the same panel reads
+  a UPS on this machine or on a Pi, NAS or pfSense box elsewhere. Standard library only.
+  - Poll NUT variables (`charge = battery.charge`, `runtime = battery.runtime /60`) with one
+    LIST VAR per poll; numbers arrive as numbers. Fill, DataArrival and alarm rules work as on SNMP.
+  - `StatusChange(old, new)` when ups.status changes (once at start too), and `OnLine`,
+    `OnBattery`, `LowBattery`, `Charging`, `ReplaceBattery` and `Status`.
+  - A driver that has lost the UPS (ERR DATA-STALE, DRIVER-NOT-CONNECTED) counts as the link down,
+    for Disconnected and the link banner.
+  - `ListVars()`, `Get()`, `ListUPS()`, `ListCommands()`, `Command()` (with a upsd.users login).
+  - Tested against a pretend upsd and against NUT 2.8.1's own upsd with its dummy-ups driver.
+- **The nut example** and `--simulator nut`: a pretend upsd whose UPS cuts its mains every minute or
+  so (type cut, back, stale or ok to drive it). Manual ch 17 has the NUT setup on a Pi.
+- Make EXE includes the NUT, link banner and kiosk modules.
+
 ## 0.9.1 (2026-11-23)
 
 - **Serial: `${VAR}` in Port**, as MQTT and Modbus already allow:
