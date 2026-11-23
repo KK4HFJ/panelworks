@@ -50,7 +50,9 @@ for key in newform.TEMPLATES:
     f.root.update()
     if key == "gauge_panel":
         check("gauge_panel: demo timer moves the gauges, readout and chart",
-              f.gauVolts.Value != 52 and f.segWatts.Value not in (0, "0", ""), f"{f.gauVolts.Value} {f.segWatts.Value}")
+              # volts = 52 + 3 sin(t/40) + noise: exactly 52.0 is a real reading, so check the range
+              f.segWatts.Value not in (0, "0", "") and 48 <= float(f.gauVolts.Value) <= 56,
+              f"{f.gauVolts.Value} {f.segWatts.Value}")
     if key == "tabbed_panel":
         f.cmdStart.Click() if hasattr(f.cmdStart, "m_Click") else f.fire("cmdStart", "Click")
         f.root.after(1300, f.root.quit)
