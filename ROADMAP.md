@@ -3,6 +3,25 @@
 Ideas for future versions, roughly in priority order within each group. ★ = next up.
 Nothing here is promised; suggestions and pull requests are welcome (see CONTRIBUTING.md).
 
+## Home automation and security (for the next two books)
+
+The books use PanelWorks as the fixed console: a keypad by the door, a zone map, a NOC screen,
+talking straight to MQTT. The alarm path never depends on PanelWorks either; the panel shows,
+arms and acknowledges, and the rules run in Node-RED. Order depends on the book outlines.
+
+- **Keypad**: an arm/disarm keypad control: PIN entry (masked, never logged or published),
+  modes (Disarmed, Home, Away), exit and entry delay countdowns, a Disarm event with which user.
+- **Zone map template**: a floor-plan Picture with live zone lights (closed, open, alarm, trouble,
+  bypassed) from MQTT, a zone list beside it, click a zone for its history.
+- **Alarm acknowledge**: Acknowledge and Silence on the Alarms control publish back over MQTT, so
+  a rule can stop escalating, with who and when.
+- **Broker-down banner**: a bar across any panel when its MQTT link drops, and a Disconnected
+  time, so a dead console can't look like a quiet house.
+- **Kiosk mode**: `panelworks run --kiosk`: full screen, no designer or Immediate window, no
+  update check, starts at login, restarts if it crashes.
+- **Supervised input display**: show a smoke detector loop as Normal / Alarm / Open / Short from
+  an end-of-line resistor reading.
+
 ## Controls
 
 - **Line**: VB's simple drawn line.

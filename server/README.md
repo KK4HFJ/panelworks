@@ -1,14 +1,19 @@
 # PanelWorks test server
 
 One small Linux box running everything the PanelWorks MQTT, InfluxDB and Grafana chapters
-need, set up by one script:
+need, set up by one script. Optional parts (marked below) are turned on only if you ask:
 
 | Service | Port | What for |
 |---|---|---|
 | Mosquitto 2 | 1883 (WebSockets 9001) | MQTT for panels and ESP32s (manual ch 8), users and an ACL |
 | InfluxDB 2 | 8086 | History for the InfluxDB control (manual ch 20) |
 | Grafana | 3000 | Dashboards; the InfluxDB data source and a PanelWorks dashboard are ready-made |
-| n8n (optional) | 5678 | Webhooks and workflows (manual ch 10), if you don't have n8n elsewhere |
+| n8n (optional: `n8n`) | 5678 | Webhooks and workflows (manual ch 10), if you don't have n8n elsewhere |
+| Node-RED (optional: `nodered`) | 1880 | Flows and rules for home automation and security, with its own MQTT user |
+| Ollama (optional: `ai`) | 11434 | A local LLM on the CPU, for questions and summaries that must work without internet |
+
+Every image is pinned to the version this was tested with (n8n 2.48.7, Node-RED 4.1.17,
+Ollama 0.40.16), so a reader's server matches the book's.
 
 It's written for a **Raspberry Pi 5 (or 4) booting from an NVMe SSD**, but any 64-bit Linux
 with Docker runs it the same way. An SD card works too, but InfluxDB writes all day and wears
@@ -67,19 +72,49 @@ cd panelworks/server
 ./setup.sh
 ```
 
-`setup.sh` asks five things (Enter takes the default: org `home`, bucket `panelworks`, keep data
-forever, your time zone, no n8n), then:
+`setup.sh` asks six things (Enter takes the default: org `home`, bucket `panelworks`, keep data
+forever, your time zone, no n8n, no Node-RED), then:
 
 - writes `.env` with random passwords and tokens (keep it private and back it up),
-- makes the Mosquitto users **panel**, **device** and **viewer** (read only),
+- makes the Mosquitto users **panel**, **device**, **viewer** (read only) and **automation**
+  (Node-RED's, read/write under `home/#`),
 - starts Mosquitto and InfluxDB, which creates its admin user, org and bucket,
-- makes two InfluxDB tokens: read/write for panels, read-only for Grafana,
-- starts Grafana (and n8n),
+- makes InfluxDB tokens: read/write for panels, read-only for Grafana, read/write for Node-RED
+  (if it's on),
+- starts Grafana and the optional parts you chose,
 - writes **panelworks-setx.cmd** and **panelworks.env** for the PCs that run panels,
 - prints every address, user and password.
 
-The first run downloads the images (about 1 GB) and takes a few minutes. Running it again is safe:
-it keeps the passwords and tokens it made.
+The first run downloads the images (about 1 GB, more with the optional parts) and takes a few
+minutes. Running it again is safe: it keeps every password, token and key it made, and only adds
+what's missing.
+
+### Adding a part later
+
+```
+./setup.sh --profile nodered        # or n8n, or ai; give --profile more than once for several
+```
+
+`setup.sh` adds the part to `COMPOSE_PROFILES` in `.env`, so from then on a plain
+`docker compose up -d` starts it too. To drop a part, take its name out of that line and run
+`docker compose up -d --remove-orphans` (its data volume stays until `docker volume rm`).
+
+**n8n's encryption key.** n8n encrypts the credentials you save in it with `N8N_ENCRYPTION_KEY`
+from `.env`. `setup.sh` makes it once and never changes it. If n8n already ran here and made its
+own key, `setup.sh` reads that one and keeps it. Moving from an n8n installed without Docker: copy
+`encryptionKey` from that install's `~/.n8n/config` into `.env` as `N8N_ENCRYPTION_KEY=...` before
+running `setup.sh`, then export and import the workflows and credentials with n8n's CLI. Inside
+Docker, n8n reaches the others by service name: `mosquitto:1883` and `http://influxdb:8086`, not
+`localhost`.
+
+**Node-RED** logs in as `admin` with `NODERED_ADMIN_PASSWORD` from `.env`; its settings are in
+`nodered/settings.js`. Flows can use the server's settings without typing them: put
+`${MQTT_HOST}`, `${MQTT_USER}`, `${MQTT_PASS}`, `${INFLUX_URL}`, `${INFLUX_ORG}`, `${INFLUX_BUCKET}`
+or `${INFLUX_TOKEN}` in a node's fields. Context saved with `context.set` survives a restart.
+
+**Ollama** has no login and no model until you pull one:
+`docker compose exec ollama ollama pull <model>`. On an 8 GB Pi, stay with small (3 to 4
+billion parameter) models, and check `free -h` with everything else running.
 
 ## 3. Your PC
 
@@ -109,7 +144,7 @@ Run these in `panelworks/server`:
 | To | Run |
 |---|---|
 | See what's running | `docker compose ps` |
-| Read a service's log | `docker compose logs -f influxdb` (or mosquitto, grafana, n8n) |
+| Read a service's log | `docker compose logs -f influxdb` (or mosquitto, grafana, n8n, nodered, ollama) |
 | Stop / start everything | `docker compose down` / `docker compose up -d` (data is kept) |
 | Update to new images | `docker compose pull && docker compose up -d` |
 | Change Mosquitto users or ACL | edit `.env` or `sudo nano mosquitto/acl`, then `./setup.sh` |
@@ -147,7 +182,7 @@ up normally on the next boot.
 
 - **InfluxDB stays on 2.x** (`influxdb:2`). The `latest` tag is InfluxDB 3, which doesn't run
   the Flux queries the InfluxDB control's Query method and the Grafana dashboard use.
-- **It's for your own network.** Nothing here uses TLS. To reach it from away, use a VPN such as
+- **It's for your own network.** Nothing here uses TLS, and Ollama has no login at all. To reach it from away, use a VPN such as
   Tailscale rather than opening ports on your router.
 - The **viewer** MQTT user can read everything and publish nothing: its publishes are accepted
   and silently dropped, which is how Mosquitto's ACLs work.

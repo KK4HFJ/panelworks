@@ -6,15 +6,35 @@
 #     2. makes the Mosquitto users panel, device and viewer
 #     3. starts Mosquitto and InfluxDB (which creates its org, bucket and admin user)
 #     4. makes two InfluxDB tokens: read/write for panels, read-only for Grafana
-#     5. starts Grafana (and n8n if you asked for it)
+#     5. starts Grafana and any optional parts you asked for (n8n, Node-RED, Ollama)
 #     6. writes panelworks.env and panelworks-setx.cmd for the PCs that run panels
 #   ./setup.sh -y     the same, taking every default without asking
+#   ./setup.sh --profile nodered    also run an optional part, now and from then on:
+#        n8n      workflows and alerts            nodered   Node-RED (home automation books)
+#        ai       Ollama, a local LLM on the CPU
 #   PW_HOST=pwserver ./setup.sh     write this name into the PC settings instead of an IP
+#
+# Run it again any time (after an IP change, or to add a part). It never changes a password,
+# token or key it already wrote to .env; it only adds what's missing.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 ASK=1
-[[ "${1:-}" == "-y" ]] && ASK=0
+ADD_PROFILES=()
+KNOWN_PROFILES="n8n nodered ai"
+while (( $# )); do
+    case "$1" in
+        -y) ASK=0 ;;
+        --profile) shift; ADD_PROFILES+=("${1:-}") ;;
+        --profile=*) ADD_PROFILES+=("${1#--profile=}") ;;
+        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+        *) printf 'setup: unknown option %s (try --help)\n' "$1" >&2; exit 2 ;;
+    esac
+    shift
+done
+for p in "${ADD_PROFILES[@]}"; do
+    [[ " $KNOWN_PROFILES " == *" $p "* ]] || { printf 'setup: unknown profile "%s": use one of %s\n' "$p" "$KNOWN_PROFILES" >&2; exit 2; }
+done
 [[ -t 0 ]] || ASK=0
 
 say()  { printf '\n== %s\n' "$*"; }
@@ -24,6 +44,10 @@ getenv() { grep -E "^$1=" .env 2>/dev/null | head -1 | cut -d= -f2- || true; }
 setenv() {            # setenv NAME VALUE: add or replace one line in .env
     if grep -qE "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env; else printf '%s=%s\n' "$1" "$2" >> .env; fi
 }
+addenv() {            # addenv NAME VALUE: add the line only if .env doesn't have it yet
+    grep -qE "^$1=" .env || printf '%s=%s\n' "$1" "$2" >> .env
+}
+has_profile() { [[ ",$(getenv COMPOSE_PROFILES)," == *",$1,"* ]]; }
 ask() {               # ask "Question" default  -> prints the answer
     local reply=""
     if (( ASK )); then read -rp "$1 [$2]: " reply; fi
@@ -55,9 +79,9 @@ if [[ ! -f .env ]]; then
     bucket="$(ask "InfluxDB bucket for panels" panelworks)"
     retention="$(ask "Keep data for (0 = forever, or e.g. 90d)" 0)"
     tz="$(ask "Time zone" "${tz_default:-UTC}")"
-    n8n="$(ask "Also run n8n on this server? (y/n)" n)"
     profiles=""
-    [[ "$n8n" =~ ^[Yy] ]] && profiles="n8n"
+    [[ "$(ask "Also run n8n on this server? (y/n)" n)" =~ ^[Yy] ]] && profiles="n8n"
+    [[ "$(ask "Also run Node-RED on this server? (y/n)" n)" =~ ^[Yy] ]] && profiles="${profiles:+$profiles,}nodered"
     umask 077
     cat > .env <<EOF
 # PanelWorks test server settings, written by setup.sh. Keep this file private.
@@ -80,15 +104,39 @@ EOF
 else
     say "Using the settings in .env"
 fi
+
+# settings added after the first version of this script: add any that are missing, keep the rest
+addenv COMPOSE_PROFILES ""
+addenv MQTT_AUTOMATION_PASSWORD "$(secret 12)"
+addenv NODERED_ADMIN_PASSWORD "$(secret 12)"
+addenv NODERED_INFLUX_TOKEN ""
+for p in "${ADD_PROFILES[@]}"; do
+    has_profile "$p" || setenv COMPOSE_PROFILES "$(getenv COMPOSE_PROFILES | sed 's/,*$//')${p:+,$p}"
+done
+setenv COMPOSE_PROFILES "$(getenv COMPOSE_PROFILES | sed 's/^,*//')"
+
+# n8n's encryption key: made once, never changed. If n8n already ran here (in Docker) without
+# one in .env, it made its own: adopt that one, or n8n would refuse to start.
+if [[ -z "$(getenv N8N_ENCRYPTION_KEY)" ]]; then
+    key=""
+    project="$(docker compose config --format json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])' 2>/dev/null || true)"
+    if [[ -n "$project" ]] && docker volume inspect "${project}_n8n-data" >/dev/null 2>&1; then
+        key="$(docker run --rm -v "${project}_n8n-data":/n8n:ro busybox cat /n8n/config 2>/dev/null \
+               | python3 -c 'import json,sys; print(json.load(sys.stdin).get("encryptionKey",""))' 2>/dev/null || true)"
+        [[ -n "$key" ]] && echo "Kept the encryption key n8n made for itself earlier"
+    fi
+    setenv N8N_ENCRYPTION_KEY "${key:-$(secret 32)}"
+fi
 ORG="$(getenv INFLUX_ORG)"; BUCKET="$(getenv INFLUX_BUCKET)"; ADMIN_TOKEN="$(getenv INFLUX_ADMIN_TOKEN)"
 [[ -n "$ORG" && -n "$BUCKET" && -n "$ADMIN_TOKEN" ]] || die ".env is missing INFLUX_ORG, INFLUX_BUCKET or INFLUX_ADMIN_TOKEN"
 
 # ---- 2. Mosquitto users ------------------------------------------------------------------
-say "Mosquitto users: panel, device, viewer"
+say "Mosquitto users: panel, device, viewer, automation"
 # Mosquitto wants its password and ACL files private and owned by its own user (uid 1883),
 # so after this, edit mosquitto/acl with sudo.
 docker compose run --rm --no-deps -T --entrypoint sh \
     -e P1="$(getenv MQTT_PANEL_PASSWORD)" -e P2="$(getenv MQTT_DEVICE_PASSWORD)" -e P3="$(getenv MQTT_VIEWER_PASSWORD)" \
+    -e P4="$(getenv MQTT_AUTOMATION_PASSWORD)" \
     mosquitto -c '
         set -e
         f=/mosquitto/config/passwd
@@ -96,6 +144,10 @@ docker compose run --rm --no-deps -T --entrypoint sh \
         mosquitto_passwd -c -b "$f" panel "$P1"
         mosquitto_passwd -b "$f" device "$P2"
         mosquitto_passwd -b "$f" viewer "$P3"
+        mosquitto_passwd -b "$f" automation "$P4"
+        # servers set up before the automation user existed: give it its ACL entry
+        grep -q "^user automation" /mosquitto/config/acl ||
+            printf "\nuser automation\ntopic readwrite home/#\n" >> /mosquitto/config/acl
         chown mosquitto:mosquitto "$f" /mosquitto/config/acl
         chmod 0700 "$f" /mosquitto/config/acl'
 
@@ -119,7 +171,9 @@ d = d[0] if isinstance(d, list) else d
 print(d["token"])'; }
 
 # ---- 4. tokens -----------------------------------------------------------------------------
-if [[ -z "$(getenv INFLUX_PANEL_TOKEN)" || -z "$(getenv GRAFANA_INFLUX_TOKEN)" ]]; then
+need_nr_token=0
+has_profile nodered && [[ -z "$(getenv NODERED_INFLUX_TOKEN)" ]] && need_nr_token=1
+if [[ -z "$(getenv INFLUX_PANEL_TOKEN)" || -z "$(getenv GRAFANA_INFLUX_TOKEN)" ]] || (( need_nr_token )); then
     say "InfluxDB tokens"
     bucket_id="$(influx bucket list --org "$ORG" --name "$BUCKET" --hide-headers | awk 'NR==1 {print $1}')"
     [[ -n "$bucket_id" ]] || die "Bucket '$BUCKET' not found in org '$ORG'. If you changed .env after the first
@@ -137,13 +191,15 @@ start, InfluxDB kept the old names: either put them back, or wipe it with
         setenv GRAFANA_INFLUX_TOKEN "$t"
         echo "Made Grafana's token (read only)"
     fi
+    if (( need_nr_token )); then
+        t="$(influx auth create --org "$ORG" --read-bucket "$bucket_id" --write-bucket "$bucket_id" \
+             --description "Node-RED (read/write $BUCKET)" --json | token_of)"
+        setenv NODERED_INFLUX_TOKEN "$t"
+        echo "Made Node-RED's token (read/write $BUCKET)"
+    fi
 fi
 
 # ---- 5. everything else ---------------------------------------------------------------------
-say "Starting Grafana$([[ "$(getenv COMPOSE_PROFILES)" == *n8n* ]] && echo ' and n8n')"
-docker compose up -d
-
-# ---- 6. settings for the PCs that run panels --------------------------------------------------
 # The address PCs use to reach this server. Set PW_HOST to a name or IP that won't change
 # (a Tailscale name such as pwserver, or a DHCP reservation); otherwise: Tailscale's IP if
 # it's running, else this machine's first IP.
@@ -151,6 +207,15 @@ ip="${PW_HOST:-}"
 if [[ -z "$ip" ]] && command -v tailscale >/dev/null; then ip="$(tailscale ip -4 2>/dev/null | head -1)"; fi
 [[ -n "$ip" ]] || ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
 ip="${ip:-$(hostname)}"
+setenv N8N_WEBHOOK_URL "http://$ip:5678/"      # the address n8n shows for its webhooks
+parts="Grafana"
+has_profile n8n && parts+=", n8n"
+has_profile nodered && parts+=", Node-RED"
+has_profile ai && parts+=", Ollama"
+say "Starting $parts"
+docker compose up -d
+
+# ---- 6. settings for the PCs that run panels --------------------------------------------------
 umask 077
 cat > panelworks.env <<EOF
 INFLUX_URL=http://$ip:8086
@@ -181,7 +246,13 @@ cat <<EOF
   Grafana     http://$ip:3000   admin / $(getenv GRAFANA_ADMIN_PASSWORD)
               dashboard: PanelWorks > PanelWorks panels
 EOF
-[[ "$(getenv COMPOSE_PROFILES)" == *n8n* ]] && echo "  n8n         http://$ip:5678   (make the owner account on first visit)"
+if has_profile n8n; then echo "  n8n         http://$ip:5678   (make the owner account on first visit)"; fi
+if has_profile nodered; then
+    echo "  Node-RED    http://$ip:1880   admin / $(getenv NODERED_ADMIN_PASSWORD)"
+    echo "              MQTT user automation / $(getenv MQTT_AUTOMATION_PASSWORD)  (home/#)"
+fi
+if has_profile ai; then echo "  Ollama      http://$ip:11434  (no login; get a model: docker compose exec ollama ollama pull <model>)"; fi
+echo "  Optional parts on: $(getenv COMPOSE_PROFILES | sed 's/^$/none/')   (add one: ./setup.sh --profile nodered)"
 cat <<EOF
 
   For a Windows PC that runs panels: copy panelworks-setx.cmd to it and run it once.

@@ -1,8 +1,11 @@
-# PanelWorks test server: Mosquitto, InfluxDB 2, Grafana and (optionally) n8n.
+# PanelWorks test server: Mosquitto, InfluxDB 2, Grafana, and optionally n8n, Node-RED and Ollama.
 # Made for a Raspberry Pi 4/5 running a 64-bit OS, but any 64-bit Linux with Docker works.
 #   ./setup.sh                      first time: makes .env, users and tokens, then starts it all
 #   docker compose up -d            start     docker compose down     stop (data is kept)
-#   docker compose --profile n8n up -d     also start n8n
+#   ./setup.sh --profile nodered    add a part later (n8n, nodered, ai); setup.sh remembers it
+# Optional parts are Compose profiles, listed in .env as COMPOSE_PROFILES=n8n,nodered
+# Images are pinned to the versions the books were tested with. To update one, change its tag
+# here, then: docker compose pull && docker compose up -d
 # Settings and secrets come from .env, which setup.sh writes. Don't commit .env.
 
 services:
@@ -66,8 +69,8 @@ services:
       GRAFANA_INFLUX_TOKEN: ${GRAFANA_INFLUX_TOKEN:-}
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n
-    profiles: ["n8n"]          # only with: docker compose --profile n8n up -d
+    image: docker.n8n.io/n8nio/n8n:2.48.7
+    profiles: ["n8n"]          # COMPOSE_PROFILES=n8n in .env, or: ./setup.sh --profile n8n
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -76,7 +79,54 @@ services:
     environment:
       TZ: ${TZ:-UTC}
       GENERIC_TIMEZONE: ${TZ:-UTC}
+      # encrypts saved credentials: setup.sh makes it once and never changes it. Lose it and
+      # every credential in n8n has to be entered again. It's in .env: back that up.
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}   # setup.sh sets this server's address
       N8N_SECURE_COOKIE: "false"   # lets you log in over plain http on your LAN
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5678/healthz',r=>process.exit(r.statusCode==200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  nodered:
+    image: nodered/node-red:4.1.17-22
+    profiles: ["nodered"]      # COMPOSE_PROFILES=...,nodered, or: ./setup.sh --profile nodered
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    ports:
+      - "1880:1880"
+    volumes:
+      - nodered-data:/data
+      - ./nodered/settings.js:/data/settings.js:ro
+    environment:
+      TZ: ${TZ:-UTC}
+      NODERED_ADMIN_PASSWORD: ${NODERED_ADMIN_PASSWORD:-}   # editor login: admin / this
+      # for flows: type ${MQTT_USER} etc. into a node's settings and Node-RED fills it in.
+      # Inside Docker the other services are reached by name: mosquitto, influxdb.
+      MQTT_HOST: mosquitto
+      MQTT_USER: automation
+      MQTT_PASS: ${MQTT_AUTOMATION_PASSWORD:-}
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG:-home}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-panelworks}
+      INFLUX_TOKEN: ${NODERED_INFLUX_TOKEN:-}
+
+  ollama:
+    image: ollama/ollama:0.40.16
+    profiles: ["ai"]           # a local LLM on the CPU. Needs RAM: try a 3-4B model on an 8 GB Pi
+    restart: unless-stopped
+    ports:
+      - "11434:11434"          # no login: keep this server off the internet
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      TZ: ${TZ:-UTC}
+      OLLAMA_KEEP_ALIVE: 30m   # keep the model loaded between questions
 
 volumes:
   mosquitto-data:
@@ -84,3 +134,5 @@ volumes:
   influxdb-config:
   grafana-data:
   n8n-data:
+  nodered-data:
+  ollama-data:

@@ -4,6 +4,16 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **Test server: optional parts for the home automation and security books.** `server/` gains
+  Node-RED (`nodered`) and Ollama (`ai`) beside n8n. Add one any time with
+  `./setup.sh --profile nodered`. Node-RED gets an admin login, its own MQTT user `automation`
+  (`home/#`) and an InfluxDB token, and flows can use `${MQTT_HOST}`, `${INFLUX_TOKEN}` and the
+  rest without typing them.
+- **Test server: n8n pinned to 2.48.7, with a fixed encryption key.** `setup.sh` writes
+  `N8N_ENCRYPTION_KEY` once and never changes it, and adopts the key of an n8n that already ran.
+  Every image is now pinned to the version the books were tested with. `setup.sh` only ever
+  adds settings to `.env`; it never rewrites a password, token or key it made.
+
 - **Tests no longer depend on GitHub.** `tools/run_tests.py` sets `PANELWORKS_NO_UPDATE_CHECK=1`, which turns off
   the designer's startup update check. CI on a commit that was already behind main showed "A newer PanelWorks is
   on GitHub" in the status bar, and `startbutton_test` read that instead of the handler error it was looking for.
