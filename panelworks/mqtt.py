@@ -21,12 +21,12 @@ import paho.mqtt.client as paho
 
 from .linkwatch import Watched
 from .runtime import VBObject, register_control
-from .util import expand
+from .util import expand, json_default
 
 
 def to_payload(v):
     """Python value -> MQTT payload text."""
-    if isinstance(v, str):
+    if isinstance(v, (str, bytes, bytearray)):     # bytes (a binary Serial line) go as they are
         return v
     if isinstance(v, float) and v.is_integer():
         v = int(v)
@@ -390,7 +390,7 @@ class Bus:
         # mirror: events as non-retained messages
         if self.mirror and event != "Timer":
             self.link.publish(f"{self.prefix}/{obj.Name}/event",
-                              json.dumps({"event": event, "args": list(args)}))
+                              json.dumps({"event": event, "args": list(args)}, default=json_default))
 
     @staticmethod
     def _as_list(x):

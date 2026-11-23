@@ -51,6 +51,7 @@ arms and acknowledges, and the rules run in Node-RED. Order depends on the book 
 
 ## Done
 
+- 0.9.1: Serial ${VAR} ports, custom terminators and bytes mode (CAT, KISS); truck_scale example shares through controls.
 - 0.9.0: link banner (a red bar when a link is down) and kiosk mode; test server profiles for the automation and security books.
 - 0.8.2: SegmentDisplay upright by default, segments shaped like real display glass.
 - 0.8.1: fixes from the book (SNMP OID values, TrapPort ${VAR}, Telegram title, Disconnected at start); test server.

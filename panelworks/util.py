@@ -19,6 +19,25 @@ ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 _icon_cache = {}
 
 
+def json_default(o):
+    """json.dumps(..., default=json_default): bytes (a binary Serial line) as hex, '0a 1b ff';
+    anything else unknown as its text."""
+    if isinstance(o, (bytes, bytearray)):
+        return bytes(o).hex(" ")
+    return str(o)
+
+
+def jsonable(v):
+    """v with any bytes inside turned into hex text, for logs and JSON replies."""
+    if isinstance(v, (bytes, bytearray)):
+        return json_default(v)
+    if isinstance(v, (list, tuple)):
+        return [jsonable(x) for x in v]
+    if isinstance(v, dict):
+        return {k: jsonable(x) for k, x in v.items()}
+    return v
+
+
 def set_window_icon(window):
     """Give a Tk window the PanelWorks icon (instead of Tk's feather).
     Never fails: a missing or unreadable icon just leaves the default."""

@@ -243,6 +243,14 @@
       "type": "Data",
       "DatabaseName": "truck_scale.db",
       "Table": "yard"
+    },
+    "lstErrors": {
+      "type": "ListBox",
+      "Left": 10,
+      "Top": 560,
+      "Width": 120,
+      "Height": 30,
+      "Visible": false
     }
   }
 }

@@ -110,11 +110,24 @@ Docker, n8n reaches the others by service name: `mosquitto:1883` and `http://inf
 **Node-RED** logs in as `admin` with `NODERED_ADMIN_PASSWORD` from `.env`; its settings are in
 `nodered/settings.js`. Flows can use the server's settings without typing them: put
 `${MQTT_HOST}`, `${MQTT_USER}`, `${MQTT_PASS}`, `${INFLUX_URL}`, `${INFLUX_ORG}`, `${INFLUX_BUCKET}`
-or `${INFLUX_TOKEN}` in a node's fields. Context saved with `context.set` survives a restart.
+`${INFLUX_TOKEN}` or `${OLLAMA_URL}` in a node's fields. Context saved with `context.set` survives a restart.
 
 **Ollama** has no login and no model until you pull one:
 `docker compose exec ollama ollama pull <model>`. On an 8 GB Pi, stay with small (3 to 4
 billion parameter) models, and check `free -h` with everything else running.
+
+The `ai` profile is one way to run the LLM, not the only one. Ollama often lives better on a
+second machine, so the house server never waits on it: another Pi, or a Mac. **On a Mac, install
+Ollama natively, not in Docker**: Docker on macOS can't reach the Mac's GPU. Then tell this
+server where it is by adding a line to `.env` and running `docker compose up -d`:
+
+```
+OLLAMA_URL=http://the-other-machine:11434
+```
+
+Node-RED flows read it as `${OLLAMA_URL}` (without the line, it's this server's own Ollama).
+In n8n, the same address goes in the Ollama credential's Base URL. The other machine's Ollama
+must listen on the network, not just on itself: set `OLLAMA_HOST=0.0.0.0` there.
 
 ## 3. Your PC
 

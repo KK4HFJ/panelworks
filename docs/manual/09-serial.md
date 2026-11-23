@@ -173,10 +173,19 @@ needed the same buffer-and-split code. The Serial control does it for you:
 | `LF` (default) | newline; a CR before it is removed too | Arduino `Serial.println`, most devices |
 | `CR` | carriage return | Many radios and old instruments |
 | `CRLF` | CR+LF only | Strict CRLF devices |
-| `None` | nothing: every chunk fires as it arrives | Binary or unframed data |
+| `None` | nothing: every chunk fires as it arrives | Unframed data |
+| `;` | a semicolon | Yaesu and Kenwood CAT: `FA014074000;` |
+| `\x03`, `\xC0` ... | that byte (`\x` and two hex digits) | ETX-framed instruments, KISS TNCs (FEND) |
+
+Terminator can be any characters that end a message, typed into the property
+(the drop-down offers the common ones). With your own terminator, nothing between
+two terminators in a row counts as a message, so a KISS frame, which starts and ends
+with `C0`, fires DataArrival once.
 
 When sending, **Output** and **SendLine** add the terminator (a newline
-for `None`); **Write** sends exactly what you give it.
+for `None`); **Write** sends exactly what you give it. So a CAT command is
+`f.rig.SendLine("FA")`, and the answer arrives in `rig_DataArrival` as
+`FA014074000`, whole, however many pieces it came in.
 
 ## Finding the port: no more COM-number guessing
 
@@ -188,6 +197,7 @@ for `None`); **Write** sends exactly what you give it.
 | `socket://192.168.1.50:23` | A network serial server (ser2net, ESP-Link, a terminal server). |
 | `rfc2217://host:port` | An RFC 2217 serial server (adjustable baud). |
 | `loop://` | A loopback for testing: everything sent comes straight back. |
+| `${RIG_PORT}` | Whatever the environment variable `RIG_PORT` says, so one form works on every PC. `${RIG_PORT:-COM5}` falls back to COM5 when it isn't set (chapter 7). |
 
 **`auto` never guesses.** If more than one device matches (an S3, plus two
 CH340 boards running your HVAC, say), the panel doesn't open any of them. It
@@ -279,7 +289,8 @@ The complete example is `examples/arduino_bench/arduino_bench.ino` with the pane
 | stop bits | 1, 1.5, 2 |
 
 Common: `9600,n,8,1`, `115200,n,8,1`; `4800,n,8,1` for NMEA GPS; `1200,n,8,1`
-for old TNCs. Settings can be changed while the port is open; the new speed
+for old TNCs. A `socket://` port ignores Settings (the serial server at the other end
+sets the speed), but it still has to be a valid value. Settings can be changed while the port is open; the new speed
 applies at once. A mistake (`fast,n,8,1`) is refused with a message saying what's wrong.
 
 ## The Arduino reset (DTR)
@@ -294,8 +305,31 @@ unless you set them, and boards with a CH340/CP2102 chip behave with the default
 ## Text encodings
 
 Lines are decoded as UTF-8 by default; anything invalid is replaced with `�`
-rather than causing an error. For devices that send raw 8-bit data, set
+rather than causing an error. For devices that send 8-bit text, set
 **Encoding** to `latin-1`.
+
+## Binary protocols: Encoding = bytes
+
+For protocols that aren't text at all (KISS frames from a TNC, Modbus RTU,
+a binary sensor), set **Encoding** to `bytes`. DataArrival, Line and Input
+are then Python `bytes`, exactly as received, and **Write** and **SendLine**
+take bytes too. With **Terminator** `\xC0`, each KISS frame arrives whole:
+
+```python
+FEND, FESC, TFEND, TFESC = 0xC0, 0xDB, 0xDC, 0xDD
+
+def tnc_DataArrival(f, frame):             # bytes, without the C0s around it
+    port, data = frame[0], frame[1:]
+    data = data.replace(bytes([FESC, TFEND]), bytes([FEND])).replace(bytes([FESC, TFESC]), bytes([FESC]))
+    f.lstPackets.AddItem(data.hex(" "), 0)
+
+def cmdSend_Click(f):                       # ax25_frame(): your own code builds the packet
+    f.tnc.Write(bytes([FEND, 0x00]) + ax25_frame(f) + bytes([FEND]))
+```
+
+Where bytes have to become text (Claude reading the property over MCP, the
+phone view, an n8n webhook), they're shown as hex: `c0 00 82 a0`. Published
+over MQTT, they go as a raw binary payload. **Fill** only works on text lines.
 
 ## Input and InBufferCount: the MSComm way
 

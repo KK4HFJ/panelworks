@@ -32,6 +32,8 @@ from concurrent.futures import Future
 from tkinter import messagebox, ttk
 import tkinter.font as tkfont
 
+from .util import jsonable
+
 
 # --------------------------------------------------------------------------
 # Tk objects must be deleted on the GUI thread
@@ -947,8 +949,9 @@ class Form:
         from .util import set_window_icon
         set_window_icon(self.root)
         self.root.geometry(f'{spec.get("width", 400)}x{spec.get("height", 300)}')
-        if "backColor" in spec:
-            self.root.configure(bg=spec["backColor"])
+        self._back_color = spec.get("backColor")      # saved again only if the form had one, or code set one
+        if self._back_color:
+            self.root.configure(bg=self._back_color)
         self.root.protocol("WM_DELETE_WINDOW", self.m_Unload)
 
         # code module (the "event procedures"), like a VB .frm code section
@@ -1059,7 +1062,9 @@ class Form:
     def get_Height(self): return self.root.winfo_height()
     def set_Height(self, v): self.root.geometry(f"{self.root.winfo_width()}x{int(v)}")
     def get_BackColor(self): return str(self.root.cget("bg"))
-    def set_BackColor(self, v): self.root.configure(bg=v)
+    def set_BackColor(self, v):
+        self.root.configure(bg=v)
+        self._back_color = str(v)
     def get_LinkBanner(self): return self.linkwatch.show
     def set_LinkBanner(self, v):
         self.linkwatch.show = bool(v)
@@ -1254,6 +1259,7 @@ class Form:
             "caption": self.get_Caption(),
             "width": self.get_Width(),
             "height": self.get_Height(),
+            **({"backColor": self._back_color} if self._back_color else {}),
             **({"code": self.code_file} if self.code_file else {}),
             **({"mqtt": self.mqtt_cfg} if self.mqtt_cfg else {}),
             **({"webhooks": self.webhooks_cfg} if self.webhooks_cfg is not None else {}),
@@ -1311,7 +1317,7 @@ class Form:
         with self._cond:
             self._seq += 1
             rec = {"seq": self._seq, "time": round(time.time(), 3),
-                   "object": obj, "event": event, "args": list(args)}
+                   "object": obj, "event": event, "args": jsonable(list(args))}
             self._events.append(rec)
             self._cond.notify_all()
         result = None

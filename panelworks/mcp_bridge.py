@@ -42,6 +42,7 @@ except ImportError:                     # mcp 1.x
     from mcp.server.fastmcp.exceptions import ToolError
 
 from .runtime import CONTROL_TYPES
+from .util import json_default
 
 
 # --------------------------------------------------------------------------
@@ -60,7 +61,7 @@ def make_impl(form):
         def do():
             o = form.obj(object)
             o.set(property, value)
-            return f"{object}.{property} = {json.dumps(o.get(property))}"
+            return f"{object}.{property} = {json.dumps(o.get(property), default=json_default)}"
         return gui(do)
 
     def fire_event(object, event, args=None):
@@ -234,7 +235,7 @@ def build_server(call):
     @mcp.resource("form://describe", mime_type="application/json")
     def form_resource() -> str:
         """Live snapshot of the whole form."""
-        return json.dumps(call("describe_form"), indent=2)
+        return json.dumps(call("describe_form"), indent=2, default=json_default)
 
     return mcp
 
@@ -302,7 +303,7 @@ class _ControlHandler(BaseHTTPRequestHandler):
         pass
 
     def _send(self, code, obj):
-        body = json.dumps(obj).encode()
+        body = json.dumps(obj, default=json_default).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -364,7 +365,7 @@ def relay_caller(form_path, wait_seconds=20):
         time.sleep(0.3)
 
     def call(tool, /, **kw):
-        body = json.dumps({"tool": tool, "args": kw}).encode()
+        body = json.dumps({"tool": tool, "args": kw}, default=json_default).encode()
         req = urllib.request.Request(url, body, {"Content-Type": "application/json", CONTROL_HEADER: "1"})
         timeout = (kw.get("timeout_seconds") or 30) + 10 if tool == "wait_for_event" else 30
         try:

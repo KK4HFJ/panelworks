@@ -26,6 +26,8 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
+from .util import json_default
+
 HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "WebRequest", "Data", "InfluxDB", "Alarms", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
@@ -447,7 +449,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _send(self, code, body, ctype="application/json", extra=None):
         data = body if isinstance(body, bytes) else (
-            json.dumps(body) if ctype == "application/json" else body).encode("utf-8")
+            json.dumps(body, default=json_default) if ctype == "application/json" else body).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", ctype + ("; charset=utf-8" if "json" in ctype or "html" in ctype else ""))
         self.send_header("Content-Length", str(len(data)))

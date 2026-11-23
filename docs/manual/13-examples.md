@@ -147,7 +147,9 @@ own table, so nothing is lost if the PC restarts mid-shift. There's a **Frame**
 for the truck details, and a **menu**: File → Export tickets to CSV, View → Weight chart,
 View → Error log. Problems (scale disconnected, database errors) go into an
 **error log** in a second window, and only a red *⚠ 1 new problem* indicator shows
-on the panel. Click it, or press Ctrl+L, to read them.
+on the panel. Click it, or press Ctrl+L, to read them. The log is kept in a hidden
+ListBox on the main form, and the log window reads it with `f.Owner.lstErrors.List`:
+forms share data through each other's controls, not each other's code.
 
 Without a scale, run the simulator first. It pretends to be an indicator,
 trucks arriving by themselves, and you can type a weight to put one on:

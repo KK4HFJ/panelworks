@@ -1,15 +1,14 @@
 # The truck scale's error log (opened with View > Error log, or by clicking the
-# red indicator). The entries live in the main form's code: f.Owner.code.log.
+# red indicator). The entries live in the main form's hidden ListBox lstErrors,
+# newest first: forms share data through each other's controls.
 
 
 def Form_Load(f):
-    f.lstLog.Clear()
-    for line in reversed(f.Owner.code.log):          # newest first
-        f.lstLog.AddItem(line)
+    f.lstLog.List = f.Owner.lstErrors.List
 
 
 def cmdClear_Click(f):
-    f.Owner.code.log.clear()
+    f.Owner.lstErrors.Clear()
     f.lstLog.Clear()
 
 

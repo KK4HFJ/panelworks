@@ -36,7 +36,7 @@ import urllib.error
 import urllib.request
 
 from . import __version__
-from .util import expand as _expand
+from .util import expand as _expand, json_default
 
 def _as_list(x):
     return [] if x is None else x if isinstance(x, list) else [x]
@@ -129,7 +129,7 @@ class Webhooks:
             obj_name, url, payload = job
             self.stats["sent"] += 1
             try:
-                req = urllib.request.Request(url, json.dumps(payload).encode(), self._headers())
+                req = urllib.request.Request(url, json.dumps(payload, default=json_default).encode(), self._headers())
                 with urllib.request.urlopen(req, timeout=self.timeout) as r:
                     body = r.read().decode("utf-8", "replace").strip()
                 data = None

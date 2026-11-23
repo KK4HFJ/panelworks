@@ -2,6 +2,22 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## 0.9.1 (2026-11-23)
+
+- **Serial: `${VAR}` in Port**, as MQTT and Modbus already allow:
+  `"Port": "${RIG_PORT:-socket://127.0.0.1:7013}"`.
+- **Serial: your own Terminator.** Besides LF, CR, CRLF and None, any characters that end a message:
+  `;` for Yaesu and Kenwood CAT, `\xC0` for KISS, `\x03` for ETX. DataArrival fires once per whole
+  message however it arrives, and SendLine ends commands with it.
+- **Serial: `Encoding = "bytes"`** for binary protocols. DataArrival, Line and Input are Python
+  bytes; Write and SendLine take bytes. Where bytes must become text (MCP, the phone view,
+  webhooks, the event log) they show as hex, and MQTT publishes them as a raw payload.
+- **The truck_scale example** keeps its error log in a hidden ListBox that the log window reads
+  through the control (`f.Owner.lstErrors.List`), not through the main form's code.
+- **Test server:** Node-RED gets `${OLLAMA_URL}`, so its flows can use an Ollama on another
+  machine (on a Mac it runs natively; Docker there can't reach the GPU). The README says how.
+- Saving a form from code (MCP `save_form`) kept no background colour; it now does.
+
 ## 0.9.0 (2026-11-23)
 
 - **Link banner.** When a panel loses a link for 5 s (its MQTT broker, a Modbus or SNMP device, a

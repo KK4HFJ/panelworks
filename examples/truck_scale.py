@@ -10,16 +10,18 @@ LINE = re.compile(r"^(ST|US|OL),(GS|NT),([+-]?\d+)\s*(lb|kg)", re.I)
 
 weight = 0                 # last reading
 stable = False
-log = []                   # problems and connection changes, shown by View > Error log
-unread = 0
+unread = 0                 # problems since the log was last opened
+# The log itself is the hidden ListBox lstErrors, newest first, so the log window can read it
+# through the control (f.Owner.lstErrors): forms share data through controls, not code.
 
 
 def note(f, text, problem=True):
     """Add to the error log; problems light the red indicator until the log is opened."""
     global unread
     line = time.strftime("%H:%M:%S  ") + text
-    log.append(line)
-    del log[:-500]
+    f.lstErrors.AddItem(line, 0)
+    while f.lstErrors.ListCount > 500:              # keep the newest 500
+        f.lstErrors.RemoveItem(500)
     if problem:
         unread += 1
         f.lblAlert.Caption = f"\u26a0 {unread} new problem{'s' if unread != 1 else ''}"

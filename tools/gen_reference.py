@@ -459,10 +459,10 @@ DOC = {
     },
     "Serial": {
         "_": "Invisible serial port (VB's MSComm, improved). See chapter 9.",
-        "Port": "`COM3`, `/dev/ttyUSB0`, `auto` (the one USB serial device; refuses if several), `auto:CH340` (the one port whose name contains the text), or a URL: `socket://host:port`, `rfc2217://host:port`, `loop://`.",
+        "Port": "`COM3`, `/dev/ttyUSB0`, `auto` (the one USB serial device; refuses if several), `auto:CH340` (the one port whose name contains the text), or a URL: `socket://host:port`, `rfc2217://host:port`, `loop://`. `${VAR}` and `${VAR:-default}` come from the environment.",
         "Settings": "`baud,parity,databits,stopbits`, e.g. `9600,n,8,1` or `115200,n,8,1`. Can be changed while open.",
-        "Terminator": "Line ending: `LF` (default; also accepts CR+LF), `CR`, `CRLF`, or `None` for raw chunks.",
-        "Encoding": "Text encoding. Default `utf-8`; `latin-1` for raw 8-bit data.",
+        "Terminator": "What ends a message: `LF` (default; also accepts CR+LF), `CR`, `CRLF`, `None` for raw chunks, or your own characters: `;` for Yaesu/Kenwood CAT, `\\xC0` for KISS (`\\x` and two hex digits for any byte).",
+        "Encoding": "Text encoding. Default `utf-8`; `latin-1` for 8-bit text; `bytes` for binary protocols: DataArrival, Line and Input are then Python bytes.",
         "Fill": "Lines like `temp -> lblTemp.Caption`. Fields of incoming JSON lines (or `key=value` lines) are copied to those properties.",
         "AutoOpen": "Open the port when the form loads. Default True.",
         "AutoReconnect": "Reopen by itself after an unplug, or keep trying until the device appears. Default True.",
