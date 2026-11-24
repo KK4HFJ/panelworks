@@ -15,6 +15,8 @@
 #   ./setup.sh --add-board garden                 an MQTT login for one board, limited to home/garden/#
 #   ./setup.sh --add-board probe5 --topics "home/garden/probe5/#"     ...or to the topics you give
 #   PW_HOST=pwserver.example.ts.net ./setup.sh    write this name into the PC settings
+#   ./setup.sh --show-passwords   print the passwords in the summary (normally it names the
+#                                 .env line instead, so the output is safe to paste or log)
 #
 # PCs reach the server over Tailscale by its full name (MagicDNS: name.tailnet.ts.net); boards on
 # the LAN use MQTT over TLS on port 8883, with the private CA that tls.sh makes (mqtt-ca.h).
@@ -25,19 +27,21 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 ASK=1
+SHOW_PW=0
 ADD_PROFILES=()
 ADD_BOARDS=()          # "name|topics" ("" topics = home/name/#)
 KNOWN_PROFILES="n8n nodered ai"
 while (( $# )); do
     case "$1" in
         -y) ASK=0 ;;
+        --show-passwords) SHOW_PW=1 ;;
         --profile) shift; ADD_PROFILES+=("${1:-}") ;;
         --profile=*) ADD_PROFILES+=("${1#--profile=}") ;;
         --add-board) shift; ADD_BOARDS+=("${1:-}|") ;;
         --topics) shift
             (( ${#ADD_BOARDS[@]} )) || { echo "setup: --topics goes after --add-board NAME" >&2; exit 2; }
             last=$(( ${#ADD_BOARDS[@]} - 1 )); ADD_BOARDS[last]="${ADD_BOARDS[last]%%|*}|${1:-}" ;;
-        -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
         *) printf 'setup: unknown option %s (try --help)\n' "$1" >&2; exit 2 ;;
     esac
     shift
@@ -60,6 +64,9 @@ setenv() {            # setenv NAME VALUE: add or replace one line in .env
 }
 addenv() {            # addenv NAME VALUE: add the line only if .env doesn't have it yet
     grep -qE "^$1=" .env || printf '%s=%s\n' "$1" "$2" >> .env
+}
+pw() {                # pw NAME: the password, or where it is (the summary never prints it unasked)
+    if (( SHOW_PW )); then getenv "$1"; else printf '[.env %s]' "$1"; fi
 }
 has_profile() { [[ ",$(getenv COMPOSE_PROFILES)," == *",$1,"* ]]; }
 ask() {               # ask "Question" default  -> prints the answer
@@ -296,23 +303,23 @@ say "Ready"
 cat <<EOF
   MQTT        $ip:1883  (WebSockets :9001)
               boards on the LAN: TLS on port 8883, CA in mqtt-ca.h ($(./tls.sh --names))
-              users: panel / $(getenv MQTT_PANEL_PASSWORD)
-                     device / $(getenv MQTT_DEVICE_PASSWORD)
-                     viewer / $(getenv MQTT_VIEWER_PASSWORD)  (read only)
-  InfluxDB    http://$ip:8086   admin / $(getenv INFLUX_ADMIN_PASSWORD)
+              users: panel / $(pw MQTT_PANEL_PASSWORD)
+                     device / $(pw MQTT_DEVICE_PASSWORD)
+                     viewer / $(pw MQTT_VIEWER_PASSWORD)  (read only)
+  InfluxDB    http://$ip:8086   admin / $(pw INFLUX_ADMIN_PASSWORD)
               org $ORG, bucket $BUCKET
-  Grafana     http://$ip:3000   admin / $(getenv GRAFANA_ADMIN_PASSWORD)
+  Grafana     http://$ip:3000   admin / $(pw GRAFANA_ADMIN_PASSWORD)
               dashboard: PanelWorks > PanelWorks panels
 EOF
 if has_profile n8n; then echo "  n8n         http://$ip:5678   (make the owner account on first visit)"; fi
 if has_profile nodered; then
-    echo "  Node-RED    http://$ip:1880   admin / $(getenv NODERED_ADMIN_PASSWORD)"
-    echo "              MQTT user automation / $(getenv MQTT_AUTOMATION_PASSWORD)  (home/#)"
+    echo "  Node-RED    http://$ip:1880   admin / $(pw NODERED_ADMIN_PASSWORD)"
+    echo "              MQTT user automation / $(pw MQTT_AUTOMATION_PASSWORD)  (home/#)"
 fi
 if [[ -n "$(getenv MQTT_BOARDS)" ]]; then
     IFS=, read -ra boards <<< "$(getenv MQTT_BOARDS)"
     for name in "${boards[@]}"; do
-        [[ -n "$name" ]] && echo "  Board       $name / $(getenv "$(board_key "$name")_PASSWORD")  ($(getenv "$(board_key "$name")_TOPICS"))"
+        [[ -n "$name" ]] && echo "  Board       $name / $(pw "$(board_key "$name")_PASSWORD")  ($(getenv "$(board_key "$name")_TOPICS"))"
     done
 fi
 if has_profile ai; then echo "  Ollama      http://$ip:11434  (no login; get a model: docker compose exec ollama ollama pull <model>)"; fi
@@ -325,3 +332,7 @@ cat <<EOF
 
   Everything (passwords and tokens) is in .env. Keep it private; back it up.
 EOF
+if (( ! SHOW_PW )); then
+    echo "  The passwords aren't printed above, so this output is safe to paste or log. See one with"
+    echo "  'grep MQTT_PANEL_PASSWORD .env', or rerun with --show-passwords on your own screen."
+fi

@@ -90,7 +90,9 @@ forever, your time zone, no n8n, no Node-RED), then:
   (if it's on),
 - starts Grafana and the optional parts you chose,
 - writes **panelworks-setx.cmd** and **panelworks.env** for the PCs that run panels,
-- prints every address, user and password.
+- prints every address and user. Passwords show as the `.env` line that holds them, like
+  `[.env MQTT_PANEL_PASSWORD]`, so the output is safe to paste into a forum post or keep in a
+  log. `./setup.sh --show-passwords` prints them; do that only on your own screen.
 
 The first run downloads the images (about 1 GB, more with the optional parts) and takes a few
 minutes. Running it again is safe: it keeps every password, token and key it made, and only adds
@@ -179,8 +181,8 @@ anyone else's:
 ./setup.sh --add-board probe5 --topics "home/garden/probe5/#"
 ```
 
-The summary prints each board's password (it's in `.env` as `MQTT_BOARD_GARDEN_PASSWORD`). Put it
-in the board's `secrets.h`, never in the sketch.
+The board's password is in `.env` as `MQTT_BOARD_GARDEN_PASSWORD` (`grep MQTT_BOARD_GARDEN .env`
+shows it). Put it in the board's `secrets.h`, never in the sketch.
 
 In the sketch, use `WiFiClientSecure` with the CA, not `setInsecure()` (which accepts anyone
 pretending to be your server), and set the clock first: the board checks the certificate's dates.

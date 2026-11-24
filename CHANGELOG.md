@@ -15,6 +15,9 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 - **Test server: PCs use the full Tailscale name.** `setup.sh` writes it into the PC settings
   (the short name can resolve to the LAN address on Windows). The README has the Tailscale-first
   layout: PCs over Tailscale, boards on the LAN with TLS.
+- **Test server: setup.sh no longer prints passwords.** The summary names the `.env` line
+  instead (`[.env MQTT_PANEL_PASSWORD]`), so its output is safe to paste or log;
+  `--show-passwords` prints them on request. Reported by the Pi A test run.
 
 ## 0.11.0 (2026-11-24)
 
