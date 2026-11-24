@@ -3,6 +3,16 @@
 Ideas for future versions, roughly in priority order within each group. ★ = next up.
 Nothing here is promised; suggestions and pull requests are welcome (see CONTRIBUTING.md).
 
+## Release schedule
+
+- **Feature freeze until the book is published.** Until then, bug fixes only. New ideas go
+  on this list and wait.
+- **Bug fixes: weekly, on Tuesdays,** as a patch release (x.y.Z), and only when there's
+  something to fix. A week with nothing to fix has no release.
+- **Features: monthly, on the first Tuesday of the month,** as a minor release (x.Y.0), with
+  whatever was finished and tested that month. A month with nothing ready has no release.
+- **1.0** is the version the book is printed against.
+
 ## Home automation and security (for the next two books)
 
 The books use PanelWorks as the fixed console: a keypad by the door, a zone map, a NOC screen,
