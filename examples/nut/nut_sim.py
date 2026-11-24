@@ -69,6 +69,7 @@ class Ups:
                 "battery.type": "PbAc", "battery.voltage": f"{12.0 + self.charge * 0.016:.1f}",
                 "battery.voltage.nominal": "12.0",
                 "device.mfr": "PanelWorks", "device.model": "Pretend UPS 600", "device.type": "ups",
+                "device.serial": "PW600X0042  ", "ups.serial": "PW600X0042  ",
                 "driver.name": "panelworks-sim", "driver.version": "1.0",
                 "input.voltage": "0.0" if on_batt else "121.4", "input.voltage.nominal": "120",
                 "output.voltage": "120.0", "ups.beeper.status": "enabled",

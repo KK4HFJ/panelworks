@@ -412,6 +412,7 @@ DOC = {
         "Username": "A upsd.users user, only needed for Command. Use `${VARIABLE}`.",
         "Password": "That user's password, only for Command. Use `${VARIABLE}` to keep it out of the file.",
         "Timeout": "Seconds to wait for upsd (default 3).",
+        "HideSerials": "True (the default): `ups.serial`, `device.serial` and other `*.serial` and `*.macaddr` variables read `(hidden)` in ListVars, Get and Values, so a screenshot doesn't show your UPS's serial number. False shows them.",
         "Status": "ups.status as it is, e.g. `OL CHRG` or `OB DISCHRG LB`. Read-only.",
         "OnLine": "True on mains (OL in ups.status). Read-only.",
         "OnBattery": "True on battery (OB). Read-only.",

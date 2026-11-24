@@ -4,6 +4,12 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+## 0.11.1 (2026-11-24)
+
+- **NUT: HideSerials (True by default).** `ups.serial`, `device.serial` and other `*.serial` and
+  `*.macaddr` variables read `(hidden)` in ListVars, Get and the Poll values, so a screenshot or
+  forum post doesn't give away your UPS's serial number. Set False to see them. The pretend UPS
+  (`--simulator nut`) now reports serials, and the nut example's screenshot shows one hidden.
 - **NUT: text values are trimmed.** APC pads its model name with spaces ("Back-UPS XS 700U ");
   the control now strips every value. The nut example's runtime gauge goes to 180 min (a small
   UPS on a light load reads about 150).

@@ -1050,6 +1050,7 @@ A UPS through NUT (Network UPS Tools): a client of upsd, TCP 3493, which serves 
 | Charging | run time | True while charging (CHRG). Read-only. |
 | Connected | run time | True while upsd answers and its driver has the UPS. Set False/True to close/open. |
 | Fill | read/write | Values to put into properties with no code, one per line: `name -> Control.Property`, e.g. `charge -> gauCharge.Value`. |
+| HideSerials | read/write | True (the default): `ups.serial`, `device.serial` and other `*.serial` and `*.macaddr` variables read `(hidden)` in ListVars, Get and Values, so a screenshot doesn't show your UPS's serial number. False shows them. |
 | Host | read/write | Where upsd runs: `127.0.0.1` on this machine, or another's address. `${NUT_HOST}` reads an environment variable. |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LastError | read-only | The last problem, or empty. Read-only. |

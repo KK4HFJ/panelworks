@@ -321,6 +321,11 @@ Every poll is one `LIST VAR`, so the whole list costs one round trip. Numbers ar
 numbers and everything else as text. Which variables exist depends on the UPS:
 `f.nut1.ListVars()` returns all of them, the NUT version of an SNMP Walk.
 
+Some of them identify your own unit: `ups.serial`, `device.serial`, and on some UPSes a MAC
+address. **HideSerials** (True by default) shows those as `(hidden)` everywhere: ListVars, Get
+and the Poll values. A screenshot of your panel can then go into a forum post without them.
+Set it to False if you need the real number, to register a battery warranty, say.
+
 **ups.status** is a few words: `OL` on line (mains), `OB` on battery, `LB` low battery,
 `CHRG` charging, `DISCHRG` discharging, `RB` replace battery, plus `BYPASS`, `OVER` (overload)
 and a few more. The control reads them for you, whatever your Poll list says:

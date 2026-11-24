@@ -112,6 +112,14 @@ check("ListVars: everything it reports", allv.get("battery.charge.low") == 25 an
 check("Get: a poll key, or any variable now", f.nut1.Get("model") == "Pretend UPS 600" and
       f.nut1.Get("battery.voltage.nominal") == 12.0)
 check("ListCommands", "test.battery.start.quick" in f.nut1.ListCommands())
+check("HideSerials (on by default): ListVars and Get hide the serial numbers",
+      f.nut1.HideSerials is True and allv.get("ups.serial") == "(hidden)"
+      and allv.get("device.serial") == "(hidden)" and f.nut1.Get("ups.serial") == "(hidden)",
+      (allv.get("ups.serial"), allv.get("device.serial")))
+f.nut1.HideSerials = "False"
+check("HideSerials False: the real serial, trimmed", f.nut1.ListVars().get("ups.serial") == "PW600X0042"
+      and f.nut1.Get("device.serial") == "PW600X0042")
+f.nut1.HideSerials = True
 try:
     f.nut1.Command("test.battery.start.quick")
     check("Command without a login is refused", False)

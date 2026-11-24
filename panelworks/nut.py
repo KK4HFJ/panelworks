@@ -72,6 +72,22 @@ def to_value(text):
     return text
 
 
+HIDDEN = "(hidden)"
+
+
+def is_private(var):
+    """Variables that identify the unit itself: ups.serial, device.serial, battery.serial..."""
+    return var.endswith(".serial") or var.endswith(".macaddr")
+
+
+def hide_private(values):
+    return {k: (HIDDEN if is_private(k) else v) for k, v in values.items()}
+
+
+def as_bool(v):
+    return v if isinstance(v, bool) else str(v).strip().lower() in ("true", "1", "yes", "on")
+
+
 def status_words(status):
     return set(str(status or "").split())
 
@@ -165,7 +181,7 @@ class NutControl(PollingControl):
         super().__init__(form, name, spec)
         for k, v in dict(_host="127.0.0.1", _port=DEFAULT_PORT, _ups="", _user="", _password="",
                          _timeout=3.0, _session=None, _ups_now="", _status=None, _status_seen=False,
-                         _pending_status=None, _missing_said=frozenset()).items():
+                         _pending_status=None, _missing_said=frozenset(), _hide=True).items():
             object.__setattr__(self, k, v)
         object.__setattr__(self, "_interval", 5000)            # a UPS changes slowly; 5 s is plenty
 
@@ -196,6 +212,8 @@ class NutControl(PollingControl):
     def set_Username(self, v): object.__setattr__(self, "_user", str(v))
     def get_Password(self): return self._password
     def set_Password(self, v): object.__setattr__(self, "_password", str(v))
+    def get_HideSerials(self): return self._hide
+    def set_HideSerials(self, v): object.__setattr__(self, "_hide", as_bool(v))
     def get_Timeout(self): return self._timeout
     def set_Timeout(self, v): object.__setattr__(self, "_timeout", max(0.5, float(v))); self._restart()
 
@@ -283,7 +301,7 @@ class NutControl(PollingControl):
         out, missing = {}, []
         for key, var, _mods in items:
             if var in allvars:
-                out[key] = allvars[var]
+                out[key] = HIDDEN if self._hide and is_private(var) else allvars[var]
             else:
                 missing.append(var)
         missing = frozenset(missing)
@@ -319,9 +337,10 @@ class NutControl(PollingControl):
         """Everything this UPS reports, {variable: value}: a first look at what you can Poll."""
         s = self._open_session()
         try:
-            return s.vars(self._ups_name(s))
+            allvars = s.vars(self._ups_name(s))
         finally:
             s.close()
+        return hide_private(allvars) if self._hide else allvars
 
     def m_Get(self, what):
         """Get(what): a Poll key's last value ("charge"), or any NUT variable read now
@@ -330,6 +349,8 @@ class NutControl(PollingControl):
             return self._values[str(what)]
         tokens, mods = split_modifiers(str(what).split())
         var = self.parse_what(tokens, what)
+        if self._hide and is_private(var):
+            return HIDDEN                              # HideSerials: don't even ask
         s = self._open_session()
         try:
             return apply_modifiers(s.get(self._ups_name(s), var), mods)
