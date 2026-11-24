@@ -28,7 +28,7 @@ from urllib.parse import parse_qs
 
 from .util import json_default
 
-HIDDEN_TYPES = {"Timer", "MQTT", "Serial", "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms", "Menu"}
+HIDDEN_TYPES = {"Timer", "MQTT", "Watchdog", "Serial", "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms", "Menu"}
 ACTION_HEADER = "X-PanelWorks-Web"
 COOKIE = "pw_session"
 
@@ -323,6 +323,8 @@ def snapshot(form):
     lw = getattr(form, "linkwatch", None)
     return {"caption": form.get_Caption(), "items": items, "menu": menu,
             "links": lw.text() if lw is not None and lw.show else "",
+            "quiet": "; ".join(s for s in (o.summary() for o in form.objects.values()
+                                            if getattr(o, "TYPE", "") == "Watchdog" and o.get_ShowQuiet()) if s),
             "bg": _hex(form, form.get_BackColor()), "time": time.strftime("%H:%M:%S")}
 
 
@@ -587,11 +589,12 @@ background:#fff;border-radius:10px;min-width:220px;box-shadow:0 4px 18px #0004;o
 #menu button{display:block;width:100%;text-align:left;font-size:16px;padding:13px 16px;border:0;background:#fff;border-bottom:1px solid #eee}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:9px 14px;border-radius:8px;display:none}
 #links{background:#b3261e;color:#fff;font-weight:600;padding:8px 12px;display:none}
+#quiet{background:#6b6b6b;color:#fff;font-weight:600;padding:6px 12px;display:none}
 .off{opacity:.5}.ro .cmd,.ro input,.ro select{pointer-events:none}
 footer{text-align:center;color:#888;font-size:12px;padding:16px}footer button{background:none;border:0;color:#668;text-decoration:underline}
 </style></head><body><header><h1 id="title">PanelWorks</h1><span id="live">connecting...</span>
 <button id="menuBtn" style="display:none" aria-label="Menu">&#9776;</button></header>
-<div id="links"></div><main id="main"></main><div id="menu"><div id="menuItems"></div></div><div id="toast"></div>
+<div id="links"></div><div id="quiet"></div><main id="main"></main><div id="menu"><div id="menuItems"></div></div><div id="toast"></div>
 <footer>PanelWorks phone view · <form method="post" action="/logout" style="display:inline"><button>Log out</button></form></footer>
 <script>
 const $=s=>document.querySelector(s);let state=null,editing=null,fails=0;
@@ -673,6 +676,7 @@ function draw(s){
   if(editing)return;                       // don't replace a field while it's being typed in
   $('#title').textContent=s.caption;document.title=s.caption;document.body.classList.toggle('ro',s.readonly);
   $('#links').textContent=s.links||'';$('#links').style.display=s.links?'block':'none';
+  $('#quiet').textContent=s.quiet?'No word from: '+s.quiet:'';$('#quiet').style.display=s.quiet?'block':'none';
   const top=s.items.filter(i=>!i.frame&&!CONT.includes(i.type)),frames=s.items.filter(i=>!i.frame&&CONT.includes(i.type));
   const all=[...blocks(top),...frames.map(f=>({y:f.y,x:f.x,html:card(s,f)}))].sort((a,b)=>a.y-b.y||a.x-b.x);
   const html=`<div class="card">`+all.map(b=>b.html.startsWith('<div class="card')?'</div>'+b.html+'<div class="card">':b.html).join('')+`</div>`;

@@ -61,6 +61,7 @@ class MqttLink:
         self.broker = expand(broker)
         self.port = int(expand(port) or (8883 if self.tls else 1883))
         self.subs = {}                     # topic filter -> qos
+        self.listeners = []                # extra fn(topic, payload, retained): see add_listener
         self.connected = False
         self.on_message, self.on_connect, self.on_disconnect = on_message, on_connect, on_disconnect
         self.client = paho.Client(paho.CallbackAPIVersion.VERSION2,
@@ -116,9 +117,32 @@ class MqttLink:
             self.form.post(self.on_disconnect)
 
     def _on_message(self, client, userdata, msg):
-        if self.on_message:
+        if self.on_message or self.listeners:
             payload = msg.payload.decode("utf-8", errors="replace")
-            self.form.post(self.on_message, msg.topic, payload, msg.retain)
+            self.form.post(self._dispatch, msg.topic, payload, msg.retain)
+
+    def _dispatch(self, topic, payload, retained):
+        """GUI thread: the owner's handler first, then any listeners (a Watchdog, say)."""
+        if self.on_message:
+            self.on_message(topic, payload, retained)
+        for fn in list(self.listeners):
+            try:
+                fn(topic, payload, retained)
+            except Exception as e:
+                print(f"[mqtt] listener: {e}")
+
+    def add_listener(self, fn, topics=()):
+        """Also hand every message to fn(topic, payload, retained), on the GUI thread, and
+        subscribe to topics. A Watchdog uses this to hear the same connection."""
+        if fn not in self.listeners:
+            self.listeners.append(fn)
+        for t in topics:
+            if t not in self.subs:
+                self.subscribe(t)
+
+    def remove_listener(self, fn):
+        if fn in self.listeners:
+            self.listeners.remove(fn)
 
     # ---- API -----------------------------------------------------------------
     def start(self):

@@ -895,6 +895,44 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | `Name_Disconnected(f)` | The port closed or the device was unplugged. |
 | `Name_Error(f, message)` | A problem opening or reading. Argument: `message`. |
 
+## Watchdog
+
+"Last heard" for the devices a panel listens to over MQTT: WAITING, OK, LATE, LOST, with a grey "no word for 12 min" tag on the controls each one feeds. It listens on the form's mqtt connection (or an MQTT control). Chapter 8.
+
+**Properties**
+
+| Property | Access | Description |
+|---|---|---|
+| DefaultInterval | read/write | Seconds, for an `every auto` device that hasn't said its interval yet (default 60). |
+| Devices | read/write | One line per device: `name = topic [topic...] every SECONDS|auto [lwt TOPIC [word]] [show ctl,ctl]`, e.g. `garden = home/garden/telemetry every 300`. |
+| Enabled | read/write | False stops the clocks (nothing goes LATE or LOST). |
+| Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
+| LateAfter | read/write | Intervals of quiet before LATE (default 2). |
+| LostAfter | read/write | Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST at once. |
+| Paused | run time | True while the connection is down: the clocks stop, since nobody can be heard. Read-only. |
+| Quiet | run time | The devices that aren't OK. Read-only. |
+| ShowQuiet | read/write | True (default): tag the controls a quiet device feeds, and list it in the phone view. |
+| Source | read/write | The connection to listen on: empty = the form's mqtt settings (or the first MQTT control); or an MQTT control's name. |
+| Tag | read/write | Free text for your own use. PanelWorks never reads it. |
+| Values | run time | Each device's state, `{"garden": "OK"}`: alarm rules can name `wd1.garden`. Read-only. |
+
+**Methods**
+
+| Method | Description |
+|---|---|
+| Age | `Age(name)`: seconds of quiet that count (not while the connection is down). |
+| Heard | `Heard(name)`: your code heard the device some other way (Serial, Modbus...). |
+| Reset | Every device back to WAITING. |
+| State | `State(name)`: WAITING, OK, LATE or LOST. |
+
+**Events**
+
+| Event procedure | Fires when |
+|---|---|
+| `Name_DeviceLost(f, name, seconds, why)` | A device has been quiet for LostAfter intervals (why = "timeout"), or its Last Will said offline (why = "lwt"). |
+| `Name_DeviceLate(f, name, seconds)` | A device has been quiet for LateAfter intervals. |
+| `Name_DeviceBack(f, name, seconds)` | A LATE or LOST device reported again; seconds = how long it was quiet. |
+
 ## Modbus
 
 A Modbus TCP or RTU master: poll registers and coils into named values, write them from code. For PLCs, VFDs, energy meters, charge controllers. Needs `pip install pymodbus`.

@@ -367,6 +367,26 @@ DOC = {
         "Set": "`Set(what, value, type)`: write one OID. type is snmpset's letter: i, u, g, c, t, s, a, o (default i for numbers, s for text).",
         "Trap!": "A trap arrived: source is the sender's IP, values a dict of its contents with readable names where known.",
     },
+    "Watchdog": {
+        "_": "\"Last heard\" for the devices a panel listens to over MQTT: WAITING, OK, LATE, LOST, with a grey \"no word for 12 min\" tag on the controls each one feeds. It listens on the form's mqtt connection (or an MQTT control). Chapter 8.",
+        "Devices": "One line per device: `name = topic [topic...] every SECONDS|auto [lwt TOPIC [word]] [show ctl,ctl]`, e.g. `garden = home/garden/telemetry every 300`.",
+        "Source": "The connection to listen on: empty = the form's mqtt settings (or the first MQTT control); or an MQTT control's name.",
+        "LateAfter": "Intervals of quiet before LATE (default 2).",
+        "LostAfter": "Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST at once.",
+        "DefaultInterval": "Seconds, for an `every auto` device that hasn't said its interval yet (default 60).",
+        "ShowQuiet": "True (default): tag the controls a quiet device feeds, and list it in the phone view.",
+        "Enabled": "False stops the clocks (nothing goes LATE or LOST).",
+        "Values": "Each device's state, `{\"garden\": \"OK\"}`: alarm rules can name `wd1.garden`. Read-only.",
+        "Quiet": "The devices that aren't OK. Read-only.",
+        "Paused": "True while the connection is down: the clocks stop, since nobody can be heard. Read-only.",
+        "State": "`State(name)`: WAITING, OK, LATE or LOST.",
+        "Age": "`Age(name)`: seconds of quiet that count (not while the connection is down).",
+        "Heard": "`Heard(name)`: your code heard the device some other way (Serial, Modbus...).",
+        "Reset": "Every device back to WAITING.",
+        "DeviceLate!": "A device has been quiet for LateAfter intervals.",
+        "DeviceLost!": "A device has been quiet for LostAfter intervals (why = \"timeout\"), or its Last Will said offline (why = \"lwt\").",
+        "DeviceBack!": "A LATE or LOST device reported again; seconds = how long it was quiet.",
+    },
     "NUT": {
         "_": "A UPS through NUT (Network UPS Tools): a client of upsd, TCP 3493, which serves the readings of a UPS on a USB cable (Raspberry Pi, Linux) or behind a NAS. Poll its variables, StatusChange when it goes on battery and back. Standard library only. Chapter 17.",
         "Poll": "What to read, one per line: `name = NUT variable [*scale] [/divisor]`, e.g. `charge = battery.charge`, `runtime = battery.runtime /60`. One LIST VAR per poll covers them all.",
@@ -552,7 +572,7 @@ ARGS = {"LinkDown": "f, name, label", "LinkUp": "f, name, label, seconds_down", 
 
 ORDER = ["Label", "CommandButton", "TextBox", "CheckBox", "OptionButton", "ListBox", "ComboBox",
          "Frame", "TabStrip", "Shape", "ProgressBar", "Slider", "Gauge", "SegmentDisplay", "PictureBox", "Chart", "Grid", "Timer", "MQTT", "Serial",
-         "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms", "AlarmPanel"]
+         "Watchdog", "Modbus", "SNMP", "NUT", "WebRequest", "Data", "InfluxDB", "Alarms", "AlarmPanel"]
 
 missing = []
 

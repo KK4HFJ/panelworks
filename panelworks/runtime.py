@@ -1466,6 +1466,7 @@ from . import segdisplay as _segdisplay  # noqa: F401,E402  (SegmentDisplay)
 from . import webrequest as _webrequest  # noqa: F401,E402  (WebRequest: web APIs, stdlib only)
 from . import influx as _influx  # noqa: F401,E402  (InfluxDB: logging for Grafana, stdlib only)
 from . import nut as _nut  # noqa: F401,E402  (NUT: a UPS through Network UPS Tools, stdlib only)
+from . import devicewatch as _devicewatch  # noqa: F401,E402  (Watchdog: "last heard" for MQTT devices)
 from . import tabstrip as _tabstrip  # noqa: F401,E402  (TabStrip: pages of controls)
 
 def _load_modbus():

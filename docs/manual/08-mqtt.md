@@ -227,6 +227,65 @@ set its **WatchLink** to False. To hide the bar but keep the events, set the
 form's **LinkBanner** to False in the designer (it's saved as
 `"linkBanner": false`).
 
+## When a device goes quiet: the Watchdog
+
+The link banner covers the panel's own connection. A device can die while the broker is
+fine: an ESP32 out of Wi-Fi range, a probe with a flat battery. Its last values stay on the
+panel looking perfectly normal. The **Watchdog** control (invisible, in the tray) knows how
+often each device should report and says when one goes quiet:
+
+![Two devices gone quiet](img/watchdog-tags.png)
+
+Give it one line per device in **Devices**:
+
+```
+garden  = home/garden/telemetry every 300
+probe5  = home/garden/probe5/# every auto lwt home/garden/probe5/status
+cistern = home/cistern/telemetry every 60 show lblCistern,gauLevel
+```
+
+| Part | Meaning |
+|---|---|
+| `name = topic ...` | The topics that count as hearing from it (`+` and `#` work). |
+| `every 300` | It should report every 300 seconds. |
+| `every auto` | It says so itself, in a JSON `"every"` (or `"interval"`) field, in seconds. Until it does, **DefaultInterval** (60). |
+| `lwt TOPIC [word]` | Its Last Will topic: `offline` (or your word) there means LOST at once. |
+| `show ctl,ctl` | Controls to mark when it's quiet. Controls **bound** to its topics in the form's `mqtt` settings are found by themselves. |
+
+Each device is **WAITING** (not heard since the panel started), **OK**, **LATE** (quiet for
+**LateAfter** intervals, 2 by default) or **LOST** (**LostAfter**, 3, or its Last Will said
+so). The controls it feeds get a grey "no word for 12 min" tag, and the phone view lists it.
+Its events:
+
+```python
+def wd1_DeviceLate(f, name, seconds): ...
+def wd1_DeviceLost(f, name, seconds, why):   # why: "timeout" or "lwt"
+    f.lblStatus.Caption = f"{name}: no word for {seconds // 60} min"
+def wd1_DeviceBack(f, name, seconds): ...
+```
+
+`wd1.Values` is `{"garden": "OK", ...}`, so an alarm rule (chapter 18) can name a device:
+`GardenLost: wd1.garden == LOST priority=1`. `wd1.Quiet` lists the devices that aren't OK,
+`wd1.State("garden")` and `wd1.Age("garden")` ask about one, and `wd1.Heard("pump")`
+lets your code say it heard a device some other way (over Serial or Modbus, say).
+
+Two rules keep it honest:
+
+- **A retained message isn't news.** When the panel starts, the broker hands over the last
+  retained value of each topic, which may be from yesterday. That fills a bound label, but
+  the device stays WAITING until it actually says something. (The Last Will topic is the
+  exception: a retained `offline` there is current, and so is `online`.)
+- **While the panel's own link to the broker is down, the clocks stop.** Nobody can be heard
+  then, so nothing goes LATE or LOST because of it (the link banner says what's wrong).
+  When the link is back, a device that was OK gets an interval to report.
+
+**Source** picks the connection it listens on: empty means the form's own `mqtt` settings
+(or the first MQTT control if there are none), or name an MQTT control. It doesn't open a
+connection of its own.
+
+The Watchdog is the console's view. If a quiet device should raise the house alarm, decide
+that on the server (Node-RED, n8n), so it works with no panel open.
+
 ## The device side
 
 An ESP32 publishing JSON that the panel above understands (Arduino, PubSubClient library):

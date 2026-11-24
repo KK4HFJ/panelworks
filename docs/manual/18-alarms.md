@@ -40,7 +40,7 @@ Name: source test limit [delay=s] [deadband=x] [priority=1..3] [message=text]
 | Part | What it is |
 |---|---|
 | `Name:` | A name you choose, letters and digits. It names the alarm in the panel, history, events and `Ack`. |
-| source | `Control.Property`, e.g. `gauPressure.Value`, `lblLevel.Caption`, `chkPump.Value`, `mb1.Connected`. Or a value from a Modbus, SNMP, NUT or Serial control: `mb1.volts` is the `volts` line of mb1's Poll list. |
+| source | `Control.Property`, e.g. `gauPressure.Value`, `lblLevel.Caption`, `chkPump.Value`, `mb1.Connected`. Or a value from a Modbus, SNMP, NUT or Serial control: `mb1.volts` is the `volts` line of mb1's Poll list. A Watchdog's device: `wd1.garden == LOST`. |
 | test | `>` `>=` `<` `<=` `==` `!=` |
 | limit | A number, `True`/`False`, or a word (`== fault`). |
 | `delay=` | Seconds the condition must hold before it alarms. A short dip back doesn't count. |

@@ -2,6 +2,24 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## 0.11.0 (2026-11-24)
+
+- **Watchdog control: "last heard" for MQTT devices.** The link banner covers the panel's own
+  connection; this covers a device that dies while the broker is fine. One line per device
+  (`garden = home/garden/telemetry every 300`, `every auto` for a device that reports its own
+  interval, `lwt TOPIC` for its Last Will).
+  - States WAITING, OK, LATE (2 intervals), LOST (3, or the Last Will). Events DeviceLate,
+    DeviceLost(why), DeviceBack.
+  - A grey "no word for 12 min" tag on the controls the device feeds: those bound to its topics,
+    found by themselves, plus any named with `show`. The phone view lists quiet devices too.
+  - `wd1.Values` is `{device: state}`, so alarm rules can say `wd1.garden == LOST`.
+  - **Retained messages don't count as heard** (yesterday's value isn't news), except on the
+    Last Will topic.
+  - **While the panel's own broker link is down the clocks stop**, so a broker outage never makes
+    a device look lost (as code saw with ch 12's hand-made NodeLost).
+  - It listens on the form's mqtt connection or an MQTT control; it opens none of its own.
+- MqttLink can hand its messages to listeners as well as its owner (how the Watchdog hears).
+
 ## 0.10.1 (2026-11-24)
 
 - **Link banner: one broker, one entry.** A panel using the same broker twice (the form's `mqtt`

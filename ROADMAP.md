@@ -51,6 +51,7 @@ arms and acknowledges, and the rules run in Node-RED. Order depends on the book 
 
 ## Done
 
+- 0.11.0: Watchdog control ("last heard": WAITING/OK/LATE/LOST, quiet tags, pauses while the broker is down).
 - 0.10.0: NUT control (a UPS through Network UPS Tools), nut example and simulator.
 - 0.9.1: Serial ${VAR} ports, custom terminators and bytes mode (CAT, KISS); truck_scale example shares through controls.
 - 0.9.0: link banner (a red bar when a link is down) and kiosk mode; test server profiles for the automation and security books.
