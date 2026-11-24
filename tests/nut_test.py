@@ -26,6 +26,7 @@ def free_port():
 
 check("numbers become numbers, words stay words", [to_value(x) for x in ("94", "121.4", "0.0", "OL CHRG", "-3")]
       == [94, 121.4, 0.0, "OL CHRG", -3])
+check("padded strings are trimmed (APC model names)", to_value("Back-UPS XS 700U  ") == "Back-UPS XS 700U" and to_value(" 94 ") == 94)
 
 # ---- the simulator ------------------------------------------------------------------------
 PORT = free_port()

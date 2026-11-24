@@ -65,7 +65,8 @@ def unquote(s):
 
 
 def to_value(text):
-    """'94' -> 94, '230.5' -> 230.5, 'OL CHRG' -> 'OL CHRG'."""
+    """'94' -> 94, '230.5' -> 230.5, 'OL CHRG' -> 'OL CHRG', 'Back-UPS XS 700U ' -> 'Back-UPS XS 700U'."""
+    text = text.strip()                          # APC pads some strings with spaces
     if _NUMBER.match(text):
         return float(text) if "." in text else int(text)
     return text

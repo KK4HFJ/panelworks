@@ -51,7 +51,7 @@
       "Title": "Runtime left",
       "Units": "min",
       "Min": 0,
-      "Max": 60,
+      "Max": 180,
       "Zones": [
         "0 5 red",
         "5 10 gold"

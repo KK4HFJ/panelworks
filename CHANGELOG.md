@@ -4,6 +4,13 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **NUT: text values are trimmed.** APC pads its model name with spaces ("Back-UPS XS 700U ");
+  the control now strips every value. The nut example's runtime gauge goes to 180 min (a small
+  UPS on a light load reads about 150).
+- **Server README: boards need no NTP for TLS.** Tested on an ESP32-S3 (core 3.3.12): it checks
+  the CA and the name or address but not the certificate's dates, so the `configTime` lines are
+  gone. Added the measured cost (about 0.75 s per TLS connect) and the `lastError` hint for a
+  board that won't connect.
 - **Test server: MQTT over TLS for boards (port 8883).** `server/tls.sh` (run by `setup.sh`)
   makes a private CA once (its key never leaves the server) and an elliptic-curve server
   certificate naming the server's LAN addresses, host name and Tailscale name. It renews 30 days

@@ -185,7 +185,10 @@ The board's password is in `.env` as `MQTT_BOARD_GARDEN_PASSWORD` (`grep MQTT_BO
 shows it). Put it in the board's `secrets.h`, never in the sketch.
 
 In the sketch, use `WiFiClientSecure` with the CA, not `setInsecure()` (which accepts anyone
-pretending to be your server), and set the clock first: the board checks the certificate's dates.
+pretending to be your server). The board checks that the certificate comes from your CA and names
+the address or name it dialled; on the ESP32 Arduino core (tested on 3.3.12) it does **not** check
+the dates, so the board needs no NTP, and an expired certificate keeps working on the boards.
+Python and openssl on the PCs do check the dates, so renew in time for them.
 
 ```cpp
 #include <WiFiClientSecure.h>
@@ -197,16 +200,19 @@ WiFiClientSecure net;
 PubSubClient mqtt(net);
 
 void connectMqtt() {
-  configTime(0, 0, "pool.ntp.org");        // TLS needs the real time
-  while (time(nullptr) < 1700000000) delay(200);
   net.setCACert(MQTT_CA_CERT);
   mqtt.setServer(MQTT_HOST, 8883);
   mqtt.connect("garden", "garden", MQTT_PASS);
 }
 ```
 
-The TLS handshake takes a moment and some power: a board that sleeps between readings pays it at
-every wake, so give it a longer interval if its battery matters.
+The TLS handshake takes about 0.75 s on an ESP32-S3 (plain MQTT: about 0.05 s), so a board that
+sleeps between readings is awake about 0.65 s longer at every wake. Give it a longer interval if
+its battery matters.
+
+If a board won't connect over TLS, `mqtt.state()` is only -2. `net.lastError(buf, sizeof buf)`
+gives the reason: -9984 ("certificate verification failed") means the wrong CA, or an address or
+name that isn't in the certificate (`./tls.sh --show` lists the names).
 
 ## Everyday commands
 
