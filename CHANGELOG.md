@@ -4,6 +4,8 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+## 0.11.2 (2026-11-24)
+
 - **Example copies follow upgrades.** `--example` and File → Examples record what each copy was
   made from (`.examples.json` in the panels folder). After an upgrade, a copy you never changed
   is brought up to date by itself; one you changed is kept, with a note. `--example NAME --fresh`
