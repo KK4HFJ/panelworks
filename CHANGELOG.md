@@ -4,6 +4,12 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+## 1.0.0 (2026-11-24)
+
+**The first stable release**, and the version the book *Draw It, Wire It, Run It* is written for.
+The code is the same as 0.11.2. From here: bug fixes on Tuesdays as 1.0.x, when there's something
+to fix; no new features until the book is published, then monthly feature releases (1.x.0).
+
 ## 0.11.2 (2026-11-24)
 
 - **Example copies follow upgrades.** `--example` and File → Examples record what each copy was

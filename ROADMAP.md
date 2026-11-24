@@ -11,7 +11,10 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
   something to fix. A week with nothing to fix has no release.
 - **Features: monthly, on the first Tuesday of the month,** as a minor release (x.Y.0), with
   whatever was finished and tested that month. A month with nothing ready has no release.
-- **1.0** is the version the book is printed against.
+- **1.0.0 (24 Nov 2026)** is the version the book is written for. Bug fixes go out as 1.0.x;
+  the first feature release after the book is 1.1.0.
+- **Next bug-fix release: 1.0.1 on Tuesday 1 December,** with every fix made from 24 Nov on.
+  No release before then, even for a fix found today.
 
 ## Home automation and security (for the next two books)
 
@@ -61,6 +64,7 @@ arms and acknowledges, and the rules run in Node-RED. Order depends on the book 
 
 ## Done
 
+- 1.0.0: first stable release (the code of 0.11.2); feature freeze until the book is out.
 - 0.11.2: example copies follow upgrades (`--fresh`); nut example label without the host.
 - 0.11.1: NUT HideSerials and trimmed values; test server: MQTT over TLS on 8883, per-board logins, quiet setup summary.
 - 0.11.0: Watchdog control ("last heard": WAITING/OK/LATE/LOST, quiet tags, pauses while the broker is down).

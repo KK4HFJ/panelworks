@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "panelworks"
-version = "0.11.2"
+version = "1.0.0"
 description = "Draw a desktop form in JSON, write event procedures in Python, and drive every object live over MCP (agents), MQTT (devices) and webhooks (n8n)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,6 +13,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Steve Spence (KK4HFJ)" }]
 keywords = ["gui", "tkinter", "mcp", "mqtt", "n8n", "webhooks", "rad", "forms", "esp32", "home-automation", "serial", "arduino"]
 classifiers = [
+  "Development Status :: 5 - Production/Stable",
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: User Interfaces",
