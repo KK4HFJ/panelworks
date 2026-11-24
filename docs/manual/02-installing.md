@@ -204,7 +204,10 @@ the update needs new libraries, and offers to restart the designer.
 ![Check for Updates](img/updates.png)
 
 Your own panels aren't touched: they live in your panels folder, and example
-copies made with File → Examples are yours. If you've edited files inside the
+copies made with File → Examples are yours. When an update brings a newer example,
+a copy you never changed is brought up to date the next time you open it; one you
+changed is kept, and PanelWorks says a newer one exists (`--example NAME --fresh`
+gets it and keeps yours as `.bak` files). If you've edited files inside the
 PanelWorks folder itself, git refuses rather than overwrite them, and says which.
 Turn the daily check off in **File → Preferences**.
 

@@ -4,6 +4,14 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **Example copies follow upgrades.** `--example` and File → Examples record what each copy was
+  made from (`.examples.json` in the panels folder). After an upgrade, a copy you never changed
+  is brought up to date by itself; one you changed is kept, with a note. `--example NAME --fresh`
+  (or "No" in the designer's question) replaces it and keeps yours as `.bak` files. Copies made
+  by 0.11.1 and older can't be told apart from edited ones, so they're kept, with the note.
+- **nut example:** the link label shows only the UPS name (`Reading pi-ups`), so screenshots
+  carry no host or address.
+
 ## 0.11.1 (2026-11-24)
 
 - **NUT: HideSerials (True by default).** `ups.serial`, `device.serial` and other `*.serial` and

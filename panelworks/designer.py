@@ -1243,27 +1243,40 @@ class Designer:
 
     def open_example(self, src):
         """Open a copy of an example in the panels folder, so the original stays clean."""
-        from .util import copy_example, panels_dir
+        from .util import copy_example, example_state, panels_dir
         if not self._ok_to_discard():
             return
         d = panels_dir()
         stem = os.path.splitext(os.path.basename(src))[0]
         dest = os.path.join(d, stem + ".json")
-        replace = False
-        if os.path.exists(dest):
+        state = example_state(src, d)
+        replace = backup = False
+        note = f"Opened a copy of the {stem} example in {d}. Change it freely; the original is untouched."
+        if state == "same":
+            replace = True                          # identical: recopying just records its stamp
+        elif state == "stale":                      # an upgrade brought a newer one; yours was never changed
+            replace = True
+            note = f"Updated your copy of the {stem} example to this PanelWorks (you hadn't changed it)."
+        elif state in ("changed", "edited"):
+            why = (f"You already have a copy of this example, and you've changed it:\n{dest}" if state == "edited"
+                   else f"This PanelWorks has a newer {stem} example, and your copy was changed "
+                        f"(or made by an older PanelWorks):\n{dest}")
             ans = messagebox.askyesnocancel(
-                "Examples", f"You already have a copy of this example:\n{dest}\n\n"
-                "Yes: open your copy\nNo: replace it with a fresh copy", parent=self.root)
+                "Examples", why + "\n\n"
+                "Yes: open your copy\nNo: replace it with a fresh copy (yours is kept as .bak files)",
+                parent=self.root)
             if ans is None:
                 return
-            replace = not ans
+            replace = backup = not ans
+            if replace:
+                note = f"Replaced your copy of the {stem} example; yours is kept as .bak files in {d}."
         try:
-            dest = copy_example(src, d, replace=replace)
+            dest = copy_example(src, d, replace=replace, backup=backup)
         except OSError as e:
             messagebox.showerror("Examples", f"Could not copy the example:\n{e}", parent=self.root)
             return
         self.open_form(dest)
-        self.say(f"Opened a copy of the {stem} example in {d}. Change it freely; the original is untouched.")
+        self.say(note)
 
     def preferences(self):
         """File > Preferences (Ctrl+,)."""

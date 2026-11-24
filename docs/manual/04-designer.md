@@ -334,8 +334,10 @@ shortcut there. Its target is
 - **File → Examples** lists the bundled example panels. Choosing one opens a
   **copy** in your panels folder, with its code and any Arduino sketch that goes
   with it, so you can change it freely while the original stays clean for
-  `git pull`. If you already have a copy, you're asked whether to open yours or
-  replace it with a fresh one.
+  `git pull`. If you already have a copy and you've changed it, you're asked
+  whether to open yours or replace it with a fresh one (yours is kept as `.bak`
+  files). A copy you never changed is simply brought up to date when a newer
+  PanelWorks has a newer version of the example.
 - **File → Open Recent** lists the last 10 forms you opened or saved, newest
   first, with their folders. A form that has been moved or deleted is greyed out
   and marked *(missing)*. **Clear Recently Opened** empties the list. The list is

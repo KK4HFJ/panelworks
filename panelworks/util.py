@@ -178,18 +178,15 @@ def list_examples():
     return out
 
 
-def copy_example(src, dest_dir, replace=False):
-    """Copy an example form, its code file and its companion folder (e.g. the
-    Arduino sketch in led_panel/) into dest_dir. Returns the new form path.
-    Never overwrites unless replace=True."""
+EXAMPLE_STAMPS = ".examples.json"   # in the panels folder: what each example copy was made from
+
+
+def example_files(src):
+    """An example's files, relative to its folder: the form, its code, companion forms and their
+    code, and every file in its companion folder (e.g. the Arduino sketch in led_panel/)."""
     import json
-    import shutil
     stem = os.path.splitext(os.path.basename(src))[0]
     sdir = os.path.dirname(src)
-    os.makedirs(dest_dir, exist_ok=True)
-    dest = os.path.join(dest_dir, stem + ".json")
-    if os.path.exists(dest) and not replace:
-        return dest
     with open(src, encoding="utf-8-sig") as f:
         spec = json.load(f)
     files = [stem + ".json"]
@@ -205,12 +202,93 @@ def copy_example(src, dest_dir, replace=False):
                     files.append(c)
             except (OSError, ValueError):
                 pass
-    for rel in files:
-        if os.path.exists(os.path.join(sdir, rel)):
-            shutil.copy2(os.path.join(sdir, rel), os.path.join(dest_dir, rel))
+    files = [rel for rel in files if os.path.exists(os.path.join(sdir, rel))]
     companion = os.path.join(sdir, stem)
     if os.path.isdir(companion):
-        shutil.copytree(companion, os.path.join(dest_dir, stem), dirs_exist_ok=True)
+        for root, dirs, names in os.walk(companion):
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            for n in names:
+                if not n.endswith((".pyc", ".db")):
+                    files.append(os.path.relpath(os.path.join(root, n), sdir).replace(os.sep, "/"))
+    return files
+
+
+def _file_hash(path):
+    import hashlib
+    try:
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return None
+
+
+def _stamps(dest_dir):
+    import json
+    try:
+        with open(os.path.join(dest_dir, EXAMPLE_STAMPS), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def example_state(src, dest_dir):
+    """How the copy of an example in dest_dir compares with the one PanelWorks carries:
+    'none' (no copy yet), 'same', 'edited' (you changed your copy; the example is the same),
+    'stale' (a newer example, and the copy is as PanelWorks made it, so it can be refreshed
+    safely) or 'changed' (newer example, but the copy was edited, or was
+    made before PanelWorks kept stamps, so it's kept)."""
+    stem = os.path.splitext(os.path.basename(src))[0]
+    if not os.path.exists(os.path.join(dest_dir, stem + ".json")):
+        return "none"
+    sdir = os.path.dirname(src)
+    files = example_files(src)
+    if all(_file_hash(os.path.join(sdir, rel)) == _file_hash(os.path.join(dest_dir, rel)) for rel in files):
+        return "same"
+    made = _stamps(dest_dir).get(stem, {}).get("files")
+    if not made:
+        return "changed"                     # made before stamps: can't tell, so keep it
+    if all(_file_hash(os.path.join(sdir, rel)) == made.get(rel) for rel in files):
+        return "edited"                      # the example hasn't changed; you edited your copy
+    for rel in set(made) | set(files):
+        now = _file_hash(os.path.join(dest_dir, rel))
+        if now is not None and now != made.get(rel):
+            return "changed"                 # you edited it (or added a file the new example has)
+    return "stale"
+
+
+def copy_example(src, dest_dir, replace=False, backup=False):
+    """Copy an example form, its code file and its companion folder (e.g. the
+    Arduino sketch in led_panel/) into dest_dir. Returns the new form path.
+    Never overwrites unless replace=True; backup=True first renames the files it would replace
+    to NAME.bak (NAME.bak2... if that's taken). Records what it copied in .examples.json."""
+    import json
+    import shutil
+    stem = os.path.splitext(os.path.basename(src))[0]
+    sdir = os.path.dirname(src)
+    os.makedirs(dest_dir, exist_ok=True)
+    dest = os.path.join(dest_dir, stem + ".json")
+    if os.path.exists(dest) and not replace:
+        return dest
+    files = example_files(src)
+    for rel in files:
+        target = os.path.join(dest_dir, rel)
+        if backup and os.path.exists(target) and _file_hash(target) != _file_hash(os.path.join(sdir, rel)):
+            n, bak = 1, target + ".bak"
+            while os.path.exists(bak):
+                n += 1
+                bak = f"{target}.bak{n}"
+            os.replace(target, bak)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copy2(os.path.join(sdir, rel), target)
+    stamps = _stamps(dest_dir)
+    from panelworks import __version__
+    stamps[stem] = {"version": __version__,
+                    "files": {rel: _file_hash(os.path.join(sdir, rel)) for rel in files}}
+    try:
+        with open(os.path.join(dest_dir, EXAMPLE_STAMPS), "w", encoding="utf-8") as f:
+            json.dump(stamps, f, indent=1, sort_keys=True)
+    except OSError:
+        pass
     return dest
 
 

@@ -10,6 +10,7 @@ whether you cloned PanelWorks or installed it from PyPI:
 ```
 python -m panelworks --example                         (list the examples)
 python -m panelworks --example power_meter --mcp none  (run one)
+python -m panelworks --example power_meter --fresh     (replace your copy with this version's)
 python -m panelworks --simulator power_meter           (its pretend device, in a second window)
 ```
 

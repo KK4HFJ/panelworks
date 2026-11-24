@@ -7,6 +7,7 @@ PanelWorks command line.
 
   panelworks --example                               # list the examples
   panelworks --example solar_battery --mcp none      # run one, from any folder
+  panelworks --example solar_battery --fresh         # replace your copy with this version's (.bak kept)
   panelworks --simulator solar_battery               # start its pretend device
   panelworks MyPanel.json --kiosk --mcp none         # full screen console, restarts if it crashes
 
@@ -57,19 +58,39 @@ def list_examples_text():
             + "\n".join(rows))
 
 
-def example_form(name):
+def example_form(name, fresh=False):
     """The form to run for --example NAME. In a git clone it's the example itself; in a
     pip install it's a copy in your panels folder (Documents/PanelWorks), made the first
-    time, so the example can write its files and your changes are kept."""
-    from panelworks.util import copy_example, examples_dir, panels_dir
+    time, so the example can write its files and your changes are kept.
+    After an upgrade, a copy you never changed is brought up to date by itself; one you
+    changed is kept, with a note. fresh=True (--fresh) saves yours as .bak and copies anew."""
+    from panelworks.util import copy_example, example_state, examples_dir, panels_dir
     stem, src = _find_example(name)
     bundled = os.path.basename(examples_dir()) == "_examples"
     if not bundled:
         return src
-    dest = os.path.join(panels_dir(), stem + ".json")
-    fresh = not os.path.exists(dest)
-    dest = copy_example(src, panels_dir())
-    print(f"{'Copied the example to' if fresh else 'Running your copy of the example:'} {dest}", file=sys.stderr)
+    pdir = panels_dir()
+    state = example_state(src, pdir)
+    if state == "none":
+        dest = copy_example(src, pdir)
+        print(f"Copied the example to {dest}", file=sys.stderr)
+    elif fresh and state != "same":
+        dest = copy_example(src, pdir, replace=True, backup=True)
+        print(f"Copied the example from PanelWorks {__version__} to {dest} (yours are kept as .bak files)",
+              file=sys.stderr)
+    elif state == "stale":
+        dest = copy_example(src, pdir, replace=True)
+        print(f"Updated your copy of the example to PanelWorks {__version__} (you hadn't changed it): {dest}",
+              file=sys.stderr)
+    else:
+        dest = os.path.join(pdir, stem + ".json")
+        if state == "same":
+            copy_example(src, pdir, replace=True)     # identical: this only records its stamp
+        print(f"Running your copy of the example: {dest}", file=sys.stderr)
+        if state == "changed":
+            print(f"  PanelWorks {__version__} has a newer {stem} example. Yours is kept because it was changed"
+                  f" (or made by an older PanelWorks).\n  To get the new one: panelworks --example {stem} --fresh"
+                  " (yours is saved as .bak)", file=sys.stderr)
     return dest
 
 
@@ -107,6 +128,8 @@ def main():
                     help="serve the phone view on this port (default 8080)")
     ap.add_argument("--pin", help="PIN for the phone view (default: the form's, or a random one)")
     ap.add_argument("--readonly", action="store_true", help="phone view can look but not touch")
+    ap.add_argument("--fresh", action="store_true",
+                    help="with --example: replace your copy with the one in this PanelWorks (yours kept as .bak)")
     ap.add_argument("--example", nargs="?", const="", metavar="NAME",
                     help="run a bundled example by name (no NAME: list them)")
     ap.add_argument("--new", nargs="?", const="", metavar="TEMPLATE",
@@ -143,7 +166,7 @@ def main():
             return
         if a.form:
             ap.error("give either a form file or --example NAME, not both")
-        a.form = example_form(a.example)
+        a.form = example_form(a.example, fresh=a.fresh)
 
     if a.kiosk:
         from panelworks import kiosk

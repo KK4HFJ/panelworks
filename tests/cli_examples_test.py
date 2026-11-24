@@ -61,6 +61,38 @@ open(dest, "a").write("\n")
 mark = os.path.getsize(dest)
 cli.example_form("solar_battery")
 check("PyPI: a second run keeps your copy (and your changes)", os.path.getsize(dest) == mark)
+
+# upgrades: what happens to a copy when the bundled example changes
+def run_ex(name, fresh=False):
+    import io, contextlib
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        d = cli.example_form(name, fresh=fresh)
+    return d, err.getvalue()
+
+nd, _ = run_ex("nut")                                   # a fresh copy, stamped
+check("stamp written for a new copy", "nut" in util._stamps(panels))
+bj = os.path.join(bundled, "nut.json")
+open(bj, "a").write("\n")                               # "upgrade": the bundled example changes
+_, msg = run_ex("nut")
+check("upgrade, copy never changed: refreshed by itself",
+      open(nd).read() == open(bj).read() and "Updated your copy" in msg, msg)
+open(nd, "a").write(" ")                                 # the user edits their copy
+_, msg = run_ex("nut")
+check("your edit, example unchanged: kept, no 'newer' note",
+      open(nd).read().endswith(" ") and "newer" not in msg, msg)
+open(bj, "a").write("\n")                               # another upgrade, after the user's edit
+_, msg = run_ex("nut")
+check("upgrade after your edit: kept, with a note about --fresh",
+      open(nd).read().endswith(" ") and "--fresh" in msg, msg)
+_, msg = run_ex("nut", fresh=True)
+check("--fresh: the new example, yours saved as .bak",
+      open(nd).read() == open(bj).read() and open(nd + ".bak").read().endswith(" ")
+      and ".bak" in msg, msg)
+os.remove(os.path.join(panels, util.EXAMPLE_STAMPS))     # a copy from before stamps (0.11.1 and older)
+open(bj, "a").write("\n")
+_, msg = run_ex("nut")
+check("copy from an older PanelWorks: kept, with the --fresh note", "--fresh" in msg, msg)
 sims = cli._simulators(bundled)
 check("PyPI: simulators found in the bundled copy",
       set(sims) == {"nut", "power_meter", "rack_status", "solar_battery", "truck_scale", "weather"}, sorted(sims))

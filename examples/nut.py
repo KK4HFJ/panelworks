@@ -12,7 +12,7 @@ WORDS = {"OL": "on mains", "OB": "on battery", "LB": "LOW BATTERY", "CHRG": "cha
 
 def nut1_Connected(f):
     f.shpLink.FillColor = "lime green"
-    f.lblLink.Caption = f"Reading {f.nut1.Target}"
+    f.lblLink.Caption = f"Reading {ups_name(f)}"    # the UPS name only: no host in screenshots
 
 
 def nut1_Disconnected(f):
@@ -21,7 +21,11 @@ def nut1_Disconnected(f):
 
 
 def nut1_Error(f, message):
-    f.lblLink.Caption = message[:60]
+    f.lblLink.Caption = message.replace(f.nut1.Target, ups_name(f))[:60]
+
+
+def ups_name(f):
+    return f.nut1.Target.split("@")[0]               # Target is ups@host:port
 
 
 def nut1_StatusChange(f, old, new):
