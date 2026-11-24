@@ -15,6 +15,7 @@ services:
     ports:
       - "1883:1883"            # MQTT
       - "9001:9001"            # MQTT over WebSockets
+      - "8883:8883"            # MQTT over TLS, for boards on the LAN (setup.sh makes the certificates)
     volumes:
       - ./mosquitto:/mosquitto/config
       - mosquitto-data:/mosquitto/data

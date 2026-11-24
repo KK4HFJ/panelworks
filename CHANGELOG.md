@@ -2,6 +2,20 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## Unreleased
+
+- **Test server: MQTT over TLS for boards (port 8883).** `server/tls.sh` (run by `setup.sh`)
+  makes a private CA once (its key never leaves the server) and an elliptic-curve server
+  certificate naming the server's LAN addresses, host name and Tailscale name. It renews 30 days
+  before expiry or when the addresses change, and writes `mqtt-ca.h` for sketches. Mosquitto reads
+  the TLS listener from `conf.d/tls.conf`, written only once the certificates exist. Tested with a
+  real Mosquitto: connect by IP and by name, a different CA refused, a wrong password refused.
+- **Test server: one MQTT login per board**, limited to its own topics:
+  `./setup.sh --add-board garden` (home/garden/#) or `--topics "..."`.
+- **Test server: PCs use the full Tailscale name.** `setup.sh` writes it into the PC settings
+  (the short name can resolve to the LAN address on Windows). The README has the Tailscale-first
+  layout: PCs over Tailscale, boards on the LAN with TLS.
+
 ## 0.11.0 (2026-11-24)
 
 - **Watchdog control: "last heard" for MQTT devices.** The link banner covers the panel's own

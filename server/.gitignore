@@ -2,3 +2,8 @@
 panelworks.env
 panelworks-setx.cmd
 mosquitto/passwd
+# made on each server by setup.sh / tls.sh: the CA key never leaves it
+ca/
+mosquitto/certs/
+mosquitto/conf.d/*.conf
+mqtt-ca.h

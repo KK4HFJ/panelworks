@@ -5,7 +5,7 @@ need, set up by one script. Optional parts (marked below) are turned on only if 
 
 | Service | Port | What for |
 |---|---|---|
-| Mosquitto 2 | 1883 (WebSockets 9001) | MQTT for panels and ESP32s (manual ch 8), users and an ACL |
+| Mosquitto 2 | 1883 (WebSockets 9001), 8883 TLS | MQTT for panels and ESP32s (manual ch 8), users and an ACL; TLS for boards on the LAN |
 | InfluxDB 2 | 8086 | History for the InfluxDB control (manual ch 20) |
 | Grafana | 3000 | Dashboards; the InfluxDB data source and a PanelWorks dashboard are ready-made |
 | n8n (optional: `n8n`) | 5678 | Webhooks and workflows (manual ch 10), if you don't have n8n elsewhere |
@@ -30,12 +30,18 @@ SD cards out; an SSD is better.
 5. From your PC: `ssh you@<the Pi's IP>`. The IP shows on the Pi's screen at the login prompt.
    `you@pwserver.local` may work too, but many networks (and Windows firewalls) block the mDNS it needs.
 
-**A fixed address.** PCs reach the server by address, so it mustn't change. Either reserve the Pi's IP
-in your router's DHCP settings, or, if you don't control the router (a work network, say), install
+**A fixed address, and who can reach the server.** The recommended way: install
 [Tailscale](https://tailscale.com) on the Pi (`curl -fsSL https://tailscale.com/install.sh | sh`, then
-`sudo tailscale up`) and on each PC: the Pi gets a 100.x address that never changes, reachable by
-name (`pwserver`) from anywhere you're signed in. `setup.sh` uses the Tailscale address when it finds
-one; `PW_HOST=name ./setup.sh` sets it yourself.
+`sudo tailscale up`) and on each PC that runs panels. PCs then reach the server by its **full
+Tailscale name**, `pwserver.<your-tailnet>.ts.net` (MagicDNS), from anywhere you're signed in, and
+Tailscale encrypts everything on the way, so plain MQTT 1883 is fine for them. Use the full name:
+on Windows the short `pwserver` can resolve to the Pi's LAN address instead. `setup.sh` writes the
+full name into the PC settings when Tailscale is running; `PW_HOST=name ./setup.sh` sets it yourself.
+
+The **boards** (ESP32s) can't run Tailscale, so they use the LAN: give the Pi a fixed LAN address
+(a DHCP reservation in the router) and have them use **MQTT over TLS on 8883** (section 4). On a
+shared network, close everything else to the LAN with a firewall on the Pi, and once the boards
+are on 8883, close 1883 to the LAN too.
 
 **Straight after the first login, make Wi-Fi permanent** (skip this on Ethernet). On current
 Raspberry Pi OS, Imager's settings are applied at first boot by cloud-init, and the Wi-Fi it sets
@@ -77,7 +83,8 @@ forever, your time zone, no n8n, no Node-RED), then:
 
 - writes `.env` with random passwords and tokens (keep it private and back it up),
 - makes the Mosquitto users **panel**, **device**, **viewer** (read only) and **automation**
-  (Node-RED's, read/write under `home/#`),
+  (Node-RED's, read/write under `home/#`), plus one per board you added with `--add-board`,
+- makes the private CA and Mosquitto's certificate for MQTT over TLS on 8883 (section 4),
 - starts Mosquitto and InfluxDB, which creates its admin user, org and bucket,
 - makes InfluxDB tokens: read/write for panels, read-only for Grafana, read/write for Node-RED
   (if it's on),
@@ -150,6 +157,55 @@ panels**, pick **ServerCheck**, and move the slider.
 
 Every panel that uses `${MQTT_HOST}` or an InfluxDB control now finds the server with no changes.
 
+## 4. Boards: MQTT over TLS on 8883
+
+On a network you share (a work or school network, an apartment block), MQTT on 1883 sends every
+password and reading in the clear. `setup.sh` sets up **MQTT over TLS on port 8883** for the boards:
+
+- `tls.sh` makes a small **private certificate authority** (CA) once, and a certificate for
+  Mosquitto that names the server's LAN addresses, its host name and its Tailscale name.
+  `TLS_NAMES="10.0.0.5,pwserver.example.ts.net" ./setup.sh` lists them yourself.
+- The CA's key, `ca/ca.key`, **never leaves the server**. Back it up somewhere private: boards trust
+  only certificates it signed. The CA certificate is public: `mqtt-ca.h` holds it as a C string,
+  ready to `#include` in a sketch.
+- The server certificate lasts 5 years; rerunning `setup.sh` renews it 30 days before it runs out,
+  or when the server's addresses change. Boards don't need anything new when it's renewed.
+
+**One login per board,** limited to its own topics, so a lost or stolen board can't read or write
+anyone else's:
+
+```
+./setup.sh --add-board garden                                # user garden, topics home/garden/#
+./setup.sh --add-board probe5 --topics "home/garden/probe5/#"
+```
+
+The summary prints each board's password (it's in `.env` as `MQTT_BOARD_GARDEN_PASSWORD`). Put it
+in the board's `secrets.h`, never in the sketch.
+
+In the sketch, use `WiFiClientSecure` with the CA, not `setInsecure()` (which accepts anyone
+pretending to be your server), and set the clock first: the board checks the certificate's dates.
+
+```cpp
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include "mqtt-ca.h"                       // from the server's panelworks/server folder
+#include "secrets.h"                       // MQTT_HOST (the server's LAN address), MQTT_PASS
+
+WiFiClientSecure net;
+PubSubClient mqtt(net);
+
+void connectMqtt() {
+  configTime(0, 0, "pool.ntp.org");        // TLS needs the real time
+  while (time(nullptr) < 1700000000) delay(200);
+  net.setCACert(MQTT_CA_CERT);
+  mqtt.setServer(MQTT_HOST, 8883);
+  mqtt.connect("garden", "garden", MQTT_PASS);
+}
+```
+
+The TLS handshake takes a moment and some power: a board that sleeps between readings pays it at
+every wake, so give it a longer interval if its battery matters.
+
 ## Everyday commands
 
 Run these in `panelworks/server`:
@@ -195,8 +251,8 @@ up normally on the next boot.
 
 - **InfluxDB stays on 2.x** (`influxdb:2`). The `latest` tag is InfluxDB 3, which doesn't run
   the Flux queries the InfluxDB control's Query method and the Grafana dashboard use.
-- **It's for your own network.** Nothing here uses TLS, and Ollama has no login at all. To reach it from away, use a VPN such as
-  Tailscale rather than opening ports on your router.
+- **Never open its ports on your router.** Reach it from away over Tailscale. MQTT for boards can
+  use TLS (8883), but Grafana, InfluxDB, n8n and Node-RED are plain http, and Ollama has no login.
 - The **viewer** MQTT user can read everything and publish nothing: its publishes are accepted
   and silently dropped, which is how Mosquitto's ACLs work.
 - Grafana's dashboard lists every measurement in the bucket (one per panel, named after the
