@@ -74,8 +74,16 @@ heard_tnc = []
 def tnc(conn):
     time.sleep(0.6)
     conn.sendall(frame1[:5]); time.sleep(0.05); conn.sendall(frame1[5:] + frame2)
-    d = conn.recv(100)
-    heard_tnc.append(d)
+    got_all = b""
+    while True:                                  # keep reading until the panel closes the port
+        try:
+            d = conn.recv(100)
+        except OSError:
+            break
+        if not d:
+            break
+        got_all += d
+        heard_tnc[:] = [got_all]
 
 
 tnc_port = server(tnc)
@@ -123,8 +131,9 @@ check("Input is bytes too", isinstance(f.tnc.Input, bytes))
 f.tnc.Write(FEND + b"\x00test" + FEND)
 f.tnc.SendLine(b"\x00more")
 run_for(2, until=lambda: heard_tnc)
+run_for(1, until=lambda: heard_tnc and heard_tnc[0].endswith(b"more" + FEND))
 check("Write sends bytes as they are; SendLine adds the terminator byte",
-      heard_tnc and heard_tnc[0].startswith(FEND + b"\x00test" + FEND), heard_tnc)
+      heard_tnc and heard_tnc[0] == FEND + b"\x00test" + FEND + b"\x00more" + FEND, heard_tnc)
 
 # ---- bytes don't break JSON (MCP, the phone view, the event log, MQTT) ------------------------
 check("the event log keeps bytes as hex", any(r["object"] == "tnc" and r["args"] == [frame1.strip(FEND).hex(" ")]
