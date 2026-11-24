@@ -35,7 +35,7 @@ The window itself. In code it is `f`; in JSON connections and MCP it is the obje
 | Forms | read-only | The open forms, by name: `f.Forms["Settings"].txtValue.Text`. Read-only. |
 | Height | read/write | Window height in pixels. |
 | LinkBanner | read/write | True (the default): a red bar across the top of the running panel while one of its links (MQTT, Modbus, SNMP, Serial, InfluxDB, WebRequest) has been down for 5 s, saying which and for how long. The phone view shows it too. False hides the bar; LinkDown and LinkUp still fire. Chapter 8. |
-| LinksDown | read-only | The links down right now (those the banner lists), e.g. `["MQTT 192.168.1.50:1883"]`; empty when all is well. Read-only. |
+| LinksDown | read-only | The links down right now (those the banner lists, each place once), e.g. `["MQTT 192.168.1.50:1883"]`; empty when all is well. Read-only. |
 | Main | read-only | The program's first form. Read-only. |
 | Owner | read-only | The form that showed this one (None for the main form). Read-only. |
 | Width | read/write | Window width in pixels. |

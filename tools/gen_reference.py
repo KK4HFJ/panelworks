@@ -542,7 +542,7 @@ FORM_DOC = {
     "Load!": "The form finished building. Do your start-up work here.",
     "Unload!": "The form is closing.",
     "LinkBanner": "True (the default): a red bar across the top of the running panel while one of its links (MQTT, Modbus, SNMP, Serial, InfluxDB, WebRequest) has been down for 5 s, saying which and for how long. The phone view shows it too. False hides the bar; LinkDown and LinkUp still fire. Chapter 8.",
-    "LinksDown": "The links down right now (those the banner lists), e.g. `[\"MQTT 192.168.1.50:1883\"]`; empty when all is well. Read-only.",
+    "LinksDown": "The links down right now (those the banner lists, each place once), e.g. `[\"MQTT 192.168.1.50:1883\"]`; empty when all is well. Read-only.",
     "LinkDown!": "A link has been down for 5 s: `name` is the control's name (\"Form\" for the form's own MQTT settings), `label` says what, e.g. `MQTT 192.168.1.50:1883`.",
     "LinkUp!": "A link that LinkDown reported is back; `seconds_down` says how long it was gone.",
 }

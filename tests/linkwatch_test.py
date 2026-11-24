@@ -28,6 +28,28 @@ check("one link: what, how long, since when", one.startswith("⚠  MQTT pi:1883 
 two = banner_text([("MQTT pi:1883", 100.0, t), ("Modbus plc:502", 200.0, t)], 233.0)
 check("two links: both listed", "2 links are down: MQTT pi:1883 (2 min 13 s); Modbus plc:502 (33 s)" in two, two)
 
+# ---- the same broker twice (the form's mqtt and an MQTT control) is listed once ----------------
+class FakeForm:
+    bus = None
+    objects = {}
+    _closing = False
+    def __init__(self): self.fired = []
+    def fire(self, *a): self.fired.append(a)
+class FakeLink:
+    def __init__(self, label): self.label = label
+    def link_state(self): return (self.label, False)
+ff = FakeForm()
+ff.objects = {"mq": FakeLink("MQTT pi:1883"), "mq2": FakeLink("MQTT pi:1883"), "mb": FakeLink("Modbus plc:502")}
+lw = linkwatch.LinkWatch(ff, show=False)
+lw.check(now=0.0, wall=t); lw.check(now=10.0, wall=t + 10)
+check("same broker twice: LinksDown names it once", lw.links_down() == ["MQTT pi:1883", "Modbus plc:502"], lw.links_down())
+check("...and the bar says 2 links, not 3", lw.text(now=10.0).startswith("\u26a0  2 links are down: MQTT pi:1883 (10 s); Modbus plc:502"),
+      lw.text(now=10.0))
+check("...while LinkDown still fires once per connection", [a[2] for a in ff.fired] == ["mq", "mq2", "mb"], ff.fired)
+ff.objects = {"mq": FakeLink("MQTT pi:1883")}
+lw.check(now=11.0, wall=t + 11)
+check("one of the two closed on purpose: still listed once", lw.links_down() == ["MQTT pi:1883"], lw.links_down())
+
 # ---- a real broker -------------------------------------------------------------------------
 if not shutil.which("mosquitto") and not os.path.exists("/usr/sbin/mosquitto"):
     print("SKIP  no mosquitto broker installed")

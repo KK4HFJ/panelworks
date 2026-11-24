@@ -2,6 +2,14 @@
 
 All notable changes to PanelWorks. Dates are when the version was tagged.
 
+## 0.10.1 (2026-11-24)
+
+- **Link banner: one broker, one entry.** A panel using the same broker twice (the form's `mqtt`
+  settings and an MQTT control) said "2 links are down" and named the broker twice. The bar and
+  `f.LinksDown` now list each place once; LinkDown and LinkUp still fire for each connection.
+  Found by the real-Pi banner test (banner up 5.8 s after Mosquitto stopped, gone 6.9 s after it
+  started).
+
 ## 0.10.0 (2026-11-23)
 
 - **NUT control**: read a UPS through NUT (Network UPS Tools), the standard way Linux reads UPSes,

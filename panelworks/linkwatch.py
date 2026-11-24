@@ -10,7 +10,9 @@ its WatchLink is on). A link that has been down for GRACE seconds puts up the ba
     panel shows may be out of date.
 
 and fires Form_LinkDown(f, name, label). When it comes back the bar goes and
-Form_LinkUp(f, name, label, seconds_down) fires. "name" is the control's name, or "Form"
+Form_LinkUp(f, name, label, seconds_down) fires. Two links to the same place (the form's
+mqtt settings and an MQTT control on the same broker) are listed once in the bar and in
+LinksDown; the events still come once per link, since each is its own connection. "name" is the control's name, or "Form"
 for the form's own MQTT settings.
 
 Form.LinkBanner = False (or "linkBanner": false in the form file) hides the bar; the
@@ -93,9 +95,20 @@ class LinkWatch:
                 out.append((name, st[0], st[1]))
         return out
 
+    def _down_by_label(self):
+        """{label: (since, wall)} for the links down long enough to count. Two controls on the same
+        broker (the form's mqtt and an MQTT control, say) are one entry: the earliest since."""
+        out = {}
+        for d in self.down.values():
+            if d["said"]:
+                prev = out.get(d["label"])
+                if prev is None or d["since"] < prev[0]:
+                    out[d["label"]] = (d["since"], d["wall"])
+        return out
+
     def links_down(self):
-        """Labels of the links down long enough to count (what the bar lists)."""
-        return [d["label"] for d in self.down.values() if d["said"]]
+        """Labels of the links down long enough to count (what the bar lists), each once."""
+        return list(self._down_by_label())
 
     # ---- the loop ----------------------------------------------------------------
     def start(self):
@@ -146,7 +159,7 @@ class LinkWatch:
     # ---- the bar -------------------------------------------------------------------
     def text(self, now=None):
         now = time.monotonic() if now is None else now
-        down = [(d["label"], d["since"], d["wall"]) for d in self.down.values() if d["said"]]
+        down = [(label, since, wall) for label, (since, wall) in self._down_by_label().items()]
         return banner_text(down, now) if down else ""
 
     def draw(self, now=None):

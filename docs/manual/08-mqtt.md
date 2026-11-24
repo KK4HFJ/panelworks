@@ -201,7 +201,9 @@ bar goes across the top of the running panel:
 ![The link banner](img/link-banner.png)
 
 It names the link, says how long it has been gone and since when, and stays
-until the link is back. Several links down are listed together. The phone view
+until the link is back. Several links down are listed together. Two connections to the
+same place (the form's `mqtt` settings and an MQTT control on the same broker) are listed
+once; LinkDown below still fires for each, since each is its own connection. The phone view
 (chapter 16) shows the same warning. It covers every control that talks to
 something: the form's own `mqtt` settings, MQTT, Modbus, SNMP, Serial, InfluxDB
 and WebRequest. A link you close on purpose (`Disconnect`, `Close`) isn't
