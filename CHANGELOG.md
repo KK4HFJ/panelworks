@@ -4,6 +4,12 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **MCP: every tool carries all four annotations** (readOnlyHint, destructiveHint, idempotentHint,
+  openWorldHint), so clients can tell the eight read-only tools from the ones that change the
+  panel or reach equipment. One table, `TOOL_HINTS` in `mcp_bridge.py`; a tool missing from it
+  fails at startup. New `tests/mcp_tools_test.py` calls all 15 tools by name through the server
+  (48 checks, on mcp 1.x and 2.x). Suggested by the M8ven MCP quality report.
+
 ## 1.0.0 (2026-11-24)
 
 **The first stable release**, and the version the book *Draw It, Wire It, Run It* is written for.

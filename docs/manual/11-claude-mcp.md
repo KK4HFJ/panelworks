@@ -114,6 +114,15 @@ Still, a panel connected to real equipment deserves care:
   panel's or Claude's.
 - Claude Desktop asks before using a tool unless you've allowed it. Keep
   approvals on for panels that control things.
+- **Every tool says what it does**, in the four standard MCP hints, so a client
+  can tell the safe ones from the rest. The eight that only look
+  (`describe_form`, `list_objects`, `get_property`, `get_events`,
+  `wait_for_event`, `control_types`, `mqtt_status`, `webhook_status`) are marked
+  read-only. `set_property`, `call_method`, `fire_event` and `mqtt_publish` are
+  marked destructive and "open world": through a binding or your event code they
+  can reach real equipment. `remove_object` and `save_form` are marked
+  destructive, and `add_object` only adds. A client that sorts tools this way can
+  auto-allow the read-only ones and ask about the rest.
 
 ## One window per form
 
