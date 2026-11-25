@@ -43,7 +43,9 @@ def nut1_StatusChange(f, old, new):
 
 def nut1_DataArrival(f, values):
     if "volts" in values:
-        f.lblVolts.Caption = f"Input {values['volts']} V"
+        # On battery there is no input; some UPSes (the APC Back-UPS) then report their
+        # low transfer setting as input.voltage, so don't show it as a reading.
+        f.lblVolts.Caption = "Input: none" if f.nut1.OnBattery else f"Input {values['volts']} V"
     if "load" in values:
         f.lblLoad.Caption = f"Load {values['load']} %"
     if "model" in values:

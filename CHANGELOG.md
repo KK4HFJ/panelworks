@@ -4,6 +4,9 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **nut example: "Input: none" on battery.** The APC Back-UPS reports its low transfer setting
+  (140 V) as `input.voltage` while on battery, which reads like a real input. The example now
+  shows the voltage only on mains. From the book's mains-pull test on a real Back-UPS XS 700U.
 - **MCP: every tool carries all four annotations** (readOnlyHint, destructiveHint, idempotentHint,
   openWorldHint), so clients can tell the eight read-only tools from the ones that change the
   panel or reach equipment. One table, `TOOL_HINTS` in `mcp_bridge.py`; a tool missing from it
