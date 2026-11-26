@@ -20,15 +20,19 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 
 - File → Export for review… and `panelworks --export-review FORM [-o OUT]` write one text file,
   `NAME.pwreview.json`: format/version, PanelWorks version, entry form, each reachable form with
-  its `describe_form` output, every form/code/text-companion file, sha256 per file, binaries by
+  its `describe_form` output plus a `review` block (counts and types, handlers, MQTT subscribe/
+  publish, Fill and DataSource links, Data LogFields/LogEvery, parsed alarm rules, name prefixes),
+  every form/code/text-companion file (.py, .json, .ino, .workflow.json, .md, flows.json, .yaml,
+  .yml, .csv, .txt), sha256 per file, binaries by
   name and hash only, a `redacted` list and `warnings`. 1 MB cap; UTF-8, LF, sorted keys.
-- Secret scrub from a table kept in PanelWorks (MQTT/NUT Password and Username; SNMP Community,
+- Secret scrub from a table kept in PanelWorks (MQTT/NUT Password, not Username; SNMP Community,
   WriteCommunity, TrapCommunity, AuthKey, PrivKey; InfluxDB Token; Alarms TelegramToken);
   `${VAR}` placeholders kept. `.env`, `panelworks-setx.cmd` and `secrets.h` never included. Code
   is scanned for literal secrets and warned about, never edited. A test fails if a control adds an
   unlisted secret-looking property.
 - JSON Schema at `docs/pwreview.schema.json`. Agreed with academy in Slack, 26 Nov 2026; waiting
-  on its rule list and answers (Username scrub, companion types, sample files).
+  academy's Foundation/Practitioner draft rules are all covered by `review` (it parses Python
+  syntax and try/except itself). Sample files when academy starts the PanelWorks track.
 
 ## Home automation and security (for the next two books)
 
