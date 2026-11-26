@@ -290,11 +290,18 @@ MQTT_HOST=$ip
 MQTT_PORT=1883
 MQTT_USER=panel
 MQTT_PASS=$(getenv MQTT_PANEL_PASSWORD)
+# The same login under the names PanelWorks' own forms read (manual, examples, book panels):
+PW_MQTT_HOST=$ip
+PW_MQTT_PORT=1883
+PW_MQTT_USER=panel
+PW_MQTT_PASS=$(getenv MQTT_PANEL_PASSWORD)
+# For a PC that talks TLS to 8883 instead (most PCs use Tailscale and plain 1883):
+# PW_MQTT_CA=C:\path\to\ca.crt
 EOF
 {
     echo "@echo off"
     echo "rem PanelWorks test server settings for this PC. Run once, then open a NEW window."
-    sed -e 's/^\([A-Z_]*\)=\(.*\)$/setx \1 "\2"/' panelworks.env
+    sed -e 's/^\([A-Z_]*\)=\(.*\)$/setx \1 "\2"/' -e 's/^# \{0,1\}/rem /' panelworks.env
     echo "echo Done. Close this window and open a new one (or restart the designer)."
 } > panelworks-setx.cmd
 sed -i 's/$/\r/' panelworks-setx.cmd                 # Windows line endings

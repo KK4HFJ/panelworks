@@ -4,6 +4,10 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **Test server: the PC settings also set `PW_MQTT_*`.** `panelworks-setx.cmd` and `panelworks.env`
+  set `PW_MQTT_HOST/PORT/USER/PASS`, the names the manual's, the examples' and the book's panels
+  read, besides `MQTT_*`; a commented `PW_MQTT_CA` line is there for TLS. Before, ServerCheck went
+  green but a book panel connected to localhost. Reported by the book.
 - **nut example: "Input: none" on battery.** The APC Back-UPS reports its low transfer setting
   (140 V) as `input.voltage` while on battery, which reads like a real input. The example now
   shows the voltage only on mains. From the book's mains-pull test on a real Back-UPS XS 700U.

@@ -141,10 +141,18 @@ must listen on the network, not just on itself: set `OLLAMA_HOST=0.0.0.0` there.
 ## 3. Your PC
 
 Copy `panelworks-setx.cmd` to the Windows PC that runs panels (for example
-`scp you@<server>:panelworks/server/panelworks-setx.cmd .`) and run it once. It sets
-`MQTT_HOST`, `MQTT_USER`, `MQTT_PASS`, `INFLUX_URL`, `INFLUX_ORG`, `INFLUX_BUCKET` and
-`INFLUX_TOKEN`. **Open a new window** afterwards: `setx` doesn't change windows already open.
-On Linux or macOS, put the lines from `panelworks.env` in `~/.profile` with `export ` in front.
+`scp you@<server>:panelworks/server/panelworks-setx.cmd .`) and run it once. It sets:
+
+- `PW_MQTT_HOST`, `PW_MQTT_PORT`, `PW_MQTT_USER`, `PW_MQTT_PASS`: the names PanelWorks' own
+  forms read (`${PW_MQTT_HOST:-localhost}` and so on), in the manual, the examples and the book.
+- `MQTT_HOST`, `MQTT_PORT`, `MQTT_USER`, `MQTT_PASS`: the same login, for ServerCheck and
+  Node-RED-style uses.
+- `INFLUX_URL`, `INFLUX_ORG`, `INFLUX_BUCKET` and `INFLUX_TOKEN`.
+
+A PC that talks TLS to 8883 instead of plain 1883 over Tailscale also needs `PW_MQTT_CA`, the
+path to `ca.crt`: the line is there, commented out (`rem`). **Open a new window** afterwards:
+`setx` doesn't change windows already open. On Linux or macOS, put the lines from
+`panelworks.env` in `~/.profile` with `export ` in front (the `#` lines are notes).
 
 Then check it all:
 
@@ -157,7 +165,8 @@ InfluxDB is taking a point every 5 seconds. **Count what's in InfluxDB** reads t
 Grafana (`http://<server>:3000`, user `admin`), open **Dashboards → PanelWorks → PanelWorks
 panels**, pick **ServerCheck**, and move the slider.
 
-Every panel that uses `${MQTT_HOST}` or an InfluxDB control now finds the server with no changes.
+Every panel that uses `${PW_MQTT_HOST}` (or `${MQTT_HOST}`) or an InfluxDB control now finds the
+server with no changes, the manual's and the book's included.
 
 ## 4. Boards: MQTT over TLS on 8883
 
