@@ -4,6 +4,13 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **OptionButton: a saved `"Value": true` inside a Frame now loads selected.** While a form loads,
+  every button starts in the `default` group, so a later one took the selection, and moving each
+  into its frame's group then dropped it. The saved choice is now applied after the move, and a
+  selected button that changes group keeps its selection. Reported by the book (Appendix A).
+- **The `mqtt_monitor` template reads `PW_MQTT_*`**, like every other PanelWorks form.
+- **No examples installed:** `--example` and `--simulator` say why (a `pip install .` from a git
+  clone doesn't carry them; the PyPI package does) and what to do, instead of "(none)".
 - **Watchdog: stopping the broker no longer makes every Last-Will device LOST.** A broker that
   shuts down sends each client's Will just before the panel's link drops; a live `offline` now
   waits 2 s and is dropped if the link goes down meanwhile. A retained `offline` replayed at a

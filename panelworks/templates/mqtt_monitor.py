@@ -1,5 +1,5 @@
 # Event procedures for {name}: an MQTT monitor.
-# The broker comes from the MQTT_HOST, MQTT_PORT, MQTT_USER and MQTT_PASS environment
+# The broker comes from the PW_MQTT_HOST, PW_MQTT_PORT, PW_MQTT_USER and PW_MQTT_PASS environment
 # variables (localhost:1883 if they aren't set). Change mqtt1's Broker to fix it instead.
 # Next steps: draw a Label, then in Connections bind its Caption to a topic, and it
 # updates with no code at all (chapter 8).

@@ -17,7 +17,7 @@
     "chkRetain":  {"type": "CheckBox", "Caption": "Retain", "Left": 295, "Top": 332, "Width": 70, "Height": 24},
     "cmdPublish": {"type": "CommandButton", "Caption": "Publish", "Left": 375, "Top": 330, "Width": 60, "Height": 28},
     "cmdClear":   {"type": "CommandButton", "Caption": "Clear", "Left": 445, "Top": 330, "Width": 60, "Height": 28},
-    "mqtt1":      {"type": "MQTT", "Broker": "${MQTT_HOST:-localhost}", "Port": "${MQTT_PORT:-1883}",
-                   "Username": "${MQTT_USER}", "Password": "${MQTT_PASS}", "Subscriptions": ["#"]}
+    "mqtt1":      {"type": "MQTT", "Broker": "${PW_MQTT_HOST:-localhost}", "Port": "${PW_MQTT_PORT:-1883}",
+                   "Username": "${PW_MQTT_USER}", "Password": "${PW_MQTT_PASS}", "Subscriptions": ["#"]}
   }
 }

@@ -46,11 +46,16 @@ def _find_example(name):
     return stem, items[stem]
 
 
+NO_EXAMPLES = ("The examples aren't installed with this copy of PanelWorks. The PyPI package carries\n"
+               "them; a `pip install .` from a git clone doesn't. From a clone, use `pip install -e .`\n"
+               "(the examples stay in the clone's examples folder), or `pip install panelworks`.")
+
+
 def list_examples_text():
     from panelworks.util import examples_dir, list_examples
     d = examples_dir()
     if not d:
-        return "The examples aren't installed with this copy of PanelWorks."
+        return NO_EXAMPLES
     sims = _simulators(d)
     rows = [f"  {stem:<16} {cap}" + ("   [has --simulator]" if stem in sims else "")
             for stem, cap, _p in list_examples()]
@@ -98,7 +103,9 @@ def run_simulator(args):
     """--simulator NAME [ARGS...]: run an example's pretend device (Ctrl+C stops it)."""
     from panelworks.util import examples_dir
     d = examples_dir()
-    sims = _simulators(d) if d else {}
+    if not d:
+        sys.exit(NO_EXAMPLES)
+    sims = _simulators(d)
     name = args[0]
     if name not in sims:
         sys.exit(f"No simulator called '{name}'. These examples have one: {', '.join(sorted(sims)) or '(none)'}")

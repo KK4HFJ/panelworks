@@ -559,12 +559,22 @@ class OptionButton(ColourMixin, Control):
 
     def get_Group(self): return self._group
     def set_Group(self, v):
+        was_on = self.get_Value()
+        old = self._form._option_group(self._group)
         object.__setattr__(self, "_auto_group", False)
         object.__setattr__(self, "_group", str(v))
-        self.widget.configure(variable=self._form._option_group(str(v)))
+        new = self._form._option_group(str(v))
+        self.widget.configure(variable=new)
+        if was_on:                                   # the selection moves with the button
+            old.set("")
+            new.set(self.Name)
 
     def get_Value(self): return self._form._option_group(self._group).get() == self.Name
     def set_Value(self, v):
+        if v and not self._form._loaded:
+            # while loading, every button is still in "default", so a later one would take this
+            # one's selection; auto_option_groups sets it again once each is in its frame's group
+            object.__setattr__(self, "_saved_on", True)
         if v and not self.get_Value():
             self._form._option_group(self._group).set(self.Name)
             self.fire("Click")
@@ -814,6 +824,10 @@ def auto_option_groups(form):
                 object.__setattr__(o, "_auto_group", True)     # not saved back to the file
             elif getattr(o, "_auto_group", False):            # moved out of its frame
                 o.set_Group("default")
+    for o in form.objects.values():                          # saved "Value": true, now in its group
+        if o.TYPE == "OptionButton" and getattr(o, "_saved_on", False):
+            object.__setattr__(o, "_saved_on", False)
+            form._option_group(o.get_Group()).set(o.Name)
 
 
 def apply_tabs(form):
