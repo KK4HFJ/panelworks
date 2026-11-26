@@ -34,6 +34,18 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
   academy's Foundation/Practitioner draft rules are all covered by `review` (it parses Python
   syntax and try/except itself). Sample files when academy starts the PanelWorks track.
 
+## Bench instruments (for a possible book, "The Electronics Workbench")
+
+ESP32 does the timing; the panel is the front panel, over the Serial control (USB, no network).
+- **Trace control:** a scope-style display that draws a block of samples at once, with timebase
+  and trigger level on the panel (the Chart is a strip chart). Enables an audio-range scope and
+  a curve tracer.
+- **Examples, sketch + panel each:** function generator (AD9833 DDS for sine/triangle/square to
+  several MHz; LEDC PWM for square; the classic ESP32's DAC for audio, as the S3 has no DAC),
+  frequency counter (PCNT), voltmeter/logger (ADS1115), electronic load and battery tester
+  (MOSFET + INA226), servo/PWM tester, continuity/diode tester, relay cycler.
+- After the PanelWorks book; release to be decided (1.1.0 or later).
+
 ## Home automation and security (for the next two books)
 
 The books use PanelWorks as the fixed console: a keypad by the door, a zone map, a NOC screen,
