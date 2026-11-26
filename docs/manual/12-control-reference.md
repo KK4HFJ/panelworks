@@ -908,7 +908,7 @@ Invisible serial port (VB's MSComm, improved). See chapter 9.
 | Enabled | read/write | False stops the clocks (nothing goes LATE or LOST). |
 | Index | read-only | Its number in a control array (`Lamp(3)` has Index 3), or empty if it isn't in one. In the designer, set it to make an array (chapter 6). In code it's read-only. |
 | LateAfter | read/write | Intervals of quiet before LATE (default 2). |
-| LostAfter | read/write | Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST at once. |
+| LostAfter | read/write | Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST after 2 s, unless the panel's own link drops in that time (a stopping broker sends every Will). |
 | Paused | run time | True while the connection is down: the clocks stop, since nobody can be heard. Read-only. |
 | Quiet | run time | The devices that aren't OK. Read-only. |
 | ShowQuiet | read/write | True (default): tag the controls a quiet device feeds, and list it in the phone view. |

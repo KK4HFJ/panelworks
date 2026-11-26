@@ -15,7 +15,9 @@ One line per device in Devices:
   name = topic [topic...]       what counts as hearing from it (MQTT filters, + and # work)
   every N                       it should report every N seconds
   every auto                    it says so itself: a JSON "every" (or "interval") in seconds
-  lwt TOPIC [WORD]              its Last Will: WORD (default "offline") there = LOST at once
+  lwt TOPIC [WORD]              its Last Will: WORD (default "offline") there = LOST (after 2 s:
+                                a broker that is shutting down sends every Will just before the
+                                panel's own link drops, and those mustn't count)
   show ctl,ctl                  controls to mark when it's quiet (as well as those bound to its
                                 topics in the form's mqtt settings, which are found by themselves)
 
@@ -41,6 +43,8 @@ from .runtime import VBObject, register_control
 
 STATES = ("WAITING", "OK", "LATE", "LOST")
 TICK_MS = 1000
+LWT_HOLD = 2.0      # s: a live Will waits this long; dropped if the panel's link goes down meanwhile
+REJOIN_GRACE = 5.0  # s after a reconnect in which a retained Will is the broker's old copy
 TAG_BG, TAG_FG = "#6b6b6b", "white"
 
 
@@ -77,7 +81,7 @@ def parse_device(line):
         raise ValueError(f"{line!r}: the name must be one word (letters, digits, _)")
     words = rest.split()
     dev = {"name": name, "topics": [], "every": None, "auto": False, "lwt": None,
-           "offline": "offline", "show": []}
+           "offline": "offline", "show": [], "why": None, "lwt_due": None}
     i = 0
     while i < len(words):
         w = words[i]
@@ -132,7 +136,7 @@ class Watchdog(VBObject):
         super().__init__(form, name, spec)
         for k, v in dict(_source="", _lines=[], _devs={}, _late=2.0, _lost=3.0, _default_every=60.0,
                          _show_tags=True, _enabled=True, _link=None, _after=None, _last_tick=None,
-                         _was_connected=None, _tags={}).items():
+                         _was_connected=None, _tags={}, _connected_at=None, _reconnects=0).items():
             object.__setattr__(self, k, v)
 
     # ---- properties -----------------------------------------------------------------
@@ -273,7 +277,7 @@ class Watchdog(VBObject):
             if d["lwt"] and _matches(d["lwt"], topic):
                 word = str(payload).strip()
                 if word.lower() == d["offline"].lower():
-                    self._mark_lost(d, "lwt")
+                    self._will(d, retained)
                 elif word:
                     self._heard(d, None)           # "online" (retained or not): it's connected now
                 continue
@@ -291,7 +295,25 @@ class Watchdog(VBObject):
                         pass
                 self._heard(d, every)
 
+    def _will(self, d, retained):
+        """Its Last Will arrived. Not LOST at once: see LWT_HOLD and REJOIN_GRACE."""
+        now = time.monotonic()
+        # just rejoined: either the tick hasn't seen the reconnect yet (the broker replays retained
+        # messages within milliseconds of it), or it saw it a moment ago
+        rejoined = self._was_connected is False or (
+            self._reconnects > 0 and self._connected_at is not None
+            and now - self._connected_at < REJOIN_GRACE)
+        if retained and rejoined:
+            # The broker restarted and replayed the Will it kept: the device may simply not have
+            # reconnected yet. Give it one interval, as after any outage.
+            d["lwt_due"] = now + self.interval(d)
+        elif retained:
+            self._mark_lost(d, "lwt")              # at panel start: it was gone before we looked
+        else:
+            d["lwt_due"] = now + LWT_HOLD          # live: wait to see if our own link survives
+
     def _heard(self, d, every):
+        d["lwt_due"] = None
         if every and every > 0:
             d["reported"] = float(every)
         was, quiet = d["state"], d["quiet"]
@@ -302,8 +324,10 @@ class Watchdog(VBObject):
             self._draw_tags()
 
     def _mark_lost(self, d, why):
+        d["lwt_due"] = None
         if d["state"] != "LOST":
             d["state"] = "LOST"
+            d["why"] = why
             self.fire("DeviceLost", d["name"], int(d["quiet"]), why)
             self._draw_tags()
 
@@ -325,6 +349,13 @@ class Watchdog(VBObject):
             else:
                 self._detach()
         connected = bool(link is not None and link.connected)
+        if connected and not self._was_connected:
+            object.__setattr__(self, "_connected_at", now)
+            if self._was_connected is False:
+                object.__setattr__(self, "_reconnects", self._reconnects + 1)
+        if not connected:
+            for d in self._devs.values():
+                d["lwt_due"] = None                # Wills sent by a broker going down: not news
         if connected and self._was_connected is False:
             # back after an outage: a device that was OK gets one interval to report
             for d in self._devs.values():
@@ -337,6 +368,8 @@ class Watchdog(VBObject):
         changed = False
         for d in self._devs.values():
             d["quiet"] += dt
+            if d["lwt_due"] is not None and now >= d["lwt_due"]:
+                self._mark_lost(d, "lwt")
             if d["state"] == "LOST":
                 continue
             iv = self.interval(d)
@@ -369,7 +402,7 @@ class Watchdog(VBObject):
                 if d["state"] in ("LATE", "LOST") or (d["state"] == "WAITING" and d["quiet"] >= self._late * self.interval(d)):
                     text = "no word" if d["state"] == "WAITING" else f"no word for {fmt_quiet(d['quiet'])}"
                     if d["state"] == "LOST":
-                        text = "LOST: " + text
+                        text = "LOST: offline (Last Will)" if d.get("why") == "lwt" else "LOST: " + text
                     for n in self.controls_for(d):
                         want[n] = text
         for n in [n for n in self._tags if n not in want]:
@@ -378,6 +411,7 @@ class Watchdog(VBObject):
             except tk.TclError:
                 pass
         root = self._form.root
+        placed = []                                     # tags already put down this pass
         for n, text in want.items():
             o = self._form.objects.get(n)
             if o is None or not getattr(o, "on_screen", lambda: True)():
@@ -388,11 +422,42 @@ class Watchdog(VBObject):
             if tag is None:
                 tag = tk.Label(root, bg=TAG_BG, fg=TAG_FG, font=("Helvetica", 8, "bold"), padx=3, pady=0)
                 self._tags[n] = tag
-            tag.configure(text=text)
+            x, y, shown = self._tag_spot(o, text, tag, placed)
+            tag.configure(text=shown)
             tag.update_idletasks()
-            x = o.get_Left() + o.get_Width() - tag.winfo_reqwidth()
-            tag.place(x=max(o.get_Left(), x), y=o.get_Top())
+            tag.place(x=max(0, x), y=max(0, y))
+            placed.append((max(0, x), max(0, y), tag.winfo_reqwidth(), tag.winfo_reqheight()))
             tag.lift()
+
+    def _tag_spot(self, o, text, tag, placed):
+        """Where a tag covers nothing: right of the control, else above it (right-aligned); the full
+        text first, then a short badge ("LOST 12 min", "offline"). If nothing is free, the badge
+        goes in the control's top-right corner. -> (x, y, text to show)"""
+        L, T, W, H = o.get_Left(), o.get_Top(), o.get_Width(), o.get_Height()
+        fw = self._form.root.winfo_width() or 10 ** 6
+        others = list(placed)
+        for ob in self._form.objects.values():
+            if ob is o:
+                continue
+            try:
+                if getattr(ob, "on_screen", lambda: True)() and ob.get_Width() and ob.get_Height():
+                    others.append((ob.get_Left(), ob.get_Top(), ob.get_Width(), ob.get_Height()))
+            except Exception:
+                continue                                # non-visual objects have no rectangle
+        state, _, rest = text.partition(": ")
+        short = ("offline" if "Last Will" in rest else
+                 (f"{state} {rest.split('for ')[-1]}" if "for " in rest else state or text)).strip()
+        for t in (text, short):
+            tag.configure(text=t)
+            tag.update_idletasks()
+            tw, th = tag.winfo_reqwidth(), tag.winfo_reqheight()
+            for x, y in ((L + W + 2, T + max(0, (H - th) // 2)),     # right of it
+                         (L + W - tw, T - th - 1)):                   # above it, right-aligned
+                if x >= 0 and y >= 0 and x + tw <= fw and all(
+                        x + tw <= ox or ox + ow <= x or y + th <= oy or oy + oh <= y
+                        for ox, oy, ow, oh in others):
+                    return x, y, t
+        return L + W - tw, T, short                     # covers a corner: the last resort
 
     def summary(self):
         """'shed LOST 3 min; probe LATE 40 s' for the phone view, or ""."""

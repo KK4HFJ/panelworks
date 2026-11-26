@@ -395,6 +395,23 @@ class Alarms(VBObject):
     def get_LastError(self): return self._last_error
 
 
+def _fit(text, font, width):
+    """text, shortened with an ellipsis to fit width pixels; "" if not even "a…" fits."""
+    text = str(text)
+    if width <= 0:
+        return ""
+    if font.measure(text) <= width:
+        return text
+    lo, hi = 0, len(text)
+    while lo < hi:                                      # the longest prefix that fits with "…"
+        mid = (lo + hi + 1) // 2
+        if font.measure(text[:mid].rstrip() + "…") <= width:
+            lo = mid
+        else:
+            hi = mid - 1
+    return text[:lo].rstrip() + "…" if lo >= 1 else ""
+
+
 @register_control
 class AlarmPanel(Control):
     """The alarm list: priority colour, name, message, value. Unacknowledged alarms
@@ -456,6 +473,16 @@ class AlarmPanel(Control):
         except tk.TclError:
             pass
 
+    def _bold_font(self):
+        """A Font matching the bold text drawn for names and the header, so widths measure right."""
+        import tkinter.font as tkfont
+        key = (self._font["family"], self._font["size"])
+        if getattr(self, "_bold_key", None) != key:
+            object.__setattr__(self, "_bold", tkfont.Font(root=self._form.root, family=key[0],
+                                                          size=key[1], weight="bold"))
+            object.__setattr__(self, "_bold_key", key)
+        return self._bold
+
     def _draw(self):
         c = self.widget
         try:
@@ -468,10 +495,13 @@ class AlarmPanel(Control):
         f = self._tkfont
         size = self._font["size"]
         bold = (self._font["family"], size, "bold")
+        fb = self._bold_font()
         head = (self._title + "  ·  " if self._title else "") + (src.get_Summary() if src else "no Alarms control")
         c.create_rectangle(0, 0, w, self.HEAD, fill="#eceff1", outline="")
-        c.create_text(8, self.HEAD / 2, text=head, anchor="w", font=bold, fill=self._fg)
-        if src is not None and src.get_Unacked():
+        ack = src is not None and src.get_Unacked()
+        room = w - 16 - (f.measure("Ack all") + 10 if ack else 0)
+        c.create_text(8, self.HEAD / 2, text=_fit(head, fb, room), anchor="w", font=bold, fill=self._fg)
+        if ack:
             c.create_text(w - 8, self.HEAD / 2, text="Ack all", anchor="e", font=f, fill="#1565c0")
         rows = []
         y = self.HEAD
@@ -487,11 +517,15 @@ class AlarmPanel(Control):
             c.create_rectangle(0, y, 6, y + self.ROW, fill=col, outline="")
             val = "" if e["value"] is None else _fmt(_number(e["value"]))
             state = {"Active": "ACTIVE", "Acked": "acked", "Cleared": "cleared"}[e["state"]]
-            c.create_text(12, y + self.ROW / 2, anchor="w", font=bold, fill=fg,
-                          text=f"{e['since']}  {e['name']}")
-            c.create_text(w - 8, y + self.ROW / 2, anchor="e", font=f, fill=fg, text=f"{val}   {state}")
-            c.create_text(12 + f.measure(f"{e['since']}  {e['name']}  ") + 8, y + self.ROW / 2, anchor="w",
-                          font=f, fill=fg, text=e["message"])
+            right = f"{val}   {state}"
+            right_x = w - 8 - f.measure(right)                # where the value/state column starts
+            left = _fit(f"{e['since']}  {e['name']}", fb, right_x - 12 - 8)
+            c.create_text(12, y + self.ROW / 2, anchor="w", font=bold, fill=fg, text=left)
+            c.create_text(w - 8, y + self.ROW / 2, anchor="e", font=f, fill=fg, text=right)
+            msg_x = 12 + fb.measure(left + "  ") + 8
+            msg = _fit(e["message"], f, right_x - 10 - msg_x)   # never runs under the state column
+            if msg:
+                c.create_text(msg_x, y + self.ROW / 2, anchor="w", font=f, fill=fg, text=msg)
             rows.append((y, e["name"]))
             y += self.ROW
         if not es:

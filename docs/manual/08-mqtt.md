@@ -249,12 +249,14 @@ cistern = home/cistern/telemetry every 60 show lblCistern,gauLevel
 | `name = topic ...` | The topics that count as hearing from it (`+` and `#` work). |
 | `every 300` | It should report every 300 seconds. |
 | `every auto` | It says so itself, in a JSON `"every"` (or `"interval"`) field, in seconds. Until it does, **DefaultInterval** (60). |
-| `lwt TOPIC [word]` | Its Last Will topic: `offline` (or your word) there means LOST at once. |
+| `lwt TOPIC [word]` | Its Last Will topic: `offline` (or your word) there means LOST, about 2 s later (see below). |
 | `show ctl,ctl` | Controls to mark when it's quiet. Controls **bound** to its topics in the form's `mqtt` settings are found by themselves. |
 
 Each device is **WAITING** (not heard since the panel started), **OK**, **LATE** (quiet for
 **LateAfter** intervals, 2 by default) or **LOST** (**LostAfter**, 3, or its Last Will said
-so). The controls it feeds get a grey "no word for 12 min" tag, and the phone view lists it.
+so). The controls it feeds get a grey "no word for 12 min" tag ("offline (Last Will)" when
+the Will said so), and the phone view lists it. The tag goes beside the control, or above it,
+where it covers nothing; on a crowded panel it shrinks to a badge such as "LOST 12 min".
 Its events:
 
 ```python
@@ -278,6 +280,11 @@ Two rules keep it honest:
 - **While the panel's own link to the broker is down, the clocks stop.** Nobody can be heard
   then, so nothing goes LATE or LOST because of it (the link banner says what's wrong).
   When the link is back, a device that was OK gets an interval to report.
+- **A broker that is shutting down sends every client's Last Will first,** just before the
+  panel's own link drops. So a live `offline` waits 2 seconds, and if the panel's link goes
+  down in that time it was the broker stopping, not the device: it's dropped. In the same
+  way, a retained `offline` that a restarted broker replays at reconnect gets one interval
+  for the device to come back before it counts.
 
 **Source** picks the connection it listens on: empty means the form's own `mqtt` settings
 (or the first MQTT control if there are none), or name an MQTT control. It doesn't open a

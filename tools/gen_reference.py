@@ -372,7 +372,7 @@ DOC = {
         "Devices": "One line per device: `name = topic [topic...] every SECONDS|auto [lwt TOPIC [word]] [show ctl,ctl]`, e.g. `garden = home/garden/telemetry every 300`.",
         "Source": "The connection to listen on: empty = the form's mqtt settings (or the first MQTT control); or an MQTT control's name.",
         "LateAfter": "Intervals of quiet before LATE (default 2).",
-        "LostAfter": "Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST at once.",
+        "LostAfter": "Intervals of quiet before LOST (default 3). A Last Will `offline` is LOST after 2 s, unless the panel's own link drops in that time (a stopping broker sends every Will).",
         "DefaultInterval": "Seconds, for an `every auto` device that hasn't said its interval yet (default 60).",
         "ShowQuiet": "True (default): tag the controls a quiet device feeds, and list it in the phone view.",
         "Enabled": "False stops the clocks (nothing goes LATE or LOST).",

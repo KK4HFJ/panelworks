@@ -167,6 +167,23 @@ while a.State("HighVolts") != "Active" and time.time() - t0 < 3:
     time.sleep(0.02)
 check("Interval: checks on its own", a.State("HighVolts") == "Active")
 
+# a narrow panel: the message is cut short ("…"), never drawn under the value and state
+f.pnl1.Width = 300
+f.pnl1._draw()
+f.root.update()
+cv = f.pnl1.widget
+rows = {}
+for item in cv.find_all():
+    if cv.type(item) == "text":
+        x1, y1, x2, y2 = cv.bbox(item)
+        rows.setdefault(round((y1 + y2) / 2), []).append((x1, x2, cv.itemcget(item, "text")))
+clash = [(r, b) for r in rows.values() for i, a1 in enumerate(r) for b in r[i + 1:]
+         if not (a1[1] <= b[0] or b[1] <= a1[0])]
+check("narrow AlarmPanel (300 px): no two texts on a row overlap", not clash, clash)
+check("...and a long message is shortened with an ellipsis",
+      any(t.endswith("…") for r in rows.values() for _, _, t in r), rows)
+f.pnl1.Width = 500
+
 if "--shot" in sys.argv:
     f.root.update()
     os.system(f"import -window root {os.path.join(ROOT, 'docs', 'alarms_shot.png')}")

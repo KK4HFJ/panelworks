@@ -4,6 +4,14 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **Watchdog: stopping the broker no longer makes every Last-Will device LOST.** A broker that
+  shuts down sends each client's Will just before the panel's link drops; a live `offline` now
+  waits 2 s and is dropped if the link goes down meanwhile. A retained `offline` replayed at a
+  reconnect gets one interval of grace. The tag says "LOST: offline (Last Will)" for a Will.
+- **Watchdog tags no longer cover the value.** A tag goes beside the control or above it where it
+  covers nothing, and shrinks to a badge ("LOST 12 min", "offline") on a crowded panel.
+- **AlarmPanel on a narrow panel:** the message is shortened with "…" so it never runs under the
+  value and state; the header is shortened before "Ack all". The bold name is measured as bold.
 - **Test server: the PC settings also set `PW_MQTT_*`.** `panelworks-setx.cmd` and `panelworks.env`
   set `PW_MQTT_HOST/PORT/USER/PASS`, the names the manual's, the examples' and the book's panels
   read, besides `MQTT_*`; a commented `PW_MQTT_CA` line is there for TLS. Before, ServerCheck went
