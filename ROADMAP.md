@@ -16,6 +16,20 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
 - **Next bug-fix release: 1.0.1 on Tuesday 1 December,** with every fix made from 24 Nov on.
   No release before then, even for a fix found today.
 
+## 1.1.0: Export for review (OfficeNex Academy)
+
+- File → Export for review… and `panelworks --export-review FORM [-o OUT]` write one text file,
+  `NAME.pwreview.json`: format/version, PanelWorks version, entry form, each reachable form with
+  its `describe_form` output, every form/code/text-companion file, sha256 per file, binaries by
+  name and hash only, a `redacted` list and `warnings`. 1 MB cap; UTF-8, LF, sorted keys.
+- Secret scrub from a table kept in PanelWorks (MQTT/NUT Password and Username; SNMP Community,
+  WriteCommunity, TrapCommunity, AuthKey, PrivKey; InfluxDB Token; Alarms TelegramToken);
+  `${VAR}` placeholders kept. `.env`, `panelworks-setx.cmd` and `secrets.h` never included. Code
+  is scanned for literal secrets and warned about, never edited. A test fails if a control adds an
+  unlisted secret-looking property.
+- JSON Schema at `docs/pwreview.schema.json`. Agreed with academy in Slack, 26 Nov 2026; waiting
+  on its rule list and answers (Username scrub, companion types, sample files).
+
 ## Home automation and security (for the next two books)
 
 The books use PanelWorks as the fixed console: a keypad by the door, a zone map, a NOC screen,
