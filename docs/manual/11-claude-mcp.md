@@ -123,6 +123,10 @@ Still, a panel connected to real equipment deserves care:
   can reach real equipment. `remove_object` and `save_form` are marked
   destructive, and `add_object` only adds. A client that sorts tools this way can
   auto-allow the read-only ones and ask about the rest.
+- **With no screen or no form file,** `--mcp stdio` still starts: it lists the 15 tools
+  (with their hints) and every tool answers "No PanelWorks panel is open here", with the
+  reason. That lets a client, or an MCP directory that checks servers, see what PanelWorks
+  offers. To drive a real panel on a machine without a screen, run it under `xvfb-run`.
 
 ## One window per form
 

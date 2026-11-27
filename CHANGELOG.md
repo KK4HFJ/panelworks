@@ -4,6 +4,12 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **MCP: the tool annotations are written out on every tool**, so tools that read the code (such
+  as the M8ven scan) see them, not only clients that ask the running server. The test checks them
+  against `TOOL_HINTS`.
+- **MCP over stdio starts with no screen or no form file.** It answers the handshake and lists the
+  15 tools; each tool says why there's no panel. Before, it crashed on "no $DISPLAY" before the
+  handshake, so an MCP directory couldn't check the server at all.
 - **OptionButton: a saved `"Value": true` inside a Frame now loads selected.** While a form loads,
   every button starts in the `default` group, so a later one took the selection, and moving each
   into its frame's group then dropped it. The saved choice is now applied after the move, and a

@@ -22,6 +22,7 @@ import glob
 import os
 import runpy
 import sys
+import tkinter as tk
 
 from panelworks import __version__
 
@@ -186,6 +187,11 @@ def main():
         run_designer(a.form)
         return
     if not a.form:
+        if a.mcp == "stdio":                 # a client or scanner checking what the server offers
+            from panelworks import mcp_bridge
+            mcp_bridge.serve_without_panel("no form file was given; start it as "
+                                           "`panelworks YourPanel.json --mcp stdio`")
+            return
         ap.error("a form file is required (or use --design to start a new one)")
 
     try:
@@ -202,7 +208,14 @@ def main():
             return
         sys.exit(f"{a.form} is already open in another window.")
 
-    form = load_form(a.form)
+    try:
+        form = load_form(a.form)
+    except tk.TclError as e:
+        if a.mcp == "stdio" and "display" in str(e).lower():
+            mcp_bridge.serve_without_panel("this machine has no screen (a panel needs a display; "
+                                           "on a server, run it under xvfb-run)")
+            return
+        raise
     if a.web or a.pin or a.readonly:
         cfg = dict(form.web_cfg or {})
         if a.web:

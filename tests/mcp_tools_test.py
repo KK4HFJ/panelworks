@@ -139,5 +139,41 @@ check("mqtt_publish with no MQTT link: a clear error, not a crash",
 check("webhook_status", ok("webhook_status"), results.get("webhook_status"))
 
 form.root.destroy()
+
+# ---- 3. no screen, or no form: the server still starts and lists its tools (registry scanners)
+import subprocess  # noqa: E402
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+PROBE = r"""
+import asyncio, json, sys
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+async def main():
+    p = StdioServerParameters(command=sys.executable, args=["-m", "panelworks"] + json.loads(sys.argv[1]),
+                              env={k: v for k, v in __import__("os").environ.items() if k != "DISPLAY"})
+    async with stdio_client(p) as (r, w):
+        async with ClientSession(r, w) as s:
+            await asyncio.wait_for(s.initialize(), 30)
+            tools = (await s.list_tools()).tools
+            res = await s.call_tool("describe_form", {})
+            err = getattr(res, "is_error", getattr(res, "isError", None))
+            print(json.dumps({"n": len(tools), "annotated": all(t.annotations is not None for t in tools),
+                              "error": err, "text": res.content[0].text}))
+asyncio.run(main())
+"""
+for label, args in (("no form file", ["--mcp", "stdio"]),
+                    ("a form but no screen", [os.path.join(ROOT, "examples", "pumppanel.json"), "--mcp", "stdio"])):
+    env = {k: v for k, v in os.environ.items() if k != "DISPLAY"}
+    env["PYTHONPATH"] = ROOT + os.pathsep + env.get("PYTHONPATH", "")
+    r = subprocess.run([sys.executable, "-c", PROBE, json.dumps(args)], capture_output=True, text=True,
+                       timeout=90, env=env, cwd=ROOT)
+    try:
+        out = json.loads(r.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        out = {"stderr": r.stderr[-400:]}
+    check(f"{label}: the server starts and lists all 15 tools, annotated",
+          out.get("n") == 15 and out.get("annotated"), out)
+    check(f"{label}: a tool call says why there's no panel",
+          out.get("error") is True and "No PanelWorks panel is open here" in out.get("text", ""), out)
+
 print(f"\n{len(FAILS)} failed" if FAILS else "ALL PASS")
 sys.exit(1 if FAILS else 0)

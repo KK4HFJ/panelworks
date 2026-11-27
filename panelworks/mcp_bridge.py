@@ -131,7 +131,8 @@ def make_impl(form):
 # The MCP server definition (same schema whether local or relayed)
 # --------------------------------------------------------------------------
 # MCP tool annotations: (readOnlyHint, destructiveHint, idempotentHint, openWorldHint) for every
-# tool, so a host can warn before one that changes things. "Open world": the tool can reach past
+# tool, so a host can warn before one that changes things. Each @mcp.tool below spells its four
+# hints out (so code scanners see them); tests/mcp_tools_test.py checks they match this table. "Open world": the tool can reach past
 # the form, to devices over MQTT, Serial, Modbus, SNMP or webhooks, through bindings or event code.
 TOOL_HINTS = {
     "describe_form":  (True,  False, True,  False),
@@ -152,14 +153,6 @@ TOOL_HINTS = {
 }
 
 
-def tool_annotations(name):
-    from mcp.types import ToolAnnotations
-    ro, destructive, idempotent, open_world = TOOL_HINTS[name]   # KeyError = a tool without hints
-    return ToolAnnotations.model_validate({
-        "readOnlyHint": ro, "destructiveHint": destructive,
-        "idempotentHint": idempotent, "openWorldHint": open_world})
-
-
 def build_server(call):
     mcp = _Server(
         name="panelworks",
@@ -172,60 +165,66 @@ def build_server(call):
         ),
     )
 
-    def tool():
-        def register(fn):
-            return mcp.tool(annotations=tool_annotations(fn.__name__))(fn)
-        return register
+    from mcp.types import ToolAnnotations
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def describe_form() -> dict:
         """Every object on the form with its type, current properties, methods,
         events, and which events have code handlers."""
         return call("describe_form")
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def list_objects() -> dict:
         """Object names and types, e.g. {"Label1": "Label", "Timer1": "Timer"}."""
         return call("list_objects")
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def get_property(object: str, property: str):
         """Read one property, e.g. get_property('Text1', 'Text')."""
         return call("get_property", object=object, property=property)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=True, openWorldHint=True))
     def set_property(object: str, property: str, value) -> str:
         """Set one property, e.g. set_property('Label1', 'Caption', 'Pump on').
         Colours are Tk names or '#rrggbb'. Setting a property may fire events
         (TextBox.Text -> Change, CheckBox.Value -> Click), as in VB."""
         return call("set_property", object=object, property=property, value=value)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=False, openWorldHint=True))
     def call_method(object: str, method: str, args: list | None = None):
         """Call a method, e.g. call_method('List1', 'AddItem', ['Tomatoes']) or
         call_method('Command1', 'Click') to press a button."""
         return call("call_method", object=object, method=method, args=args)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=False, openWorldHint=True))
     def fire_event(object: str, event: str, args: list | None = None) -> str:
         """Raise an event and run its handler without changing any control,
         e.g. fire_event('Timer1', 'Timer')."""
         return call("fire_event", object=object, event=event, args=args)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def get_events(since_seq: int = 0, include_timer: bool = False) -> list:
         """Events since a sequence number (user clicks, text changes, errors in
         handlers). Pass the last seq you saw to get only new ones."""
         return call("get_events", since_seq=since_seq, include_timer=include_timer)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def wait_for_event(object: str | None = None, event: str | None = None,
                        timeout_seconds: float = 30) -> dict | None:
         """Block until the next matching event (e.g. object='Command1',
         event='Click'), or return null on timeout."""
         return call("wait_for_event", object=object, event=event, timeout_seconds=timeout_seconds)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False,
+                                          idempotentHint=False, openWorldHint=False))
     def add_object(name: str, type: str, properties: dict | None = None) -> dict:
         """Draw a new control on the form. Types: Label, CommandButton, TextBox,
         CheckBox, OptionButton, ListBox, ComboBox, Frame, TabStrip, Shape, ProgressBar, Slider, Gauge, SegmentDisplay, PictureBox, Chart, Grid, AlarmPanel,
@@ -234,34 +233,40 @@ def build_server(call):
         {'Caption': 'Stop', 'Left': 10, 'Top': 80, 'Width': 80, 'Height': 30})"""
         return call("add_object", name=name, type=type, properties=properties)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=True, openWorldHint=False))
     def remove_object(name: str) -> str:
         """Delete a control from the form."""
         return call("remove_object", name=name)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=True, openWorldHint=False))
     def save_form(path: str | None = None) -> str:
         """Write the current form (layout + properties) back to JSON. Defaults to
         the file it was loaded from."""
         return call("save_form", path=path)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def control_types() -> dict:
         """Available control types with their properties, methods and events."""
         return call("control_types")
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def mqtt_status() -> dict:
         """The form's MQTT link (from the JSON 'mqtt' block): broker, connected,
         mirror prefix, and every property<-topic binding."""
         return call("mqtt_status")
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True,
+                                          idempotentHint=False, openWorldHint=True))
     def mqtt_publish(topic: str, payload: str, retain: bool = False) -> str:
         """Publish through the form's MQTT link, e.g. mqtt_publish('pump/cmd', 'ON')."""
         return call("mqtt_publish", topic=topic, payload=payload, retain=retain)
 
-    @tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                          idempotentHint=True, openWorldHint=False))
     def webhook_status() -> dict:
         """The form's HTTP webhooks (n8n etc.): base URL, poll settings, which
         object events call which URLs, and sent/ok/failed counts with the last error."""
@@ -273,6 +278,21 @@ def build_server(call):
         return json.dumps(call("describe_form"), indent=2, default=json_default)
 
     return mcp
+
+
+def no_panel_caller(reason):
+    """Caller for a server with no panel behind it: every tool answers with why."""
+    def call(tool, /, **kw):
+        raise ToolError(f"No PanelWorks panel is open here: {reason}")
+    return call
+
+
+def serve_without_panel(reason):
+    """--mcp stdio with no form file or no screen: still answer the MCP handshake and list the
+    tools (with their annotations), so a client or a registry scanner can see what's offered.
+    Every tool call explains what's missing."""
+    print(f"[panelworks] MCP over stdio with no panel: {reason}", file=sys.stderr)
+    build_server(no_panel_caller(reason)).run("stdio")
 
 
 def local_caller(form):
