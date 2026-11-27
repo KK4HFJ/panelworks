@@ -34,6 +34,18 @@ Nothing here is promised; suggestions and pull requests are welcome (see CONTRIB
   academy's Foundation/Practitioner draft rules are all covered by `review` (it parses Python
   syntax and try/except itself). Sample files when academy starts the PanelWorks track.
 
+## DCC model railroad accessories (DCC-EX first, JMRI later)
+
+- **`DCC` control:** USB serial or Wi-Fi to a DCC-EX command station (native `<...>` protocol,
+  `<O>`/`<X>` replies), in the link banner like MQTT and NUT. Named turnouts, accessories and
+  sensors (`yard_lead = 12`); Throw, Close, Accessory methods; TurnoutChanged and SensorChanged
+  events; start EXRAIL routes. `--simulator dcc` for tests and books.
+- **Turnout control:** a track-diagram piece that shows its route and throws when clicked; with
+  block-occupancy lamps it makes a CTC/dispatcher panel.
+- **Later:** a JMRI JSON backend for Digitrax, NCE and other systems.
+- Until then, the Serial control with Terminator `>` already talks to DCC-EX.
+- After the PanelWorks book; release to be decided (1.1.0 or later).
+
 ## Bench instruments (for a possible book, "The Electronics Workbench")
 
 ESP32 does the timing; the panel is the front panel, over the Serial control (USB, no network).
