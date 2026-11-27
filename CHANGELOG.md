@@ -4,6 +4,11 @@ All notable changes to PanelWorks. Dates are when the version was tagged.
 
 ## Unreleased
 
+- **Listed in the official MCP Registry** as `io.github.KK4HFJ/panelworks` (from 1.0.1). `server.json`
+  describes the PyPI package and how a client starts it (`panelworks FORM.json --mcp stdio`); the
+  README carries the `mcp-name` ownership marker the registry checks on PyPI. The publish workflow
+  lists each release after PyPI, signed in with GitHub OIDC (no token stored). `tests/registry_test.py`
+  keeps the name, marker and versions in step.
 - **MCP: the tool annotations are written out on every tool**, so tools that read the code (such
   as the M8ven scan) see them, not only clients that ask the running server. The test checks them
   against `TOOL_HINTS`.

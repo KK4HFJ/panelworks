@@ -2,6 +2,8 @@
 
 [![Tests](https://github.com/KK4HFJ/panelworks/actions/workflows/tests.yml/badge.svg)](https://github.com/KK4HFJ/panelworks/actions/workflows/tests.yml) [![PyPI](https://img.shields.io/pypi/v/panelworks)](https://pypi.org/project/panelworks/) [![M8ven Score](https://m8ven.ai/badge/mcp/kk4hfj-panelworks-us6wtt?v=5873b563671304b3e95a4a6228d92f18)](https://m8ven.ai/mcp/kk4hfj-panelworks-us6wtt?s=readme)
 
+<!-- mcp-name: io.github.KK4HFJ/panelworks -->
+
 Draw a form in JSON, write `Object_Event` procedures in Python, and run it as a
 real Tkinter desktop window. Every object is live-addressable, by agents over
 **MCP** (Claude can read and set properties, call methods, wait for events, even

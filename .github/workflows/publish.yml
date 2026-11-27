@@ -2,7 +2,9 @@
 # or by hand from the Actions tab ("Run workflow") for the version on main.
 #
 # Uses PyPI trusted publishing: PyPI trusts this repository + this file + the "pypi"
-# environment, so no API token is stored anywhere.
+# environment, so no API token is stored anywhere. After PyPI, the release is listed in the
+# official MCP Registry (server.json), signed in with this run's GitHub OIDC token: no secret
+# either. The registry checks the PyPI README for "mcp-name: io.github.KK4HFJ/panelworks".
 name: Publish to PyPI
 
 on:
@@ -53,3 +55,36 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  mcp-registry:
+    needs: publish
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write          # mcp-publisher login github-oidc
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Set server.json to this release's version
+        run: |
+          v="${{ github.event.release.tag_name }}"; v="${v#v}"
+          jq --arg v "$v" '.version = $v | .packages[].version = $v' server.json > s.tmp && mv s.tmp server.json
+          cat server.json
+      - name: Wait for PyPI to serve this version
+        run: |
+          v=$(jq -r .version server.json)
+          for i in $(seq 1 30); do
+            curl -sf "https://pypi.org/pypi/panelworks/$v/json" > /dev/null && exit 0
+            echo "not on PyPI yet ($i)"; sleep 10
+          done
+          exit 1
+      - name: Install mcp-publisher
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher --help | head -3
+      - name: Publish to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

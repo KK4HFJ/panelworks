@@ -1,0 +1,39 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.KK4HFJ/panelworks",
+  "title": "PanelWorks",
+  "description": "VB-style Python control panels; every control live over MCP: read, set, click, watch events.",
+  "version": "1.0.0",
+  "websiteUrl": "https://github.com/KK4HFJ/panelworks",
+  "repository": {
+    "url": "https://github.com/KK4HFJ/panelworks",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "panelworks",
+      "version": "1.0.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "valueHint": "form_file",
+          "description": "The panel to open: a PanelWorks form .json file (a screen is needed to show it).",
+          "isRequired": true,
+          "format": "filepath"
+        },
+        {
+          "type": "named",
+          "name": "--mcp",
+          "value": "stdio",
+          "description": "Serve MCP over stdio for this client."
+        }
+      ]
+    }
+  ]
+}
