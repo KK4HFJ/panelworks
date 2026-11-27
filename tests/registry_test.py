@@ -3,7 +3,11 @@ import json
 import os
 import re
 import sys
-import tomllib
+
+try:
+    import tomllib          # Python 3.11+
+except ModuleNotFoundError:  # 3.10 (CI matrix): read the two fields we need by hand
+    tomllib = None
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 ok = True
@@ -17,7 +21,13 @@ def check(label, cond, detail=""):
 
 srv = json.load(open(os.path.join(ROOT, "server.json"), encoding="utf-8"))
 readme = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()
-proj = tomllib.load(open(os.path.join(ROOT, "pyproject.toml"), "rb"))["project"]
+_pp = os.path.join(ROOT, "pyproject.toml")
+if tomllib:
+    proj = tomllib.load(open(_pp, "rb"))["project"]
+else:
+    _t = open(_pp, encoding="utf-8").read()
+    _sec = _t.split("[project]", 1)[1].split("\n[", 1)[0]
+    proj = {k: re.search(rf'^{k}\s*=\s*"([^"]*)"', _sec, re.M).group(1) for k in ("name", "version")}
 name = srv["name"]
 check("name is in the GitHub namespace of the repo owner", name.startswith("io.github.KK4HFJ/"), name)
 check("README carries the ownership marker, on its own (boundary after it)",
